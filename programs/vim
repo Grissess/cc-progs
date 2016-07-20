@@ -1,0 +1,194 @@
+os.loadAPI("/disk/apis/libtedit")
+
+local args = {...}
+
+local text = ""
+local path = nil
+if #args > 0 then
+	path = shell.resolve(args[1])
+	if fs.exists(path) and not fs.isDir(path) then
+		local f = io.open(path, "r")
+		text = f:read("*all")
+		f:close()
+	end
+end
+
+local buf = libtedit.buffer.new(text)
+local op = nil
+local reg = ""
+
+local function simple_motion(char, key)
+	if char == "h" or key == keys.left then
+		buf:setcursor(buf.cx - 1, buf.cy)
+		return true
+	end
+	if char == "j" or key == keys.down then
+		buf:setcursor(buf.cx, buf.cy + 1)
+		return true
+	end
+	if char == "k" or key == keys.up then
+		buf:setcursor(buf.cx, buf.cy - 1)
+		return true
+	end
+	if char == "l" or key == keys.right then
+		buf:setcursor(buf.cx + 1, buf.cy)
+		return true
+	end
+	if char == "^" or key == keys.home then
+		buf:setcursor(1, buf.cy)
+		return true
+	end
+	if char == "$" or key == keys['end'] then
+		buf:setcursor(100000, buf.cy)  -- FIXME
+		return true
+	end
+	if char == "w" then
+		local txt = buf.lines[buf.cy]
+		local idx = txt:find("%w", buf.cx + 1)
+		if idx ~= nil then
+			buf:setcursor(idx, buf.cy)
+		end
+		return true
+	end
+	if char == "W" then
+		local txt = buf.lines[buf.cy]
+		local idx = txt:find("%S", buf.cx + 1)
+		if idx ~= nil then
+			buf:setcursor(idx, buf.cy)
+		end
+		return true
+	end
+	return false
+end
+
+local function normal_mode(char, key) 
+	buf.status = "-- NORMAL --"
+	if simple_motion(char, key) then
+		return normal_mode
+	end
+	if char == "i" then
+		return insert_mode
+	end
+	if char == "a" then
+		buf:setcursor(buf.cx + 1, buf.cy)
+		return insert_mode
+	end
+	if char == ":" then
+		buf.status = ":"
+		return command_mode
+	end
+	buf.status = "Unknown keypress"
+	return normal_mode
+end
+
+local function insert_mode(char, key)
+	buf.status = "-- INSERT --"
+	if key == keys.left then
+		buf:setcursor(buf.cx - 1, buf.cy)
+		return insert_mode
+	end
+	if key == keys.down then
+		buf:setcursor(buf.cx, buf.cy + 1)
+		return insert_mode
+	end
+	if key == keys.up then
+		buf:setcursor(buf.cx, buf.cy - 1)
+		return insert_mode
+	end
+	if key == keys.right then
+		buf:setcursor(buf.cx + 1, buf.cy)
+		return insert_mode
+	end
+	if key == keys.insert then
+		return normal_mode
+	end
+	if key == keys.backspace then
+		buf:setcursor(buf.cx - 1, buf.cy)
+		buf:delete(1)
+		return insert_mode
+	end
+	if key == keys.delete then
+		buf:delete(1)
+		return insert_mode
+	end
+	if char ~= nil then
+		buf:insert(char)
+	end
+	return insert_mode
+end
+
+local function command_mode(char, key)
+	if key == keys.enter then
+		run_command(buf.status:sub(2))
+		buf.status = "-- NORMAL --"
+		return normal_mode
+	end
+	if key == keys.backspace then
+		buf.status = buf.status:sub(1, -2)
+		if #buf.status then
+			return command_mode
+		else
+			return normal_mode
+		end
+	if char ~= nil then
+		buf.status += char
+	end
+	return command_mode
+end
+
+local function run_command(cmd)
+	local parts = {}
+	for part in cmd:gmatch("%S") do
+		table.insert(parts, part)
+	end
+	cmd = table.remove(parts, 1)
+	if cmd == "write" or cmd == "w" then
+		if parts[1] ~= nil then
+			path = shell.resolve(parts[1])
+		end
+		if path == nil then
+			cmd_error("Can't save: no path specified (pass an argument)")
+			return false
+		end
+		local f = io.open(path, "w")
+		for idx, line in ipairs(buf.lines) do
+			f:write(line.."\n")
+		end
+		f:close()
+		return true
+	end
+	if cmd == "quit" or cmd == "q" then
+		running = false
+		return true
+	end
+	if cmd == "wq" then
+		if run_command("w") then
+			return run_command("q")
+		end
+		return false
+	end
+	cmd_error("Unknown command: "..cmd)
+	return false
+end
+
+local function cmd_error(errstr)
+	buf.status = errstr
+	buf:blit(term)
+	os.sleep(1)
+end
+
+local mode = normal_mode
+local running = true
+
+while running do
+	local ev, p1, p2, p3 = os.pullEvent()
+	if ev == "key" then
+		mode = mode(nil, p1)
+	end
+	if ev == "char" then
+		mode = mode(p1, nil)
+	end
+	if buf.dirty then
+		buf:blit(term)
+	end
+end

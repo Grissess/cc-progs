@@ -1,0 +1,154 @@
+highlighter = {
+	new = function(classes)
+		return setmetatable({classes = classes}, {__index = highlighter})
+	end,
+
+	highlight = function(self, text)
+		local parts = {{text=text}}
+		for class, matches in pairs(self.classes) do
+			for idx, match in ipairs(matches) do
+				for pidx, part in ipairs(parts) do
+					local midx, mend = part.text:find(match)
+					if midx ~= nil then
+						table.insert(parts, pidx + 1, {class = class, text = part.text:sub(midx, mend)})
+						table.insert(parts, pidx + 2, {text = part.text:sub(mend + 1)})
+						part.text = part.text:sub(0, midx - 1)
+					end
+				end
+			end
+		end
+		local idx = 1
+		while idx <= #parts do
+			if #parts[idx].text == 0 then
+				table.remove(parts, idx)
+			else
+				idx += 1
+			end
+		end
+		return parts
+	end,
+}
+
+syntaxes = {
+	none = highlighter.new({}),
+	lua = highlighter.new({
+		oper = {"%{", "%}"},
+		digit = {"%d"},
+		keyword = {"function", "if", "then", "while", "for", "do", "end", "return", "local"},
+		func = {  -- FIXME
+			"setmetatable", "getmetatable", "pairs", "ipairs", 
+			"table%.insert", "table%.remove",
+		},
+		comment = {"%-%-.*$"},
+		string = {"%b\"\"", "%b''"},
+	}),
+}
+
+colors = {
+	full = {
+		default = colors.white,
+		oper = colors.green,
+		digit = colors.cyan,
+		keyword = colors.yellow,
+		func = colors.blue,
+		comment = colors.pink,
+		string = colors.red,
+		status = colors.lightGray,
+	},
+	gray = {
+		default = colors.white,
+		oper = colors.white,
+		digit = colors.white,
+		keyword = colors.lightGray,
+		func = colors.white,
+		comment = colors.lightGray,
+		string = colors.white,
+		status = colors.lightGray,
+	},
+}
+
+buffer = {
+	new = function(text)
+		if text == nil then text = "" end
+		local lines = {}
+		for line in text:gmatch("[^\n]") do
+			table.insert(lines, line)
+		end
+		if #lines == 0 then table.insert(lines, "") end
+		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, dirty = true, syntax = syntaxes.none, status = ""}, {__index = buffer})
+	end,
+
+	clampxy = function(self, x, y)
+		if y > #self.lines then y = #self.lines end
+		if y < 1 then y = 1 end
+		width = #(self.lines[y])
+		if x < 1 then x = 1 end
+		if x > width + 1 then x = width + 1 end
+		return x, y
+	end,
+
+	setscroll = function(self, x, y)
+		self.sx, self.sy = self.clampxy(x, y)
+		self.dirty = true
+	end,
+
+	setcursor = function(self, x, y)
+		self.cx, self.sy = self.clampxy(x, y)
+		self.dirty = true
+	end,
+
+	blit = function(self, term)
+		local tw, th = term.getSize()
+		local ts = th - 1
+		local tx, ty = 1, 1
+		local bx, by = self.sx, self.sy
+		term.setBackgroundColor(colors.black)
+		local colset
+		if term.isColor() then
+			colset = colors.full
+		else
+			colset = colors.gray
+		end
+
+		while ty <= ts and by <= #self.lines do
+			local str = self.lines[by]:sub(bx, bx + tw - 1)
+			if #str > 0 then
+				local parts = self.syntax:highlight(str)
+				term.setCursorPos(1, ty)
+				for idx, part in ipairs(parts) do
+					local cls = part.class
+					if cls == nil then cls = "default" end
+					local col = colset[cls]
+					if col == nil then col = colset.default end
+					term.setTextColor(col)
+					term.write(part.text)
+				end
+			end
+			ty += 1
+		end
+
+		term.setCursorPos(1, th)
+		term.setTextColor(colset.status or colset.default)
+		term.write(self.status)
+
+		term.setCursorPos(self.cx - self.sx + 1, self.cy - self.sy + 1)
+		self.dirty = false
+	end,
+
+	insert = function(self, text)
+		local str = self.lines[self.cy]
+		str = str:sub(0, self.cx - 1) + text + str:sub(self.cx)
+		self.lines[self.cy] = str
+		self.dirty = true
+	end,
+
+	delete = function(self, cnt)
+		if cnt == nil then cnt = 1 end
+		local str = self.lines[self.cy]
+		str = str:sub(0, self.cx - 1) + str:sub(self.cx + cnt)
+		self.lines[self.cy] = str
+		self.dirty = true
+	end,
+}
+
+
