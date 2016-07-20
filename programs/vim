@@ -130,6 +130,7 @@ local function command_mode(char, key)
 		else
 			return normal_mode
 		end
+	end
 	if char ~= nil then
 		buf.status += char
 	end
