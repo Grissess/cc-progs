@@ -22,7 +22,7 @@ highlighter = {
 			if #parts[idx].text == 0 then
 				table.remove(parts, idx)
 			else
-				idx += 1
+				idx = idx + 1
 			end
 		end
 		return parts
@@ -44,7 +44,7 @@ syntaxes = {
 	}),
 }
 
-colors = {
+colorschema = {
 	full = {
 		default = colors.white,
 		oper = colors.green,
@@ -71,8 +71,10 @@ buffer = {
 	new = function(text)
 		if text == nil then text = "" end
 		local lines = {}
-		for line in text:gmatch("[^\n]") do
-			table.insert(lines, line)
+		local nlidx = text:find("\n")
+		while nlidx ~= nil do
+			table.insert(lines, text:sub(0, nlidx - 1))
+			text = text:sub(nlidx + 1)
 		end
 		if #lines == 0 then table.insert(lines, "") end
 		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, dirty = true, syntax = syntaxes.none, status = ""}, {__index = buffer})
@@ -88,12 +90,12 @@ buffer = {
 	end,
 
 	setscroll = function(self, x, y)
-		self.sx, self.sy = self.clampxy(x, y)
+		self.sx, self.sy = self:clampxy(x, y)
 		self.dirty = true
 	end,
 
 	setcursor = function(self, x, y)
-		self.cx, self.sy = self.clampxy(x, y)
+		self.cx, self.sy = self:clampxy(x, y)
 		self.dirty = true
 	end,
 
@@ -105,9 +107,9 @@ buffer = {
 		term.setBackgroundColor(colors.black)
 		local colset
 		if term.isColor() then
-			colset = colors.full
+			colset = colorschema.full
 		else
-			colset = colors.gray
+			colset = colorschema.gray
 		end
 
 		while ty <= ts and by <= #self.lines do
@@ -124,7 +126,8 @@ buffer = {
 					term.write(part.text)
 				end
 			end
-			ty += 1
+			ty = ty + 1
+			by = by + 1
 		end
 
 		term.setCursorPos(1, th)

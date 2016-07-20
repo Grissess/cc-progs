@@ -8,7 +8,7 @@ if #args > 0 then
 	path = shell.resolve(args[1])
 	if fs.exists(path) and not fs.isDir(path) then
 		local f = io.open(path, "r")
-		text = f:read("*all")
+		text = f:read("*a")
 		f:close()
 	end
 end
@@ -132,7 +132,7 @@ local function command_mode(char, key)
 		end
 	end
 	if char ~= nil then
-		buf.status += char
+		buf.status = buf.status .. char
 	end
 	return command_mode
 end
@@ -179,17 +179,23 @@ local function cmd_error(errstr)
 end
 
 local mode = normal_mode
+local newmode
 local running = true
 
 while running do
 	local ev, p1, p2, p3 = os.pullEvent()
 	if ev == "key" then
-		mode = mode(nil, p1)
+		newmode = mode(nil, p1)
 	end
 	if ev == "char" then
-		mode = mode(p1, nil)
+		newmode = mode(p1, nil)
+	end
+	if newmode ~= nil then
+		mode = newmode
+	else
+		buf.status = "Warning: no switch from mode"
 	end
 	if buf.dirty then
-		buf:blit(term)
+		buf:blit(term.native())
 	end
 end
