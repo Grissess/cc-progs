@@ -116,9 +116,9 @@ buffer = {
 		while ty <= ts and by <= #self.lines do
 			local str = self.lines[by]:sub(bx, bx + tw - 1)
 			if #str > 0 then
-				local parts = self.syntax:highlight(str)
 				term.setCursorPos(1, ty)
-				term.write(" ":rep(tw))
+				term.write(string.rep(" ", tw))
+				local parts = self.syntax:highlight(str)
 				term.setCursorPos(1, ty)
 				for idx, part in ipairs(parts) do
 					local cls = part.class
@@ -134,7 +134,7 @@ buffer = {
 		end
 
 		term.setCursorPos(1, th)
-		term.write(" ":rep(tw))
+		term.write(string.rep(" ", tw))
 		term.setCursorPos(1, th)
 		term.setTextColor(colset.status or colset.default)
 		term.write(self.status)

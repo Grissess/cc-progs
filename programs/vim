@@ -69,6 +69,16 @@ local function normal_mode(char, key)
 	if char == "i" then
 		return insert_mode
 	end
+	if char == "o" then
+		table.insert(buf.lines, buf.cy + 1, "")
+		buf:setcursor(1, buf.cy + 1)
+		return insert_mode
+	end
+	if char == "O" then
+		table.insert(buf.lines, buf.cy, "")
+		buf:setcursor(1, buf.cy)
+		return insert_mode
+	end
 	if char == "a" then
 		buf:setcursor(buf.cx + 1, buf.cy)
 		return insert_mode
@@ -77,8 +87,18 @@ local function normal_mode(char, key)
 		buf.status = ":"
 		return command_mode
 	end
+	if char == "d" then
+		return delete_mode
+	end
 	buf.status = "Unknown keypress"
 	return normal_mode
+end
+
+local function delete_mode(char, key)
+	if char == "d" then
+		table.remove(buf.lines, buf.cy)
+		buf:setcursor(buf.cx, buf.cy)
+	end
 end
 
 local function insert_mode(char, key)
@@ -98,9 +118,6 @@ local function insert_mode(char, key)
 	if key == keys.right then
 		buf:setcursor(buf.cx + 1, buf.cy)
 		return insert_mode
-	end
-	if key == keys.insert then
-		return normal_mode
 	end
 	if key == keys.backspace then
 		buf:setcursor(buf.cx - 1, buf.cy)
@@ -185,7 +202,11 @@ local running = true
 while running do
 	local ev, p1, p2, p3 = os.pullEvent()
 	if ev == "key" then
-		newmode = mode(nil, p1)
+		if p1 == keys.rightAlt then
+			newmode = normal_mode
+		else
+			newmode = mode(nil, p1)
+		end
 	end
 	if ev == "char" then
 		newmode = mode(p1, nil)
