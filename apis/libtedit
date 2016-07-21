@@ -1,4 +1,4 @@
--- libtedit revision 3
+-- libtedit revision 4
 
 highlighter = {
 	new = function(classes)
@@ -36,7 +36,7 @@ syntaxes = {
 	lua = highlighter.new({
 		oper = {"%{", "%}"},
 		digit = {"%d"},
-		keyword = {"function", "if", "then", "while", "for", "do", "end", "return", "local"},
+		keyword = {"function", "if", "then", "while", "for", "do", "end", "return", "local", "true", "false", "nil"},
 		func = {  -- FIXME
 			"setmetatable", "getmetatable", "pairs", "ipairs", 
 			"table%.insert", "table%.remove",
@@ -155,7 +155,7 @@ buffer = {
 		local str = self.lines[self.cy]
 		str = str:sub(0, self.cx - 1) .. text .. str:sub(self.cx)
 		self.lines[self.cy] = str
-		self.cx += #text
+		self.cx = self.cx #text
 		self.dirty = true
 	end,
 
