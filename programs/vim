@@ -18,6 +18,7 @@ end
 local buf = libtedit.buffer.new(text)
 local op = nil
 local reg = ""
+local entry = ""
 local searchpat = nil
 
 local function simple_motion(char, key)
@@ -72,145 +73,148 @@ local function simple_motion(char, key)
 	return false
 end
 
-local function normal_mode(char, key) 
-	buf.status = "-- NORMAL --"
-	if simple_motion(char, key) then
-		return normal_mode
-	end
-	if char == "i" then
-		return insert_mode
-	end
-	if char == "o" then
-		table.insert(buf.lines, buf.cy + 1, "")
-		buf:setcursor(1, buf.cy + 1)
-		return insert_mode
-	end
-	if char == "O" then
-		table.insert(buf.lines, buf.cy, "")
-		buf:setcursor(1, buf.cy)
-		return insert_mode
-	end
-	if char == "a" then
-		buf:setcursor(buf.cx + 1, buf.cy)
-		return insert_mode
-	end
-	if char == ":" then
-		buf.status = ":"
-		return command_mode
-	end
-	if char == "d" then
-		return delete_mode
-	end
-	if char == "/" then
-		buf.status = "/"
-		return search_mode
-	end
-	buf.status = "Unknown keypress"
-	return normal_mode
-end
+local modes = {
+	normal = function(char, key) 
+		if simple_motion(char, key) then
+			return "normal"
+		end
+		if char == "i" then
+			return "insert"
+		end
+		if char == "o" then
+			table.insert(buf.lines, buf.cy + 1, "")
+			buf:setcursor(1, buf.cy + 1)
+			return "insert"
+		end
+		if char == "O" then
+			table.insert(buf.lines, buf.cy, "")
+			buf:setcursor(1, buf.cy)
+			return "insert"
+		end
+		if char == "a" then
+			buf:setcursor(buf.cx + 1, buf.cy)
+			return "insert"
+		end
+		if char == ":" then
+			entry = ":"
+			return "command"
+		end
+		if char == "d" then
+			return "delete"
+		end
+		if char == "/" then
+			entry = "/"
+			return "search"
+		end
+		buf.status = "Unknown keypress"
+		return "normal"
+	end,
 
-local function delete_mode(char, key)
-	if char == "d" then
-		table.remove(buf.lines, buf.cy)
-		buf:setcursor(buf.cx, buf.cy)
-	end
-end
+	delete = function(char, key)
+		if char == "d" then
+			table.remove(buf.lines, buf.cy)
+			buf:setcursor(buf.cx, buf.cy)
+		end
+		return "normal"
+	end,
 
-
-local function search_mode(char, key)
-	if key == keys.enter then
-		searchpat = buf.status:sub(2)
-		local ly = buf.cy
-		local lx = buf.cx + 1
-		while ly <= #buf.lines do
-			local idx = buf.lines[ly]:find(pat)
-			if idx ~= nil then
-				buf:setcursor(idx, ly)
-				return normal_mode
+	search = function(char, key)
+		if key == keys.enter then
+			searchpat = entry:sub(2)
+			local ly = buf.cy
+			local lx = buf.cx + 1
+			while ly <= #buf.lines do
+				local idx = buf.lines[ly]:find(pat)
+				if idx ~= nil then
+					buf:setcursor(idx, ly)
+					return "normal"
+				end
+				ly = ly + 1
+				lx = 1
 			end
-			ly = ly + 1
-			lx = 1
-		end
-		buf.status = "Search wrapped to top"
-		ly = 1
-		while ly < buf.cy do
-			local idx = buf.lines[ly]:find(pat)
-			if idx ~= nil then
-				buf:setcursor(idx, ly)
-				return normal_mode
+			buf.status = "Search wrapped to top"
+			ly = 1
+			while ly < buf.cy do
+				local idx = buf.lines[ly]:find(pat)
+				if idx ~= nil then
+					buf:setcursor(idx, ly)
+					return "normal"
+				end
+				ly = ly + 1
+				lx = 1
 			end
-			ly = ly + 1
-			lx = 1
+			buf.status = "Pattern not found"
+			return "normal"
 		end
-		buf.status = "Pattern not found"
-		return normal_mode
-	end
-	if key == keys.backspace then
-		buf.status = buf.status:sub(1, -2)
-		if #buf.status > 0 then
-			return search_mode
-		else
-			return normal_mode
+		if key == keys.backspace then
+			entry = entry:sub(1, -2)
+			buf.status = entry
+			if #entry > 0 then
+				return "search"
+			else
+				return "normal"
+			end
 		end
-	end
-	if char ~= nil then
-		buf.status = buf.status .. char
-	end
-	return search_mode
-end
+		if char ~= nil then
+			entry = entry .. char
+		end
+		buf.status = entry
+		return "search"
+	end,
 
-local function insert_mode(char, key)
-	buf.status = "-- INSERT --"
-	if key == keys.left then
-		buf:setcursor(buf.cx - 1, buf.cy)
-		return insert_mode
-	end
-	if key == keys.down then
-		buf:setcursor(buf.cx, buf.cy + 1)
-		return insert_mode
-	end
-	if key == keys.up then
-		buf:setcursor(buf.cx, buf.cy - 1)
-		return insert_mode
-	end
-	if key == keys.right then
-		buf:setcursor(buf.cx + 1, buf.cy)
-		return insert_mode
-	end
-	if key == keys.backspace then
-		buf:setcursor(buf.cx - 1, buf.cy)
-		buf:delete(1)
-		return insert_mode
-	end
-	if key == keys.delete then
-		buf:delete(1)
-		return insert_mode
-	end
-	if char ~= nil then
-		buf:insert(char)
-	end
-	return insert_mode
-end
-
-local function command_mode(char, key)
-	if key == keys.enter then
-		run_command(buf.status:sub(2))
-		buf.status = "-- NORMAL --"
-		return normal_mode
-	end
-	if key == keys.backspace then
-		buf.status = buf.status:sub(1, -2)
-		if #buf.status > 0 then
-			return command_mode
-		else
-			return normal_mode
+	insert = function(char, key)
+		if key == keys.left then
+			buf:setcursor(buf.cx - 1, buf.cy)
+			return "insert"
 		end
-	end
-	if char ~= nil then
-		buf.status = buf.status .. char
-	end
-	return command_mode
-end
+		if key == keys.down then
+			buf:setcursor(buf.cx, buf.cy + 1)
+			return "insert"
+		end
+		if key == keys.up then
+			buf:setcursor(buf.cx, buf.cy - 1)
+			return "insert"
+		end
+		if key == keys.right then
+			buf:setcursor(buf.cx + 1, buf.cy)
+			return "insert"
+		end
+		if key == keys.backspace then
+			buf:setcursor(buf.cx - 1, buf.cy)
+			buf:delete(1)
+			return "insert"
+		end
+		if key == keys.delete then
+			buf:delete(1)
+			return "insert"
+		end
+		if char ~= nil then
+			buf:insert(char)
+		end
+		return "insert"
+	end,
+
+	command = function(char, key)
+		if key == keys.enter then
+			run_command(entry:sub(2))
+			return "normal"
+		end
+		if key == keys.backspace then
+			entry = entry:sub(1, -2)
+			buf.status = entry
+			if #entry > 0 then
+				return "command"
+			else
+				return "normal"
+			end
+		end
+		if char ~= nil then
+			entry = entry .. char
+		end
+		buf.status = entry
+		return "command"
+	end,
+}
 
 local function run_command(cmd)
 	local parts = {}
@@ -253,7 +257,7 @@ local function cmd_error(errstr)
 	os.sleep(1)
 end
 
-local mode = normal_mode
+local mode = "normal"
 local newmode
 local running = true
 
@@ -261,13 +265,13 @@ while running do
 	local ev, p1, p2, p3 = os.pullEvent()
 	if ev == "key" then
 		if p1 == keys.rightAlt then
-			newmode = normal_mode
+			newmode = "normal"
 		else
-			newmode = mode(nil, p1)
+			newmode = modes[mode](nil, p1)
 		end
 	end
 	if ev == "char" then
-		newmode = mode(p1, nil)
+		newmode = modes[mode](p1, nil)
 	end
 	if newmode ~= nil then
 		mode = newmode
@@ -275,6 +279,7 @@ while running do
 		buf.status = "Warning: no switch from mode"
 	end
 	if buf.dirty then
+		buf.status = "[" .. mode .. "] " .. buf.status
 		buf:blit(term.native())
 	end
 end

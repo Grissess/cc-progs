@@ -101,7 +101,7 @@ buffer = {
 		self.cx, self.sy = self:clampxy(x, y)
 		if self.cy < self.sy then self.sy = self.cy end
 		if self.cy > self.sy + self.height then self.sy = self.cy - self.height + 1 end
-		if self.cx < self.sz then self.sx = self.cx end
+		if self.cx < self.sx then self.sx = self.cx end
 		if self.cx > self.sx + self.width then self.sx = self.cx - self.width + 1 end
 		self.dirty = true
 	end,
