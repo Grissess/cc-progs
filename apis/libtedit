@@ -189,8 +189,9 @@ buffer = {
 		local ly = ts + 1
 		while #text > 0 do
 			term.setCursorPos(1, ly)
-			term.write(self.status)
+			term.write(text)
 			ly = ly + 1
+			text = text:sub(tw)
 		end
 
 		term.setCursorPos(self.cx - self.sx + 1, self.cy - self.sy + 1)
