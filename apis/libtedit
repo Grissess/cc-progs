@@ -1,4 +1,4 @@
-REVISION = 17
+REVISION = 18
 
 highlighter = {
 	new = function(classes)
