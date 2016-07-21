@@ -120,6 +120,7 @@ buffer = {
 			colset = colorschema.gray
 		end
 
+		term.clear()
 		while ty <= ts and by <= #self.lines do
 			local str = self.lines[by]:sub(bx, bx + tw - 1)
 			if #str > 0 then

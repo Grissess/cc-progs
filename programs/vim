@@ -104,12 +104,24 @@ local modes = {
 			simple_motion("$", nil)
 			return "insert"
 		end
+		if char == "p" then
+			table.insert(buf.lines, buf.cy + 1, reg)
+			return "normal"
+		end
+		if char == "p" then
+			table.insert(buf.lines, buf.cy, reg)
+			buf:setcursor(1, buf.cy + 1)
+			return "normal"
+		end
 		if char == ":" then
 			entry = ":"
 			return "command"
 		end
 		if char == "d" then
 			return "delete"
+		end
+		if char == "y" then
+			return "yank"
 		end
 		if char == "/" then
 			entry = "/"
@@ -127,6 +139,13 @@ local modes = {
 		return "normal"
 	end,
 
+	yank = function(char, key)
+		if char == "y" then
+			reg = buf.lines[buf.cy]
+		end
+		return "normal"
+	end,
+
 	search = function(char, key)
 		if key == keys.enter then
 			local pat = entry:sub(2)
@@ -140,7 +159,7 @@ local modes = {
 			local ly = buf.cy
 			local lx = buf.cx + 1
 			while ly <= #buf.lines do
-				local idx = buf.lines[ly]:find(searchpat)
+				local idx = buf.lines[ly]:find(searchpat, lx)
 				if idx ~= nil then
 					buf:setcursor(idx, ly)
 					return "normal"
@@ -151,7 +170,7 @@ local modes = {
 			buf.status = "Search wrapped to top"
 			ly = 1
 			while ly < buf.cy do
-				local idx = buf.lines[ly]:find(searchpat)
+				local idx = buf.lines[ly]:find(searchpat, lx)
 				if idx ~= nil then
 					buf:setcursor(idx, ly)
 					return "normal"
