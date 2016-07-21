@@ -1,4 +1,4 @@
-REVISION = 26
+REVISION = 27
 
 colorschema = {
 	full = {
@@ -171,24 +171,27 @@ buffer = {
 			colset = colorschema.gray
 		end
 
-		if self.dirty then
-			term.clear()
-			while ty <= ts and by <= #self.lines do
-				local str = self.lines[by]:sub(bx, bx + tw - 1)
-				if #str > 0 then
-					term.setCursorPos(1, ty)
-					local fg = self.syntax:highlight(str, colset)
-					term_blit(term, str, fg)
-				end
-				ty = ty + 1
-				by = by + 1
+		term.clear()
+		while ty <= ts and by <= #self.lines do
+			local str = self.lines[by]:sub(bx, bx + tw - 1)
+			if #str > 0 then
+				term.setCursorPos(1, ty)
+				local fg = self.syntax:highlight(str, colset)
+				term_blit(term, str, fg)
 			end
-			self.dirty = false
+			ty = ty + 1
+			by = by + 1
 		end
+		self.dirty = false
 
-		term.setCursorPos(1, ts + 1)
 		term.setTextColor(colset.status or colset.default)
-		term.write(self.status)
+		local text = self.status
+		local ly = ts + 1
+		while #text > 0 do
+			term.setCursorPos(1, ly)
+			term.write(self.status)
+			ly = ly + 1
+		end
 
 		term.setCursorPos(self.cx - self.sx + 1, self.cy - self.sy + 1)
 		term.setCursorBlink(true)
