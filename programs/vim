@@ -1,3 +1,5 @@
+-- vim revision 1
+
 os.loadAPI("/disk/apis/libtedit")
 
 local args = {...}
@@ -16,6 +18,7 @@ end
 local buf = libtedit.buffer.new(text)
 local op = nil
 local reg = ""
+local searchpat = nil
 
 local function simple_motion(char, key)
 	if char == "h" or key == keys.left then
@@ -98,6 +101,10 @@ local function normal_mode(char, key)
 	if char == "d" then
 		return delete_mode
 	end
+	if char == "/" then
+		buf.status = "/"
+		return search_mode
+	end
 	buf.status = "Unknown keypress"
 	return normal_mode
 end
@@ -107,6 +114,49 @@ local function delete_mode(char, key)
 		table.remove(buf.lines, buf.cy)
 		buf:setcursor(buf.cx, buf.cy)
 	end
+end
+
+
+local function search_mode(char, key)
+	if key == keys.enter then
+		searchpat = buf.status:sub(2)
+		local ly = buf.cy
+		local lx = buf.cx + 1
+		while ly <= #buf.lines do
+			local idx = buf.lines[ly]:find(pat)
+			if idx ~= nil then
+				buf:setcursor(idx, ly)
+				return normal_mode
+			end
+			ly = ly + 1
+			lx = 1
+		end
+		buf.status = "Search wrapped to top"
+		ly = 1
+		while ly < buf.cy do
+			local idx = buf.lines[ly]:find(pat)
+			if idx ~= nil then
+				buf:setcursor(idx, ly)
+				return normal_mode
+			end
+			ly = ly + 1
+			lx = 1
+		end
+		buf.status = "Pattern not found"
+		return normal_mode
+	end
+	if key == keys.backspace then
+		buf.status = buf.status:sub(1, -2)
+		if #buf.status > 0 then
+			return search_mode
+		else
+			return normal_mode
+		end
+	end
+	if char ~= nil then
+		buf.status = buf.status .. char
+	end
+	return search_mode
 end
 
 local function insert_mode(char, key)
@@ -150,7 +200,7 @@ local function command_mode(char, key)
 	end
 	if key == keys.backspace then
 		buf.status = buf.status:sub(1, -2)
-		if #buf.status then
+		if #buf.status > 0 then
 			return command_mode
 		else
 			return normal_mode

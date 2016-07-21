@@ -1,3 +1,5 @@
+-- libtedit revision 1
+
 highlighter = {
 	new = function(classes)
 		return setmetatable({classes = classes}, {__index = highlighter})
@@ -78,7 +80,7 @@ buffer = {
 			nlidx = text:find("\n")
 		end
 		if #lines == 0 then table.insert(lines, "") end
-		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, dirty = true, syntax = syntaxes.none, status = ""}, {__index = buffer})
+		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, width = 51, height = 19, dirty = true, syntax = syntaxes.none, status = ""}, {__index = buffer})
 	end,
 
 	clampxy = function(self, x, y)
@@ -97,11 +99,16 @@ buffer = {
 
 	setcursor = function(self, x, y)
 		self.cx, self.sy = self:clampxy(x, y)
+		if self.cy < self.sy then self.sy = self.cy end
+		if self.cy > self.sy + self.height then self.sy = self.cy - self.height + 1 end
+		if self.cx < self.sz then self.sx = self.cx end
+		if self.cx > self.sx + self.width then self.sx = self.cx - self.width + 1 end
 		self.dirty = true
 	end,
 
 	blit = function(self, term)
 		local tw, th = term.getSize()
+		self.width, self.height = tw, th
 		local ts = th - 1
 		local tx, ty = 1, 1
 		local bx, by = self.sx, self.sy
@@ -140,6 +147,7 @@ buffer = {
 		term.write(self.status)
 
 		term.setCursorPos(self.cx - self.sx + 1, self.cy - self.sy + 1)
+		term.setCursorBlink(true)
 		self.dirty = false
 	end,
 
