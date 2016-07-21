@@ -195,7 +195,7 @@ local modes = {
 			entry = "/"
 			return "search"
 		end
-		if char:match("%d") ~= nil then
+		if char ~= nil and char:match("%d") ~= nil then
 			entry = char
 			return "rep"
 		end
@@ -272,7 +272,7 @@ local modes = {
 	end,
 
 	rep = function(char, key)
-		if char:match("%d") then
+		if char ~= nil and char:match("%d") then
 			entry = entry .. char
 			buf.status = entry
 			return "rep"
