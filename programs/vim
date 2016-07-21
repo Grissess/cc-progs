@@ -1,4 +1,4 @@
--- vim revision 6
+-- vim revision 7
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -282,7 +282,7 @@ while running do
 	end
 	if buf.dirty then
 		local oldstatus = buf.status
-		buf.status = "[" .. mode .. ":" .. buf.cy .. "," .. buf.cx .. "] " .. buf.status
+		buf.status = "[" .. mode .. ":" .. buf.cy .. "/" .. #buf.lines .. "," .. buf.cx .. "] " .. buf.status
 		buf:blit(term.native())
 		buf.status = oldstatus
 	end

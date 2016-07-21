@@ -1,4 +1,4 @@
--- libtedit revision 6
+-- libtedit revision 7
 
 highlighter = {
 	new = function(classes)
@@ -167,5 +167,3 @@ buffer = {
 		self.dirty = true
 	end,
 }
-
-
