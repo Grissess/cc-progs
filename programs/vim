@@ -1,4 +1,4 @@
--- vim revision 11
+-- vim revision 12
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -20,6 +20,29 @@ local op = nil
 local reg = ""
 local entry = ""
 local searchpat = nil
+
+local unprintable_set = {
+	keys.enter, keys.backspace,
+	keys.leftCtrl, keys.leftShift, keys.leftAlt,
+	keys.rightCtrl, keys.rightShift, keys.rightAlt,
+	keys.kana, keys.convert, keys.noconvert,
+	keys.stop, keys.kanji, keys.ax,
+	keys.capsLock, keys.numLock, keys.scrollLock,
+	keys.up, keys.down, keys.left, keys.right,
+	keys.home, keys['end'], keys.insert, keys.delete,
+	keys.pageUp, keys.pageDown,
+	keys.f1, keys.f2, keys.f3, keys.f4, keys.f5,
+	keys.f6, keys.f7, keys.f8, keys.f9, keys.f10,
+	keys.f11, keys.f12,
+}
+local unprintable_map = {}
+for idx, ky in ipairs(unprintable_set) do
+	unprintable_map[ky] = true
+end
+
+function is_unprintable(key)
+	return unprintable_map[key] == true
+end
 
 function simple_motion(char, key)
 	if char == "h" or key == keys.left then
@@ -301,7 +324,7 @@ local running = true
 
 while running do
 	local ev, p1, p2, p3 = os.pullEvent()
-	if ev == "key" then
+	if ev == "key" and is_unprintable(p1) then
 		if p1 == keys.rightAlt then
 			newmode = "normal"
 		else
