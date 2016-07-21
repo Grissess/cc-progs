@@ -1,4 +1,4 @@
--- vim revision 12
+-- vim revision 13
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -96,6 +96,51 @@ function simple_motion(char, key)
 	return false
 end
 
+function run_command(cmd)
+	local parts = {}
+	for part in cmd:gmatch("%S") do
+		table.insert(parts, part)
+	end
+	cmd = table.remove(parts, 1)
+	if cmd == "write" or cmd == "w" then
+		if parts[1] ~= nil then
+			path = shell.resolve(parts[1])
+		end
+		if path == nil then
+			cmd_error("Can't save: no path specified (pass an argument)")
+			return false
+		end
+		local f = io.open(path, "w")
+		for idx, line in ipairs(buf.lines) do
+			f:write(line.."\n")
+		end
+		f:close()
+		return true
+	end
+	if cmd == "quit" or cmd == "q" then
+		running = false
+		return true
+	end
+	if cmd == "wq" then
+		if run_command("w") then
+			return run_command("q")
+		end
+		return false
+	end
+	cmd_error("Unknown command: "..cmd)
+	return false
+end
+
+function cmd_error(errstr)
+	buf.status = errstr
+	buf:blit(term)
+	os.sleep(1)
+end
+
+local mode = "normal"
+local newmode
+local running = true
+
 local modes = {
 	normal = function(char, key) 
 		buf.status = " -- NORMAL --"
@@ -149,6 +194,10 @@ local modes = {
 		if char == "/" then
 			entry = "/"
 			return "search"
+		end
+		if char:match("%d") ~= nil then
+			entry = char
+			return "repeat"
 		end
 		buf.status = "Unknown keypress"
 		return "normal"
@@ -222,6 +271,27 @@ local modes = {
 		return "search"
 	end,
 
+	repeat = function(char, key)
+		if char:match("%d") then
+			entry = entry .. char
+			buf.status = entry
+			return "number"
+		end
+		local val = tonumber(entry)
+		if char == "g" then
+			buf:setcursor(buf.cx, val)
+			return "normal"
+		end
+		if char == "h" or char == "j" or char == "k" or char == "l" then
+			for rep = 1, val do
+				simple_motion(char, nil)
+			end
+			return "normal"
+		end
+		buf.status = "Unknown motion"
+		return "normal"
+	end,
+
 	insert = function(char, key)
 		buf.status = " -- INSERT --"
 		if key == keys.left then
@@ -248,6 +318,10 @@ local modes = {
 		if key == keys.delete then
 			buf:delete(1)
 			return "insert"
+		end
+		if key == keys.enter then
+			table.insert(buf.lines, buf.cy + 1, "")
+			buf:setcursor(1, buf.cy + 1)
 		end
 		if char ~= nil then
 			buf:insert(char)
@@ -276,51 +350,6 @@ local modes = {
 		return "command"
 	end,
 }
-
-function run_command(cmd)
-	local parts = {}
-	for part in cmd:gmatch("%S") do
-		table.insert(parts, part)
-	end
-	cmd = table.remove(parts, 1)
-	if cmd == "write" or cmd == "w" then
-		if parts[1] ~= nil then
-			path = shell.resolve(parts[1])
-		end
-		if path == nil then
-			cmd_error("Can't save: no path specified (pass an argument)")
-			return false
-		end
-		local f = io.open(path, "w")
-		for idx, line in ipairs(buf.lines) do
-			f:write(line.."\n")
-		end
-		f:close()
-		return true
-	end
-	if cmd == "quit" or cmd == "q" then
-		running = false
-		return true
-	end
-	if cmd == "wq" then
-		if run_command("w") then
-			return run_command("q")
-		end
-		return false
-	end
-	cmd_error("Unknown command: "..cmd)
-	return false
-end
-
-function cmd_error(errstr)
-	buf.status = errstr
-	buf:blit(term)
-	os.sleep(1)
-end
-
-local mode = "normal"
-local newmode
-local running = true
 
 while running do
 	local ev, p1, p2, p3 = os.pullEvent()
