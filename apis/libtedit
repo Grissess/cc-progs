@@ -149,7 +149,7 @@ buffer = {
 	sethighlights = function(self, ...)
 		self.syntax.classes.highlight = {...}
 		self.dirty = true
-	end
+	end,
 
 	blit = function(self, term)
 		local tw, th = term.getSize()
