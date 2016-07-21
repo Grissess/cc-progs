@@ -1,4 +1,4 @@
-REVISION = 23
+REVISION = 24
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -29,7 +29,7 @@ options = {
 	autoindent = true,
 }
 
-local unprintable_set = {
+unprintable_set = {
 	keys.enter, keys.backspace,
 	keys.leftCtrl, keys.leftShift, keys.leftAlt,
 	keys.rightCtrl, keys.rightShift, keys.rightAlt,
@@ -166,7 +166,7 @@ commands = {
 			return false
 		end
 		if #parts < 2 then
-			buf.status = parts[1] .. ": " .. options[parts[1]]
+			buf.status = parts[1] .. ": " .. tostring(options[parts[1]])
 			return true
 		end
 		local chunk, err = loadstring(parts[2], "option")
