@@ -158,7 +158,8 @@ buffer = {
 
 	blit = function(self, term)
 		local tw, th = term.getSize()
-		local ts = th - 1
+		local bh = math.floor((#buf.status + tw - 1) / tw)
+		local ts = th - bh
 		self.width, self.height = tw, ts
 		local tx, ty = 1, 1
 		local bx, by = self.sx, self.sy
@@ -170,27 +171,27 @@ buffer = {
 			colset = colorschema.gray
 		end
 
-		term.clear()
-		while ty <= ts and by <= #self.lines do
-			local str = self.lines[by]:sub(bx, bx + tw - 1)
-			if #str > 0 then
-				term.setCursorPos(1, ty)
-				local fg = self.syntax:highlight(str, colset)
-				term_blit(term, str, fg)
+		if self.dirty then
+			term.clear()
+			while ty <= ts and by <= #self.lines do
+				local str = self.lines[by]:sub(bx, bx + tw - 1)
+				if #str > 0 then
+					term.setCursorPos(1, ty)
+					local fg = self.syntax:highlight(str, colset)
+					term_blit(term, str, fg)
+				end
+				ty = ty + 1
+				by = by + 1
 			end
-			ty = ty + 1
-			by = by + 1
+			self.dirty = false
 		end
 
-		term.setCursorPos(1, th)
-		term.write(string.rep(" ", tw))
-		term.setCursorPos(1, th)
+		term.setCursorPos(1, ts + 1)
 		term.setTextColor(colset.status or colset.default)
 		term.write(self.status)
 
 		term.setCursorPos(self.cx - self.sx + 1, self.cy - self.sy + 1)
 		term.setCursorBlink(true)
-		self.dirty = false
 	end,
 
 	insert = function(self, text)
