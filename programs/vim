@@ -1,4 +1,4 @@
-REVISION = 22
+REVISION = 23
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -505,11 +505,15 @@ buf:blit(term)
 
 while running do
 	local ev, p1, p2, p3 = os.pullEvent()
-	if ev == "key" and is_unprintable(p1) then
-		if p1 == keys.rightAlt then
-			newmode = "normal"
+	if ev == "key" then
+		if is_unprintable(p1) then
+			if p1 == keys.rightAlt then
+				newmode = "normal"
+			else
+				newmode = modes[mode](nil, p1)
+			end
 		else
-			newmode = modes[mode](nil, p1)
+			buf.status = "ignored printable ctrl " .. p1
 		end
 	end
 	if ev == "char" then
@@ -526,8 +530,6 @@ while running do
 		else
 			buf.status = "Warning: no such mode " .. newmode
 		end
-	else
-		buf.status = "Warning: no switch from mode"
 	end
 	local oldstatus = buf.status
 	buf.status = "[" .. mode .. ":" .. buf.cy .. "/" .. #buf.lines .. "," .. buf.cx .. "] " .. buf.status
