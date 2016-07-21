@@ -553,3 +553,8 @@ while running do
 	buf:blit(term)
 	buf.status = oldstatus
 end
+
+term.clear()
+term.setCursorPos(1, 1)
+term.setTextColor(colors.white)
+print("[exited vim]")
