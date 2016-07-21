@@ -191,6 +191,10 @@ local modes = {
 		if char == "d" then
 			return "delete"
 		end
+		if char == "x" then
+			buf:delete(1)
+			buf:setcursor(buf.cx, buf.cy)
+		end
 		if char == "y" then
 			return "yank"
 		end
