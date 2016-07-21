@@ -1,4 +1,4 @@
--- vim revision 13
+-- vim revision 14
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -275,7 +275,7 @@ local modes = {
 		if char:match("%d") then
 			entry = entry .. char
 			buf.status = entry
-			return "number"
+			return "rep"
 		end
 		local val = tonumber(entry)
 		if char == "g" then
@@ -369,7 +369,11 @@ while running do
 		end
 	end
 	if newmode ~= nil then
-		mode = newmode
+		if modes[newmode] ~= nil then
+			mode = newmode
+		else
+			buf.status = "Warning: no such mode " .. newmode
+		end
 	else
 		buf.status = "Warning: no switch from mode"
 	end
