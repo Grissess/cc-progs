@@ -1,0 +1,35 @@
+local HTTP_ROOT = "https://raw.githubusercontent.com/Grissess/cc-progs/master/"
+local DISK_ROOT = "/disk"
+
+local args = {...}
+
+if args[1] ~= nil then
+	DISK_ROOT = args[1]
+end
+
+if http == nil then
+	error("HTTP isn't supported, sorry")
+end
+
+local man_req = http.get(HTTP_ROOT .. ".manifest")
+if man_req == nil then
+	error("Couldn't retrieve manifest, aborting")
+end
+
+local line = file:read()
+while line do
+	print("Downloading ", line, "...")
+	local req = http.get(HTTP_ROOT .. line)
+	if req == nil then
+		print("Failed!")
+	else
+		local lpath = fs.combine(DISK_ROOT, line)
+		print("Writing to ", lpath, "...")
+		local f = fs.open(lpath, "w")
+		f:write(req:readAll())
+		f:close()
+		print("Done!")
+	end
+end
+
+print("Complete!")

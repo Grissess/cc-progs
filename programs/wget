@@ -1,0 +1,26 @@
+if http == nil then
+	error("No HTTP support, sorry")
+end
+
+local args = {...}
+
+if #args < 1 then
+	error("Usage: wget <URI> [<path>]")
+end
+
+local uri = args[1]
+local path = shell.resolve(fs.getName(uri))
+if #args >= 2 then
+	path = shell.resolve(args[2])
+end
+
+local req = http.get(uri)
+if req == nil then
+	error("Request failed")
+end
+
+local f = fs.open(path, "w")
+f:write(req:readAll())
+f:close()
+
+print("Complete!")

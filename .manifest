@@ -1,0 +1,4 @@
+programs/vim
+programs/bootstrap
+apis/libtedit
+.manifest
