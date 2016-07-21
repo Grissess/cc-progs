@@ -25,6 +25,10 @@ local mode = "normal"
 local newmode
 local running = true
 
+options = {
+	autoindent = true,
+}
+
 local unprintable_set = {
 	keys.enter, keys.backspace,
 	keys.leftCtrl, keys.leftShift, keys.leftAlt,
@@ -39,7 +43,7 @@ local unprintable_set = {
 	keys.f6, keys.f7, keys.f8, keys.f9, keys.f10,
 	keys.f11, keys.f12,
 }
-local unprintable_map = {}
+unprintable_map = {}
 for idx, ky in ipairs(unprintable_set) do
 	unprintable_map[ky] = true
 end
@@ -154,6 +158,29 @@ commands = {
 		end
 		buf.syntax = syn
 	end,
+
+	set = function(...)
+		local parts = {...}
+		if #parts < 1 then
+			cmd_error("Specify at least a variable")
+			return false
+		end
+		if #parts < 2 then
+			buf.status = parts[1] .. ": " .. options[parts[1]]
+			return true
+		end
+		local chunk, err = loadstring(parts[2], "option")
+		if chunk == nil then
+			buf.status = "Couldn't eval: " .. err
+			return false
+		end
+		local stat, res = pcall(chunk)
+		if not stat then
+			buf.status = "Error in eval: " .. res
+			return false
+		end
+		options[parts[1]] = res
+	end,
 }
 
 commands.w = commands.write
@@ -214,6 +241,14 @@ function do_search(pat)
 	buf.status = "Pattern not found"
 end
 
+function auto_indent()
+	if buf.cy <= 1 then return end
+	local match = buf.lines[buf.cy - 1]:match("%s+")
+	if match ~= nil then
+		buf:insert(match)
+	end
+end
+
 local modes = {
 	normal = function(char, key) 
 		buf.status = " -- NORMAL --"
@@ -230,11 +265,17 @@ local modes = {
 		if char == "o" then
 			table.insert(buf.lines, buf.cy + 1, "")
 			buf:setcursor(1, buf.cy + 1)
+			if options.autoindent then
+				auto_indent()
+			end
 			return "insert"
 		end
 		if char == "O" then
 			table.insert(buf.lines, buf.cy, "")
 			buf:setcursor(1, buf.cy)
+			if options.autoindent then
+				auto_indent()
+			end
 			return "insert"
 		end
 		if char == "a" then
@@ -427,6 +468,9 @@ local modes = {
 		if key == keys.enter then
 			table.insert(buf.lines, buf.cy + 1, "")
 			buf:setcursor(1, buf.cy + 1)
+			if options.autoindent then
+				auto_indent()
+			end
 		end
 		if char ~= nil then
 			buf:insert(char)

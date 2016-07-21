@@ -78,9 +78,9 @@ syntaxes = {
 	lua = highlighter.new({
 		oper = {"%{", "%}", ",", "%(", "%)", "%.", ":", "%+"},
 		digit = {"%d"},
-		keyword = {"function", "if", "then", "while", "for", "in", "do", "end", "return", "local", "true", "false", "nil"},
+		keyword = {"function", "if", "then", "else", "while", "for", "in", "do", "end", "return", "local", "true", "false", "nil", "and", "or"},
 		func = {  -- FIXME
-			"setmetatable", "getmetatable", "pairs", "ipairs", "unpack", "error",
+			"setmetatable", "getmetatable", "pairs", "ipairs", "unpack", "error", "print",
 			"table%.insert", "table%.remove", "table%.concat",
 			"string%.rep",
 		},
