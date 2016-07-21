@@ -16,7 +16,7 @@ if man_req == nil then
 	error("Couldn't retrieve manifest, aborting")
 end
 
-local line = file:read()
+local line = man_req:read()
 while line do
 	print("Downloading ", line, "...")
 	local req = http.get(HTTP_ROOT .. line)
@@ -30,6 +30,7 @@ while line do
 		f:close()
 		print("Done!")
 	end
+	line = man_req:read()
 end
 
 print("Complete!")
