@@ -58,6 +58,14 @@ local function simple_motion(char, key)
 		end
 		return true
 	end
+	if key == keys.pageDown then
+		buf:setcursor(buf.cx, buf.cy + 20)
+		return true
+	end
+	if key == keys.pageUp then
+		buf:setcursor(buf.cx, buf.cy - 20)
+		return true
+	end
 	return false
 end
 
