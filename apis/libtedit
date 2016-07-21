@@ -158,7 +158,7 @@ buffer = {
 
 	blit = function(self, term)
 		local tw, th = term.getSize()
-		local bh = math.floor((#buf.status + tw - 1) / tw)
+		local bh = math.floor((#self.status + tw - 1) / tw)
 		local ts = th - bh
 		self.width, self.height = tw, ts
 		local tx, ty = 1, 1
