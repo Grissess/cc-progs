@@ -79,7 +79,7 @@ buffer = {
 			text = text:sub(nlidx + 1)
 			nlidx = text:find("\n")
 		end
-		if #lines == 0 then table.insert(lines, "") end
+		table.insert(lines, text)  -- guaranteed to be at least one empty line
 		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, width = 51, height = 19, dirty = true, syntax = syntaxes.none, status = ""}, {__index = buffer})
 	end,
 
