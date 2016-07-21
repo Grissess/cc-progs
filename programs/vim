@@ -1,4 +1,4 @@
--- vim revision 7
+-- vim revision 8
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -82,6 +82,10 @@ local modes = {
 		if char == "i" then
 			return "insert"
 		end
+		if char == "I" then
+			simple_motion("^", nil)
+			return "insert"
+		end
 		if char == "o" then
 			table.insert(buf.lines, buf.cy + 1, "")
 			buf:setcursor(1, buf.cy + 1)
@@ -94,6 +98,10 @@ local modes = {
 		end
 		if char == "a" then
 			buf:setcursor(buf.cx + 1, buf.cy)
+			return "insert"
+		end
+		if char == "A" then
+			simple_motion("$", nil)
 			return "insert"
 		end
 		if char == ":" then
@@ -280,10 +288,8 @@ while running do
 	else
 		buf.status = "Warning: no switch from mode"
 	end
-	if buf.dirty then
-		local oldstatus = buf.status
-		buf.status = "[" .. mode .. ":" .. buf.cy .. "/" .. #buf.lines .. "," .. buf.cx .. "] " .. buf.status
-		buf:blit(term.native())
-		buf.status = oldstatus
-	end
+	local oldstatus = buf.status
+	buf.status = "[" .. mode .. ":" .. buf.cy .. "/" .. #buf.lines .. "," .. buf.cx .. "] " .. buf.status
+	buf:blit(term.native())
+	buf.status = oldstatus
 end
