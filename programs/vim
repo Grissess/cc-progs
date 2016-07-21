@@ -1,4 +1,4 @@
-REVISION = 19
+REVISION = 20
 
 os.loadAPI("/disk/apis/libtedit")
 

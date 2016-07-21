@@ -1,4 +1,4 @@
-REVISION = 19
+REVISION = 20
 
 colorschema = {
 	full = {
@@ -94,7 +94,7 @@ function term_blit(term, text, fg)
 	local idx = 1
 	local curcol = nil
 	while idx <= #text do
-		if revcolmap[fg[idx]] ~= curcol then
+		if revcolmap[fg:sub(idx, idx)] ~= curcol then
 			curcol = revcolmap[fg:sub(idx, idx)]
 			term.setTextColor(curcol)
 		end
