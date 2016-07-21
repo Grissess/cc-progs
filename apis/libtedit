@@ -1,4 +1,4 @@
-REVISION = 20
+REVISION = 21
 
 colorschema = {
 	full = {
@@ -78,7 +78,7 @@ syntaxes = {
 	lua = highlighter.new({
 		oper = {"%{", "%}", ",", "%(", "%)", "%.", ":", "%+"},
 		digit = {"%d"},
-		keyword = {"function", "if", "then", "while", "for", "do", "end", "return", "local", "true", "false", "nil"},
+		keyword = {"function", "if", "then", "while", "for", "in", "do", "end", "return", "local", "true", "false", "nil"},
 		func = {  -- FIXME
 			"setmetatable", "getmetatable", "pairs", "ipairs", "unpack", "error",
 			"table%.insert", "table%.remove", "table%.concat",

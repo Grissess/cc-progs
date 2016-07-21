@@ -1,4 +1,4 @@
-REVISION = 20
+REVISION = 21
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -73,6 +73,12 @@ function simple_motion(char, key)
 		buf:setcursor(100000, buf.cy)  -- FIXME
 		return true
 	end
+	if char == "g" then
+		buf:setcursor(1, 1)
+	end
+	if char == "G" then
+		buf:setcursor(1, #buf.lines)
+	end
 	if char == "w" then
 		local txt = buf.lines[buf.cy]
 		local idx = txt:find("%w", buf.cx + 1)
@@ -100,7 +106,7 @@ function simple_motion(char, key)
 	return false
 end
 
-local commands = {
+commands = {
 	write = function(...)
 		local parts = {...}
 		if parts[1] ~= nil then
@@ -329,17 +335,19 @@ local modes = {
 	end,
 
 	fsearch = function(char, key)
-		if char ~= nil then
-			do_search(char)
+		if char == nil then
+			return "fsearch"
 		end
+		do_search(char)
 		return "normal"
 	end,
 
 	tsearch = function(char, key)
-		if char ~= nil then
-			do_search(char)
-			buf:setcursor(buf.cx - 1, buf.cy)
+		if char == nil then
+			return "tsearch"
 		end
+		do_search(char)
+		buf:setcursor(buf.cx - 1, buf.cy)
 		return "normal"
 	end,
 
