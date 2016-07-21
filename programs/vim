@@ -197,7 +197,7 @@ local modes = {
 		end
 		if char:match("%d") ~= nil then
 			entry = char
-			return "repeat"
+			return "rep"
 		end
 		buf.status = "Unknown keypress"
 		return "normal"
@@ -271,7 +271,7 @@ local modes = {
 		return "search"
 	end,
 
-	repeat = function(char, key)
+	rep = function(char, key)
 		if char:match("%d") then
 			entry = entry .. char
 			buf.status = entry
