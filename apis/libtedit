@@ -80,7 +80,7 @@ syntaxes = {
 			"table%.insert", "table%.remove",
 		},
 		comment = {"%-%-.*$"},
-		string = {"%b\"\"", "%b''"},
+		string = {"\"[^\"]*\"", "'[^']*'"},
 	}),
 }
 
@@ -95,10 +95,10 @@ function term_blit(term, text, fg)
 	local curcol = nil
 	while idx <= #text do
 		if revcolmap[fg[idx]] ~= curcol then
-			curcol = revcolmap[fg[idx]]
+			curcol = revcolmap[fg:sub(idx, idx)]
 			term.setTextColor(curcol)
 		end
-		term.write(text[idx])
+		term.write(text:sub(idx, idx))
 		idx = idx + 1
 	end
 end
