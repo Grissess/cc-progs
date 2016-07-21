@@ -1,4 +1,4 @@
--- vim revision 15
+-- vim revision 16
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -20,6 +20,10 @@ local op = nil
 local reg = ""
 local entry = ""
 local searchpat = nil
+
+local mode = "normal"
+local newmode
+local running = true
 
 local unprintable_set = {
 	keys.enter, keys.backspace,
@@ -139,10 +143,6 @@ function cmd_error(errstr)
 	buf:blit(term)
 	os.sleep(1)
 end
-
-local mode = "normal"
-local newmode
-local running = true
 
 local modes = {
 	normal = function(char, key) 
