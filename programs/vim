@@ -1,4 +1,4 @@
-REVISION = 28
+REVISION = 29
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -259,7 +259,11 @@ function do_search(pat)
 	local ly = buf.cy
 	local lx = buf.cx + 1
 	while ly <= #buf.lines do
-		local idx = buf.lines[ly]:find(searchpat, lx)
+		local stat, idx = pcall(string.find, buf.lines[ly], searchpat, lx)
+		if not stat then
+			buf.status = "Bad pattern"
+			return
+		end
 		if idx ~= nil then
 			buf:setcursor(idx, ly)
 			return
@@ -270,7 +274,11 @@ function do_search(pat)
 	buf.status = "Search wrapped to top"
 	ly = 1
 	while ly < buf.cy do
-		local idx = buf.lines[ly]:find(searchpat, lx)
+		local stat, idx = pcall(string.find, buf.lines[ly], searchpat, lx)
+		if not stat then
+			buf.status = "Bad pattern"
+			return
+		end
 		if idx ~= nil then
 			buf:setcursor(idx, ly)
 			return
@@ -422,7 +430,7 @@ local modes = {
 		if char == nil then
 			return "fsearch"
 		end
-		do_search(char)
+		do_search("%" .. char)
 		return "normal"
 	end,
 
@@ -430,7 +438,7 @@ local modes = {
 		if char == nil then
 			return "tsearch"
 		end
-		do_search(char)
+		do_search("%" .. char)
 		buf:setcursor(buf.cx - 1, buf.cy)
 		return "normal"
 	end,

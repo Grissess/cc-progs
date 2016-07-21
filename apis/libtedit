@@ -1,4 +1,4 @@
-REVISION = 28
+REVISION = 29
 
 colorschema = {
 	full = {
@@ -86,7 +86,7 @@ syntaxes = {
 			"setmetatable", "getmetatable", "pairs", "ipairs", "unpack", "error", "print",
 			"tonumber", "tostring",
 			"table%.insert", "table%.remove", "table%.concat",
-			"string%.rep",
+			"string%.rep", "string%.find", "string%.match", "string%.gmatch", "string%.gsub",
 			"io.open",
 		},
 		comment = {"%-%-.*$"},
