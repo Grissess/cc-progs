@@ -1,4 +1,4 @@
-REVISION = 21
+REVISION = 22
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -186,7 +186,7 @@ function do_search(pat)
 	end
 	if searchpat == nil then
 		buf.status = "No prior search, aborting"
-		return "normal"
+		return
 	end
 	buf:sethighlights(searchpat)
 	local ly = buf.cy
@@ -195,7 +195,7 @@ function do_search(pat)
 		local idx = buf.lines[ly]:find(searchpat, lx)
 		if idx ~= nil then
 			buf:setcursor(idx, ly)
-			return "normal"
+			return
 		end
 		ly = ly + 1
 		lx = 1
@@ -206,7 +206,7 @@ function do_search(pat)
 		local idx = buf.lines[ly]:find(searchpat, lx)
 		if idx ~= nil then
 			buf:setcursor(idx, ly)
-			return "normal"
+			return
 		end
 		ly = ly + 1
 		lx = 1
@@ -283,6 +283,9 @@ local modes = {
 		if char == "t" then
 			return "tsearch"
 		end
+		if char == "z" then
+			return "scroll"
+		end
 		if char ~= nil and char:match("%d") ~= nil then
 			entry = char
 			return "rep"
@@ -348,6 +351,22 @@ local modes = {
 		end
 		do_search(char)
 		buf:setcursor(buf.cx - 1, buf.cy)
+		return "normal"
+	end,
+
+	scroll = function(char, key)
+		if char == nil then
+			return "scroll"
+		end
+		if char == "z" then
+			buf:setscroll(buf.sx, buf.cy - math.floor(buf.height / 2))
+		end
+		if char == "t" then
+			buf:setscroll(buf.sx, buf.cy)
+		end
+		if char == "b" then
+			buf:setscroll(buf.sx, buf.cy - buf.height + 1)
+		end
 		return "normal"
 	end,
 
