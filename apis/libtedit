@@ -1,4 +1,4 @@
--- libtedit revision 10
+-- libtedit revision 11
 
 highlighter = {
 	new = function(classes)
@@ -100,16 +100,16 @@ buffer = {
 	setcursor = function(self, x, y)
 		self.cx, self.cy = self:clampxy(x, y)
 		if self.cy < self.sy then self.sy = self.cy end
-		if self.cy > self.sy + self.height then self.sy = self.cy - self.height + 1 end
+		if self.cy > self.sy + self.height - 1 then self.sy = self.cy - self.height + 1 end
 		if self.cx < self.sx then self.sx = self.cx end
-		if self.cx > self.sx + self.width then self.sx = self.cx - self.width + 1 end
+		if self.cx > self.sx + self.width - 1 then self.sx = self.cx - self.width + 1 end
 		self.dirty = true
 	end,
 
 	blit = function(self, term)
 		local tw, th = term.getSize()
-		self.width, self.height = tw, th
 		local ts = th - 1
+		self.width, self.height = tw, ts
 		local tx, ty = 1, 1
 		local bx, by = self.sx, self.sy
 		term.setBackgroundColor(colors.black)

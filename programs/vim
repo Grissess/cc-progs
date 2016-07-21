@@ -1,4 +1,4 @@
--- vim revision 10
+-- vim revision 11
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -135,6 +135,7 @@ local modes = {
 		if char == "d" then
 			table.remove(buf.lines, buf.cy)
 			buf:setcursor(buf.cx, buf.cy)
+			buf.status = "Line deleted"
 		end
 		return "normal"
 	end,
@@ -143,6 +144,7 @@ local modes = {
 		if char == "y" then
 			reg = buf.lines[buf.cy]
 		end
+		buf.status = "Yanked " .. #reg .. " chars"
 		return "normal"
 	end,
 
