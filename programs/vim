@@ -1,4 +1,4 @@
-REVISION = 18
+REVISION = 19
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -144,6 +144,39 @@ function cmd_error(errstr)
 	os.sleep(1)
 end
 
+function do_search(pat)
+	if pat ~= nil then
+		searchpat = pat
+	end
+	if searchpat == nil then
+		buf.status = "No prior search, aborting"
+		return "normal"
+	end
+	local ly = buf.cy
+	local lx = buf.cx + 1
+	while ly <= #buf.lines do
+		local idx = buf.lines[ly]:find(searchpat, lx)
+		if idx ~= nil then
+			buf:setcursor(idx, ly)
+			return "normal"
+		end
+		ly = ly + 1
+		lx = 1
+	end
+	buf.status = "Search wrapped to top"
+	ly = 1
+	while ly < buf.cy do
+		local idx = buf.lines[ly]:find(searchpat, lx)
+		if idx ~= nil then
+			buf:setcursor(idx, ly)
+			return "normal"
+		end
+		ly = ly + 1
+		lx = 1
+	end
+	buf.status = "Pattern not found"
+end
+
 local modes = {
 	normal = function(char, key) 
 		buf.status = " -- NORMAL --"
@@ -194,6 +227,7 @@ local modes = {
 		if char == "x" then
 			buf:delete(1)
 			buf:setcursor(buf.cx, buf.cy)
+			return "normal"
 		end
 		if char == "y" then
 			return "yank"
@@ -201,6 +235,10 @@ local modes = {
 		if char == "/" then
 			entry = "/"
 			return "search"
+		end
+		if char == "n" then
+			do_search()
+			return "normal"
 		end
 		if char ~= nil and char:match("%d") ~= nil then
 			entry = char
@@ -231,35 +269,10 @@ local modes = {
 		if key == keys.enter then
 			local pat = entry:sub(2)
 			if #pat > 0 then
-				searchpat = pat
+				do_search(pat)
+			else
+				do_search()
 			end
-			if searchpat == nil then
-				buf.status = "No prior search, aborting"
-				return "normal"
-			end
-			local ly = buf.cy
-			local lx = buf.cx + 1
-			while ly <= #buf.lines do
-				local idx = buf.lines[ly]:find(searchpat, lx)
-				if idx ~= nil then
-					buf:setcursor(idx, ly)
-					return "normal"
-				end
-				ly = ly + 1
-				lx = 1
-			end
-			buf.status = "Search wrapped to top"
-			ly = 1
-			while ly < buf.cy do
-				local idx = buf.lines[ly]:find(searchpat, lx)
-				if idx ~= nil then
-					buf:setcursor(idx, ly)
-					return "normal"
-				end
-				ly = ly + 1
-				lx = 1
-			end
-			buf.status = "Pattern not found"
 			return "normal"
 		end
 		if key == keys.backspace then

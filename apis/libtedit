@@ -1,50 +1,4 @@
-REVISION = 18
-
-highlighter = {
-	new = function(classes)
-		return setmetatable({classes = classes}, {__index = highlighter})
-	end,
-
-	highlight = function(self, text)
-		local parts = {{text=text}}
-		for class, matches in pairs(self.classes) do
-			for idx, match in ipairs(matches) do
-				for pidx, part in ipairs(parts) do
-					local midx, mend = part.text:find(match)
-					if midx ~= nil then
-						table.insert(parts, pidx + 1, {class = class, text = part.text:sub(midx, mend)})
-						table.insert(parts, pidx + 2, {text = part.text:sub(mend + 1)})
-						part.text = part.text:sub(0, midx - 1)
-					end
-				end
-			end
-		end
-		local idx = 1
-		while idx <= #parts do
-			if #parts[idx].text == 0 then
-				table.remove(parts, idx)
-			else
-				idx = idx + 1
-			end
-		end
-		return parts
-	end,
-}
-
-syntaxes = {
-	none = highlighter.new({}),
-	lua = highlighter.new({
-		oper = {"%{", "%}"},
-		digit = {"%d"},
-		keyword = {"function", "if", "then", "while", "for", "do", "end", "return", "local", "true", "false", "nil"},
-		func = {  -- FIXME
-			"setmetatable", "getmetatable", "pairs", "ipairs", 
-			"table%.insert", "table%.remove",
-		},
-		comment = {"%-%-.*$"},
-		string = {"%b\"\"", "%b''"},
-	}),
-}
+REVISION = 19
 
 colorschema = {
 	full = {
@@ -69,6 +23,86 @@ colorschema = {
 	},
 }
 
+colormap = {
+	[colors.white] = "0",
+	[colors.orange] = "1",
+	[colors.magenta] = "2",
+	[colors.lightBlue] = "3",
+	[colors.yellow] = "4",
+	[colors.lime] = "5",
+	[colors.pink] = "6",
+	[colors.gray] = "7",
+	[colors.lightGray] = "8",
+	[colors.cyan] = "9",
+	[colors.purple] = "a",
+	[colors.blue] = "b",
+	[colors.brown] = "c",
+	[colors.green] = "d",
+	[colors.red] = "e",
+	[colors.black] = "f",
+}
+
+revcolmap = {}
+for col, chr in pairs(colormap) do
+	revcolmap[chr] = col
+end
+
+highlighter = {
+	new = function(classes)
+		return setmetatable({classes = classes}, {__index = highlighter})
+	end,
+
+	highlight = function(self, text, cs)
+		local fg = string.rep(colormap[cs.default], #text)
+		for class, matches in pairs(self.classes) do
+			for idx, match in ipairs(matches) do
+				local sidx = 1
+				local mstart, mend = text:find(match, sidx)
+				while mstart ~= nil do
+					fg = fg:sub(0, mstart - 1) .. colormap[cs[class]]:rep(mend - mstart + 1) .. fg:sub(mend + 1)
+					sidx = mend + 1
+					mstart, mend = text:find(match, sidx)
+				end
+			end
+		end
+		return fg
+	end,
+}
+
+syntaxes = {
+	none = highlighter.new({}),
+	lua = highlighter.new({
+		oper = {"%{", "%}"},
+		digit = {"%d"},
+		keyword = {"function", "if", "then", "while", "for", "do", "end", "return", "local", "true", "false", "nil"},
+		func = {  -- FIXME
+			"setmetatable", "getmetatable", "pairs", "ipairs", 
+			"table%.insert", "table%.remove",
+		},
+		comment = {"%-%-.*$"},
+		string = {"%b\"\"", "%b''"},
+	}),
+}
+
+function term_blit(term, text, fg)
+	if term.blit ~= nil then
+		term.blit(text, fg, string.rep(" ", #text))
+		return
+	end
+	if #text <= 0 then return end
+	if #text ~= #fg then error("text and fg must be of same length") end
+	local idx = 1
+	local curcol = nil
+	while idx <= #text do
+		if revcolmap[fg[idx]] ~= curcol then
+			curcol = revcolmap[fg[idx]]
+			term.setTextColor(curcol)
+		end
+		term.write(text[idx])
+		idx = idx + 1
+	end
+end
+
 buffer = {
 	new = function(text)
 		if text == nil then text = "" end
@@ -80,7 +114,7 @@ buffer = {
 			nlidx = text:find("\n")
 		end
 		table.insert(lines, text)  -- guaranteed to be at least one empty line
-		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, width = 51, height = 19, dirty = true, syntax = syntaxes.none, status = ""}, {__index = buffer})
+		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, width = 51, height = 19, dirty = true, syntax = syntaxes.lua, status = ""}, {__index = buffer})
 	end,
 
 	clampxy = function(self, x, y)
@@ -125,17 +159,8 @@ buffer = {
 			local str = self.lines[by]:sub(bx, bx + tw - 1)
 			if #str > 0 then
 				term.setCursorPos(1, ty)
-				term.write(string.rep(" ", tw))
-				local parts = self.syntax:highlight(str)
-				term.setCursorPos(1, ty)
-				for idx, part in ipairs(parts) do
-					local cls = part.class
-					if cls == nil then cls = "default" end
-					local col = colset[cls]
-					if col == nil then col = colset.default end
-					term.setTextColor(col)
-					term.write(part.text)
-				end
+				local fg = self.syntax:highlight(str, colset)
+				term_blit(term, str, fg)
 			end
 			ty = ty + 1
 			by = by + 1
