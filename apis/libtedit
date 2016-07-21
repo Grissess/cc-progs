@@ -1,4 +1,4 @@
-REVISION = 25
+REVISION = 26
 
 colorschema = {
 	full = {
@@ -77,15 +77,17 @@ highlighter = {
 
 syntaxes = {
 	none = highlighter.new({}),
-	lua = highlighter.new({
+	lua = highlighter.new({  -- TODO: All of these need some contextual awareness
 		oper = {"%{", "%}", ",", "%(", "%)", "%+"},
 		member = {"%.", ":"},
 		digit = {"%d"},
 		keyword = {"function", "if", "then", "else", "while", "for", "in", "do", "end", "return", "local", "true", "false", "nil", "and", "or"},
 		func = {  -- FIXME
 			"setmetatable", "getmetatable", "pairs", "ipairs", "unpack", "error", "print",
+			"tonumber", "tostring",
 			"table%.insert", "table%.remove", "table%.concat",
 			"string%.rep",
+			"io.open",
 		},
 		comment = {"%-%-.*$"},
 		string = {"\"[^\"]*\"", "'[^']*'"},
@@ -196,6 +198,7 @@ buffer = {
 		str = str:sub(0, self.cx - 1) .. text .. str:sub(self.cx)
 		self.lines[self.cy] = str
 		self.cx = self.cx + #text
+		self:setcursor(self.cx, self.cy)
 		self.dirty = true
 	end,
 

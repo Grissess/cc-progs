@@ -1,4 +1,4 @@
-REVISION = 25
+REVISION = 26
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -521,7 +521,7 @@ while running do
 	end
 	if ev == "mouse_click" then
 		if p1 == 1 then
-			buf:setcursor(buf.cx + p2 - 1, buf.cy + p3 - 1)
+			buf:setcursor(buf.sx + p2 - 1, buf.sy + p3 - 1)
 		end
 	end
 	if newmode ~= nil then
