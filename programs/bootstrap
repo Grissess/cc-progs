@@ -1,5 +1,6 @@
 local HTTP_ROOT = "https://raw.githubusercontent.com/Grissess/cc-progs/master/"
 local DISK_ROOT = "/disk"
+local rand = math.floor(65536 * math.random())
 
 local args = {...}
 
@@ -13,7 +14,7 @@ end
 
 print("Getting manifest...")
 
-local man_req = http.get(HTTP_ROOT .. ".manifest")
+local man_req = http.get(HTTP_ROOT .. ".manifest?rand=" .. rand)
 if man_req == nil then
 	error("Couldn't retrieve manifest, aborting")
 end
@@ -21,7 +22,7 @@ end
 local line = man_req:readLine()
 while line do
 	print("Downloading ", line, "...")
-	local req = http.get(HTTP_ROOT .. line)
+	local req = http.get(HTTP_ROOT .. line .. "?rand=" .. rand)
 	if req == nil then
 		print("Failed!")
 	elseif req.getResponseCode() ~= 200 then

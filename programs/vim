@@ -1,4 +1,4 @@
--- vim revision 4
+-- vim revision 5
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -75,6 +75,7 @@ end
 
 local modes = {
 	normal = function(char, key) 
+		buf.status = " -- NORMAL --"
 		if simple_motion(char, key) then
 			return "normal"
 		end
@@ -163,6 +164,7 @@ local modes = {
 	end,
 
 	insert = function(char, key)
+		buf.status = " -- INSERT --"
 		if key == keys.left then
 			buf:setcursor(buf.cx - 1, buf.cy)
 			return "insert"
