@@ -100,14 +100,9 @@ function simple_motion(char, key)
 	return false
 end
 
-function run_command(cmd)
-	local parts = {}
-	for part in cmd:gmatch("%S+") do
-		table.insert(parts, part)
-	end
-	cmd = table.remove(parts, 1)
-	buf.status = ""
-	if cmd == "write" or cmd == "w" then
+local commands = {
+	write = function(...)
+		local parts = {...}
 		if parts[1] ~= nil then
 			path = shell.resolve(parts[1])
 		end
@@ -122,20 +117,55 @@ function run_command(cmd)
 		f:close()
 		buf.status = buf.status .. "(saved to " .. path .. ") "
 		return true
-	end
-	if cmd == "quit" or cmd == "q" then
+	end,
+
+	quit = function(...)
 		running = false
 		buf.status = buf.status .. "(goodbye :)"
 		return true
-	end
-	if cmd == "wq" then
-		if run_command("w") then
-			return run_command("q")
+	end,
+
+	wq = function(...)
+		if commands.write(...) then
+			commands.quit(...)
 		end
+	end,
+
+	noh = function(...)
+		buf:sethighlights()
+	end,
+
+	syntax = function(...)
+		local parts = {...}
+		if #parts < 1 then
+			cmd_error("No syntax specified")
+			return false
+		end
+		local syn = libtedit.syntaxes[parts[1]]
+		if syn == nil then
+			cmd_error("Not a syntax")
+			return false
+		end
+		buf.syntax = syn
+	end,
+}
+
+commands.w = commands.write
+commands.q = commands.quit
+
+function run_command(cmd)
+	local parts = {}
+	for part in cmd:gmatch("%S+") do
+		table.insert(parts, part)
+	end
+	cmd = table.remove(parts, 1)
+	buf.status = ""
+	local cmdfunc = commands[cmd]
+	if cmdfunc == nil then
+		cmd_error("Unknown command: "..cmd)
 		return false
 	end
-	cmd_error("Unknown command: "..cmd)
-	return false
+	return cmdfunc(unpack(parts))
 end
 
 function cmd_error(errstr)
@@ -152,6 +182,7 @@ function do_search(pat)
 		buf.status = "No prior search, aborting"
 		return "normal"
 	end
+	buf:sethighlights(searchpat)
 	local ly = buf.cy
 	local lx = buf.cx + 1
 	while ly <= #buf.lines do
@@ -236,9 +267,15 @@ local modes = {
 			entry = "/"
 			return "search"
 		end
-		if char == "n" then
+		if char == "n" or char == ";" then
 			do_search()
 			return "normal"
+		end
+		if char == "f" then
+			return "fsearch"
+		end
+		if char == "t" then
+			return "tsearch"
 		end
 		if char ~= nil and char:match("%d") ~= nil then
 			entry = char
@@ -289,6 +326,21 @@ local modes = {
 		end
 		buf.status = entry
 		return "search"
+	end,
+
+	fsearch = function(char, key)
+		if char ~= nil then
+			do_search(char)
+		end
+		return "normal"
+	end,
+
+	tsearch = function(char, key)
+		if char ~= nil then
+			do_search(char)
+			buf:setcursor(buf.cx - 1, buf.cy)
+		end
+		return "normal"
 	end,
 
 	rep = function(char, key)

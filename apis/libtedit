@@ -9,6 +9,8 @@ colorschema = {
 		func = colors.blue,
 		comment = colors.pink,
 		string = colors.red,
+		error = colors.pink,
+		highlight = colors.orange,
 		status = colors.lightGray,
 	},
 	gray = {
@@ -19,6 +21,8 @@ colorschema = {
 		func = colors.white,
 		comment = colors.lightGray,
 		string = colors.white,
+		error = colors.gray,
+		highlight = colors.lightGray,
 		status = colors.lightGray,
 	},
 }
@@ -72,15 +76,17 @@ highlighter = {
 syntaxes = {
 	none = highlighter.new({}),
 	lua = highlighter.new({
-		oper = {"%{", "%}"},
+		oper = {"%{", "%}", ",", "%(", "%)", "%.", ":", "%+"},
 		digit = {"%d"},
 		keyword = {"function", "if", "then", "while", "for", "do", "end", "return", "local", "true", "false", "nil"},
 		func = {  -- FIXME
-			"setmetatable", "getmetatable", "pairs", "ipairs", 
-			"table%.insert", "table%.remove",
+			"setmetatable", "getmetatable", "pairs", "ipairs", "unpack", "error",
+			"table%.insert", "table%.remove", "table%.concat",
+			"string%.rep",
 		},
 		comment = {"%-%-.*$"},
 		string = {"\"[^\"]*\"", "'[^']*'"},
+		error = {"!="},
 	}),
 }
 
@@ -139,6 +145,11 @@ buffer = {
 		if self.cx > self.sx + self.width - 1 then self.sx = self.cx - self.width + 1 end
 		self.dirty = true
 	end,
+
+	sethighlights = function(self, ...)
+		self.syntax.classes.highlight = {...}
+		self.dirty = true
+	end
 
 	blit = function(self, term)
 		local tw, th = term.getSize()
