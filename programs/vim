@@ -181,10 +181,27 @@ commands = {
 		end
 		options[parts[1]] = res
 	end,
+
+	eval = function(...)
+		local str = table.concat({...}, " ")
+		local chunk, err = loadstring(str, "eval")
+		if chunk == nil then
+			buf.status = "Couldn't compile: " .. err
+			return false
+		end
+		local stat, res = pcall(chunk)
+		if not stat then
+			buf.status = "Error in expression: " .. res
+			return false
+		end
+		buf.status = tostring(res)
+		return true
+	end,
 }
 
 commands.w = commands.write
 commands.q = commands.quit
+commands['!'] = commands.eval
 
 function run_command(cmd)
 	local parts = {}
