@@ -1,4 +1,4 @@
--- vim revision 5
+-- vim revision 6
 
 os.loadAPI("/disk/apis/libtedit")
 
