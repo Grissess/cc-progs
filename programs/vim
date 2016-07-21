@@ -1,4 +1,4 @@
--- vim revision 16
+REVISION = 17
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -102,7 +102,7 @@ end
 
 function run_command(cmd)
 	local parts = {}
-	for part in cmd:gmatch("%S") do
+	for part in cmd:gmatch("%S+") do
 		table.insert(parts, part)
 	end
 	cmd = table.remove(parts, 1)
@@ -314,6 +314,12 @@ local modes = {
 			return "insert"
 		end
 		if key == keys.backspace then
+			if buf.cx == 1 and buf.cy ~= 1 then
+				buf:setcursor(10000, buf.cy - 1)
+				buf.lines[buf.cy] = buf.lines[buf.cy] .. buf.lines[buf.cy + 1]
+				table.remove(buf.lines, buf.cy + 1)
+				return "insert"
+			end
 			buf:setcursor(buf.cx - 1, buf.cy)
 			buf:delete(1)
 			return "insert"
@@ -354,6 +360,9 @@ local modes = {
 	end,
 }
 
+buf.status = "oc-progs vim rev " .. REVISION .. " libtedit " .. libtedit.REVISION .. " - Grissess"
+buf:blit(term)
+
 while running do
 	local ev, p1, p2, p3 = os.pullEvent()
 	if ev == "key" and is_unprintable(p1) then
@@ -382,6 +391,6 @@ while running do
 	end
 	local oldstatus = buf.status
 	buf.status = "[" .. mode .. ":" .. buf.cy .. "/" .. #buf.lines .. "," .. buf.cx .. "] " .. buf.status
-	buf:blit(term.native())
+	buf:blit(term)
 	buf.status = oldstatus
 end
