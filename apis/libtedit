@@ -98,7 +98,7 @@ buffer = {
 	end,
 
 	setcursor = function(self, x, y)
-		self.cx, self.sy = self:clampxy(x, y)
+		self.cx, self.cy = self:clampxy(x, y)
 		if self.cy < self.sy then self.sy = self.cy end
 		if self.cy > self.sy + self.height then self.sy = self.cy - self.height + 1 end
 		if self.cx < self.sx then self.sx = self.cx end
