@@ -1,4 +1,4 @@
-REVISION = 24
+REVISION = 25
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -33,8 +33,6 @@ unprintable_set = {
 	keys.enter, keys.backspace,
 	keys.leftCtrl, keys.leftShift, keys.leftAlt,
 	keys.rightCtrl, keys.rightShift, keys.rightAlt,
-	keys.kana, keys.convert, keys.noconvert,
-	keys.stop, keys.kanji, keys.ax,
 	keys.capsLock, keys.numLock, keys.scrollLock,
 	keys.up, keys.down, keys.left, keys.right,
 	keys.home, keys['end'], keys.insert, keys.delete,
@@ -42,6 +40,8 @@ unprintable_set = {
 	keys.f1, keys.f2, keys.f3, keys.f4, keys.f5,
 	keys.f6, keys.f7, keys.f8, keys.f9, keys.f10,
 	keys.f11, keys.f12,
+	keys.kana, keys.convert, keys.noconvert,
+	keys.stop, keys.kanji, keys.ax,
 }
 unprintable_map = {}
 for idx, ky in ipairs(unprintable_set) do
