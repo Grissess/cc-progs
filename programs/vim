@@ -1,4 +1,4 @@
--- vim revision 8
+-- vim revision 9
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -21,7 +21,7 @@ local reg = ""
 local entry = ""
 local searchpat = nil
 
-local function simple_motion(char, key)
+function simple_motion(char, key)
 	if char == "h" or key == keys.left then
 		buf:setcursor(buf.cx - 1, buf.cy)
 		return true
@@ -226,7 +226,7 @@ local modes = {
 	end,
 }
 
-local function run_command(cmd)
+function run_command(cmd)
 	local parts = {}
 	for part in cmd:gmatch("%S") do
 		table.insert(parts, part)
@@ -261,7 +261,7 @@ local function run_command(cmd)
 	return false
 end
 
-local function cmd_error(errstr)
+function cmd_error(errstr)
 	buf.status = errstr
 	buf:blit(term)
 	os.sleep(1)
@@ -282,6 +282,11 @@ while running do
 	end
 	if ev == "char" then
 		newmode = modes[mode](p1, nil)
+	end
+	if ev == "mouse_click" then
+		if p1 == 1 then
+			buf:setcursor(buf.cx + p2 - 1, buf.cy + p3 - 1)
+		end
 	end
 	if newmode ~= nil then
 		mode = newmode
