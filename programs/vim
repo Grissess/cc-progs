@@ -1,4 +1,4 @@
--- vim revision 14
+-- vim revision 15
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -102,6 +102,7 @@ function run_command(cmd)
 		table.insert(parts, part)
 	end
 	cmd = table.remove(parts, 1)
+	buf.status = ""
 	if cmd == "write" or cmd == "w" then
 		if parts[1] ~= nil then
 			path = shell.resolve(parts[1])
@@ -115,10 +116,12 @@ function run_command(cmd)
 			f:write(line.."\n")
 		end
 		f:close()
+		buf.status = buf.status .. "(saved to " .. path .. ") "
 		return true
 	end
 	if cmd == "quit" or cmd == "q" then
 		running = false
+		buf.status = buf.status .. "(goodbye :)"
 		return true
 	end
 	if cmd == "wq" then
