@@ -1,4 +1,4 @@
--- libtedit revision 2
+-- libtedit revision 3
 
 highlighter = {
 	new = function(classes)
@@ -153,15 +153,16 @@ buffer = {
 
 	insert = function(self, text)
 		local str = self.lines[self.cy]
-		str = str:sub(0, self.cx - 1) + text + str:sub(self.cx)
+		str = str:sub(0, self.cx - 1) .. text .. str:sub(self.cx)
 		self.lines[self.cy] = str
+		self.cx += #text
 		self.dirty = true
 	end,
 
 	delete = function(self, cnt)
 		if cnt == nil then cnt = 1 end
 		local str = self.lines[self.cy]
-		str = str:sub(0, self.cx - 1) + str:sub(self.cx + cnt)
+		str = str:sub(0, self.cx - 1) .. str:sub(self.cx + cnt)
 		self.lines[self.cy] = str
 		self.dirty = true
 	end,
