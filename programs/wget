@@ -18,9 +18,12 @@ local req = http.get(uri)
 if req == nil then
 	error("Request failed")
 end
+if req.getResponseCode() ~= 200 then
+	error("Request failed with status ", req.getResponseCode())
+end
 
 local f = fs.open(path, "w")
-f:write(req:readAll())
-f:close()
+f.write(req.readAll())
+f.close()
 
 print("Complete!")

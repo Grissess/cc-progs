@@ -11,26 +11,32 @@ if http == nil then
 	error("HTTP isn't supported, sorry")
 end
 
+print("Getting manifest...")
+
 local man_req = http.get(HTTP_ROOT .. ".manifest")
 if man_req == nil then
 	error("Couldn't retrieve manifest, aborting")
 end
 
-local line = man_req:read()
+local line = man_req:readLine()
 while line do
 	print("Downloading ", line, "...")
 	local req = http.get(HTTP_ROOT .. line)
 	if req == nil then
 		print("Failed!")
+	elseif req.getResponseCode() ~= 200 then
+		print("Failed: HTTP status ", req.getResponseCode())
+		req.close()
 	else
 		local lpath = fs.combine(DISK_ROOT, line)
 		print("Writing to ", lpath, "...")
 		local f = fs.open(lpath, "w")
-		f:write(req:readAll())
-		f:close()
+		f.write(req.readAll())
+		f.close()
+		req.close()
 		print("Done!")
 	end
-	line = man_req:read()
+	line = man_req:readLine()
 end
 
 print("Complete!")
