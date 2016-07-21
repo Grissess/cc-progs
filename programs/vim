@@ -1,4 +1,4 @@
--- vim revision 9
+-- vim revision 10
 
 os.loadAPI("/disk/apis/libtedit")
 
@@ -129,11 +129,18 @@ local modes = {
 
 	search = function(char, key)
 		if key == keys.enter then
-			searchpat = entry:sub(2)
+			local pat = entry:sub(2)
+			if #pat > 0 then
+				searchpat = pat
+			end
+			if searchpat == nil then
+				buf.status = "No prior search, aborting"
+				return "normal"
+			end
 			local ly = buf.cy
 			local lx = buf.cx + 1
 			while ly <= #buf.lines do
-				local idx = buf.lines[ly]:find(pat)
+				local idx = buf.lines[ly]:find(searchpat)
 				if idx ~= nil then
 					buf:setcursor(idx, ly)
 					return "normal"
@@ -144,7 +151,7 @@ local modes = {
 			buf.status = "Search wrapped to top"
 			ly = 1
 			while ly < buf.cy do
-				local idx = buf.lines[ly]:find(pat)
+				local idx = buf.lines[ly]:find(searchpat)
 				if idx ~= nil then
 					buf:setcursor(idx, ly)
 					return "normal"

@@ -1,4 +1,4 @@
--- libtedit revision 9
+-- libtedit revision 10
 
 highlighter = {
 	new = function(classes)
