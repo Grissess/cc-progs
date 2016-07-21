@@ -29,24 +29,47 @@ options = {
 	autoindent = true,
 }
 
-unprintable_set = {
-	keys.enter, keys.backspace,
-	keys.leftCtrl, keys.leftShift, keys.leftAlt,
-	keys.rightCtrl, keys.rightShift, keys.rightAlt,
-	keys.capsLock, keys.numLock, keys.scrollLock,
-	keys.up, keys.down, keys.left, keys.right,
-	keys.home, keys['end'], keys.insert, keys.delete,
-	keys.pageUp, keys.pageDown,
-	keys.f1, keys.f2, keys.f3, keys.f4, keys.f5,
-	keys.f6, keys.f7, keys.f8, keys.f9, keys.f10,
-	keys.f11, keys.f12,
-	keys.kana, keys.convert, keys.noconvert,
-	keys.stop, keys.kanji, keys.ax,
+unprintable_map = {
+	[keys.enter] = true,
+	[keys.backspace] = true,
+	[keys.leftCtrl] = true,
+	[keys.leftShift] = true,
+	[keys.leftAlt] = true,
+	[keys.rightCtrl] = true,
+	[keys.rightShift] = true,
+	[keys.rightAlt] = true,
+	[keys.capsLock] = true,
+	[keys.numLock] = true,
+	[keys.scrollLock] = true,
+	[keys.up] = true,
+	[keys.down] = true,
+	[keys.left] = true,
+	[keys.right] = true,
+	[keys.home] = true,
+	[keys['end']] = true,
+	[keys.insert] = true,
+	[keys.delete] = true,
+	[keys.pageUp] = true,
+	[keys.pageDown] = true,
+	[keys.f1] = true,
+	[keys.f2] = true,
+	[keys.f3] = true,
+	[keys.f4] = true,
+	[keys.f5] = true,
+	[keys.f6] = true,
+	[keys.f7] = true,
+	[keys.f8] = true,
+	[keys.f9] = true,
+	[keys.f10] = true,
+	[keys.f11] = true,
+	[keys.f12] = true,
+	[keys.kana] = true,
+	[keys.convert] = true,
+	[keys.noconvert] = true,
+	[keys.stop] = true,
+	[keys.kanji] = true,
+	[keys.ax] = true,
 }
-unprintable_map = {}
-for idx, ky in ipairs(unprintable_set) do
-	unprintable_map[ky] = true
-end
 
 function is_unprintable(key)
 	return unprintable_map[key] == true
