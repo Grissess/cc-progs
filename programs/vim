@@ -430,7 +430,11 @@ local modes = {
 		if char == nil then
 			return "fsearch"
 		end
-		do_search("%" .. char)
+		if char:match("%w") == nil then
+			do_search("%" .. char)
+		else
+			do_search(char)
+		end
 		return "normal"
 	end,
 
@@ -438,7 +442,11 @@ local modes = {
 		if char == nil then
 			return "tsearch"
 		end
-		do_search("%" .. char)
+		if char:match("%w") == nil then
+			do_search("%" .. char)
+		else
+			do_search(char)
+		end
 		buf:setcursor(buf.cx - 1, buf.cy)
 		return "normal"
 	end,
