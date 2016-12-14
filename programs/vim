@@ -1,4 +1,4 @@
-REVISION = 32
+REVISION = 33
 
 local CC = os.loadAPI ~= nil
 
@@ -659,7 +659,7 @@ while running do
 				end
 			else
 				local cr = string.char(p2)
-				newmode = modes[modes](cr, nil)
+				newmode = modes[mode](cr, nil)
 			end
 		end
 		if ev == "touch" then

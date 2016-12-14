@@ -1,5 +1,5 @@
 !Manifest revision 1
-!Library versions 32
+!Library versions 33
 programs/vim programs/vim
 programs/bootstrap programs/bootstrap
 programs/wget programs/wget
