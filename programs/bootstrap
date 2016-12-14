@@ -1,4 +1,4 @@
-REVISION = 2
+REVISION = 3
 
 print('cc-progs bootstrapper rev ' .. REVISION .. ' - Grissess')
 
