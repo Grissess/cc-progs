@@ -1,4 +1,4 @@
-REVISION = 33
+REVISION = 35
 
 local CC = os.loadAPI ~= nil
 
@@ -265,7 +265,7 @@ function run_command(cmd)
 		cmd_error("Unknown command: "..cmd)
 		return false
 	end
-	return cmdfunc(unpack(parts))
+	return cmdfunc(table.unpack(parts))
 end
 
 function cmd_error(errstr)

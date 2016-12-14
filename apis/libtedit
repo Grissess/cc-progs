@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 34
+REVISION = 35
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -101,7 +101,7 @@ syntaxes = {
 		func = {  -- FIXME
 			"setmetatable", "getmetatable", "pairs", "ipairs", "unpack", "error", "print",
 			"tonumber", "tostring",
-			"table%.insert", "table%.remove", "table%.concat",
+			"table%.insert", "table%.remove", "table%.concat", "table%.unpack",
 			"string%.rep", "string%.find", "string%.match", "string%.gmatch", "string%.gsub",
 			"io.open",
 		},
@@ -163,6 +163,7 @@ else
 				if #buffer > 0 then
 					gpu.set(sidx, line, buffer)
 				end
+				buffer = ""
 				sidx = idx
 				curcol = revcolmap[fg:sub(idx, idx)]
 				gpu.setForeground(real_colors[curcol])
