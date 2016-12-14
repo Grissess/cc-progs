@@ -6,6 +6,7 @@ if CC then
 	os.loadAPI("/disk/apis/libtedit")
 else
 	libtedit = require('libtedit')
+	component = require('component')
 	event = require('event')
 	shell = require('shell')
 	keyboard = require('keyboard')

@@ -281,7 +281,11 @@ buffer = {
 			text = text:sub(tw)
 		end
 
-		term.setCursorPos(self.cx - self.sx + 1, self.cy - self.sy + 1)
+		if CC then
+			term.setCursorPos(self.cx - self.sx + 1, self.cy - self.sy + 1)
+		else
+			term.setCursor(self.cx - self.sx + 1, self.cy - self.sy + 1)
+		end
 		term.setCursorBlink(true)
 	end,
 
