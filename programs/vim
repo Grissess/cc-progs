@@ -45,7 +45,7 @@ options = {
 }
 
 if not CC then
-	keys.back = keys.backspace
+	keys.backspace = keys.back
 	keys.leftCtrl = keys.lcontrol
 	keys.leftShift = keys.lshift
 	keys.leftAlt = keys.lmenu
