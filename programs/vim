@@ -1,6 +1,16 @@
-REVISION = 29
+REVISION = 30
 
-os.loadAPI("/disk/apis/libtedit")
+local CC = os.loadAPI ~= nil
+
+if CC then
+	os.loadAPI("/disk/apis/libtedit")
+else
+	local libtedit = require('libtedit')
+	local event = require('event')
+	local shell = require('shell')
+	local keyboard = require('keyboard')
+	local keys = keyboard.keys
+end
 
 local args = {...}
 
@@ -29,47 +39,91 @@ options = {
 	autoindent = true,
 }
 
-unprintable_map = {
-	[keys.enter] = true,
-	[keys.backspace] = true,
-	[keys.leftCtrl] = true,
-	[keys.leftShift] = true,
-	[keys.leftAlt] = true,
-	[keys.rightCtrl] = true,
-	[keys.rightShift] = true,
-	[keys.rightAlt] = true,
-	[keys.capsLock] = true,
-	[keys.numLock] = true,
-	[keys.scollLock] = true,  -- XXX sic
-	[keys.up] = true,
-	[keys.down] = true,
-	[keys.left] = true,
-	[keys.right] = true,
-	[keys.home] = true,
-	[keys['end']] = true,
-	[keys.insert] = true,
-	[keys.delete] = true,
-	[keys.pageUp] = true,
-	[keys.pageDown] = true,
-	[keys.f1] = true,
-	[keys.f2] = true,
-	[keys.f3] = true,
-	[keys.f4] = true,
-	[keys.f5] = true,
-	[keys.f6] = true,
-	[keys.f7] = true,
-	[keys.f8] = true,
-	[keys.f9] = true,
-	[keys.f10] = true,
-	[keys.f11] = true,
-	[keys.f12] = true,
-	[keys.kana] = true,
-	[keys.convert] = true,
-	[keys.noconvert] = true,
-	[keys.stop] = true,
-	[keys.kanji] = true,
-	[keys.ax] = true,
-}
+if CC then
+	unprintable_map = {
+		[keys.enter] = true,
+		[keys.backspace] = true,
+		[keys.leftCtrl] = true,
+		[keys.leftShift] = true,
+		[keys.leftAlt] = true,
+		[keys.rightCtrl] = true,
+		[keys.rightShift] = true,
+		[keys.rightAlt] = true,
+		[keys.capsLock] = true,
+		[keys.numLock] = true,
+		[keys.scollLock] = true,  -- XXX sic
+		[keys.up] = true,
+		[keys.down] = true,
+		[keys.left] = true,
+		[keys.right] = true,
+		[keys.home] = true,
+		[keys['end']] = true,
+		[keys.insert] = true,
+		[keys.delete] = true,
+		[keys.pageUp] = true,
+		[keys.pageDown] = true,
+		[keys.f1] = true,
+		[keys.f2] = true,
+		[keys.f3] = true,
+		[keys.f4] = true,
+		[keys.f5] = true,
+		[keys.f6] = true,
+		[keys.f7] = true,
+		[keys.f8] = true,
+		[keys.f9] = true,
+		[keys.f10] = true,
+		[keys.f11] = true,
+		[keys.f12] = true,
+		[keys.kana] = true,
+		[keys.convert] = true,
+		[keys.noconvert] = true,
+		[keys.stop] = true,
+		[keys.kanji] = true,
+		[keys.ax] = true,
+	}
+else
+	unprintable_map = {
+		[keys.enter] = true,
+		[keys.back] = true,
+		[keys.lcontrol] = true,
+		[keys.lshift] = true,
+		[keys.lmenu] = true,
+		[keys.rcontrol] = true,
+		[keys.rshift] = true,
+		[keys.rmenu] = true,
+		[keys.capital] = true,
+		[keys.numlock] = true,
+		[keys.scroll] = true,  -- XXX sic
+		[keys.up] = true,
+		[keys.down] = true,
+		[keys.left] = true,
+		[keys.right] = true,
+		[keys.home] = true,
+		[keys['end']] = true,
+		[keys.insert] = true,
+		[keys.delete] = true,
+		[keys.pageUp] = true,
+		[keys.pageDown] = true,
+		[keys.f1] = true,
+		[keys.f2] = true,
+		[keys.f3] = true,
+		[keys.f4] = true,
+		[keys.f5] = true,
+		[keys.f6] = true,
+		[keys.f7] = true,
+		[keys.f8] = true,
+		[keys.f9] = true,
+		[keys.f10] = true,
+		[keys.f11] = true,
+		[keys.f12] = true,
+		[keys.kana] = true,
+		[keys.convert] = true,
+		[keys.noconvert] = true,
+		[keys.stop] = true,
+		[keys.kanji] = true,
+		[keys.ax] = true,
+	}
+end
 
 function is_unprintable(key)
 	return unprintable_map[key] == true
@@ -560,24 +614,44 @@ buf.status = "oc-progs vim rev " .. REVISION .. " libtedit " .. libtedit.REVISIO
 buf:blit(term)
 
 while running do
-	local ev, p1, p2, p3 = os.pullEvent()
-	if ev == "key" then
-		if is_unprintable(p1) then
-			if p1 == keys.rightAlt then
-				newmode = "normal"
+	if CC then
+		local ev, p1, p2, p3 = os.pullEvent()
+		if ev == "key" then
+			if is_unprintable(p1) then
+				if p1 == keys.rightAlt then
+					newmode = "normal"
+				else
+					newmode = modes[mode](nil, p1)
+				end
 			else
-				newmode = modes[mode](nil, p1)
+				buf.status = "ignored printable ctrl " .. p1
 			end
-		else
-			buf.status = "ignored printable ctrl " .. p1
 		end
-	end
-	if ev == "char" then
-		newmode = modes[mode](p1, nil)
-	end
-	if ev == "mouse_click" then
-		if p1 == 1 then
-			buf:setcursor(buf.sx + p2 - 1, buf.sy + p3 - 1)
+		if ev == "char" then
+			newmode = modes[mode](p1, nil)
+		end
+		if ev == "mouse_click" then
+			if p1 == 1 then
+				buf:setcursor(buf.sx + p2 - 1, buf.sy + p3 - 1)
+			end
+		end
+	else
+		local ev, p1, p2, p3, p4 = event.pull()
+		if ev == "key_down" then
+			if is_unprintable(p3) then
+				if p3 == keys.rmenu then
+					newmode = "normal"
+				else
+					newmode = modes[mode](nil, p3)
+				end
+			else
+				newmode = modes[modes](string.char(p2), nil)
+			end
+		end
+		if ev == "touch" then
+			if p4 == 1 then
+				buf:setcursor(buf.sx + p2 - 1, buf.sy + p3 - 1)
+			end
 		end
 	end
 	if newmode ~= nil then

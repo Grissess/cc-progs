@@ -1,5 +1,19 @@
+REVISION = 2
+
+print('cc-progs bootstrapper rev ' .. REVISION .. ' - Grissess')
+
+local CC = os.loadAPI
 local HTTP_ROOT = "https://raw.githubusercontent.com/Grissess/cc-progs/master/"
-local DISK_ROOT = "/disk"
+
+print('Is ComputerCraft:', CC)
+print('HTTP root:', HTTP_ROOT)
+
+if CC then
+	local DISK_ROOT = "/disk"
+else
+	local DISK_ROOT = "/usr"
+end
+
 local rand = math.floor(65536 * math.random())
 
 local args = {...}
@@ -8,36 +22,73 @@ if args[1] ~= nil then
 	DISK_ROOT = args[1]
 end
 
-if http == nil then
-	error("HTTP isn't supported, sorry")
-end
+print('Install root:', DISK_ROOT)
 
-print("Getting manifest...")
-
-local man_req = http.get(HTTP_ROOT .. ".manifest?rand=" .. rand)
-if man_req == nil then
-	error("Couldn't retrieve manifest, aborting")
-end
-
-local line = man_req:readLine()
-while line do
-	print("Downloading ", line, "...")
-	local req = http.get(HTTP_ROOT .. line .. "?rand=" .. rand)
-	if req == nil then
-		print("Failed!")
-	elseif req.getResponseCode() ~= 200 then
-		print("Failed: HTTP status ", req.getResponseCode())
-		req.close()
-	else
-		local lpath = fs.combine(DISK_ROOT, line)
-		print("Writing to ", lpath, "...")
-		local f = fs.open(lpath, "w")
-		f.write(req.readAll())
-		f.close()
-		req.close()
-		print("Done!")
+if CC then
+	if http == nil then
+		error("HTTP isn't supported, sorry")
 	end
-	line = man_req:readLine()
+else
+	local internet = require('internet')
+	local filesystem = require('filesystem')
+end
+
+local resp
+repeat
+	print('Are these settings OK? [Y/n]')
+	resp = io.read():lower()
+until resp == '' or resp == 'y' or resp == 'n'
+
+if resp == 'n' then
+	error('Aborted.')
+end
+
+local MANIFEST
+if CC then
+	MANIFEST = "manifest.cc"
+else
+	MANIFEST = "manifest.oc"
+end
+
+print('Getting:', MANIFEST)
+
+
+local function http_get(uri)
+	if CC then
+		local req = http.get(uri)
+		if req == nil then
+			print("Failed!")
+		elseif req.getResponseCode() ~= 200 then
+			print("Failed: HTTP status ", req.getResponseCode())
+			req.close()
+		end
+		local buffer = return req.readAll()
+		req.close()
+		return buffer
+	else
+		local buffer = ''
+		for data in internet.request(uri) do
+			buffer += data
+		end
+		return buffer
+	end
+end
+local man_str = http_get(HTTP_ROOT .. "." .. MANIFEST .. "?rand=" .. rand)
+
+for line in man_str:gmatch("[^\r\n]+") do
+	local dest, src = line:match("([^%s]+) ([^%s]+)")
+	print('Downloading', src, 'to', dest)
+	local data = http_get(HTTP_ROOT .. src .. "?rand=" .. rand)
+	local lpath = fs.combine(DISK_ROOT, dest)
+	print("Writing to ", lpath, "...")
+	if CC then
+		local f = fs.open(lpath, "w")
+	else
+		local f = filesystem.open(lpath, "w")
+	end
+	f.write(data)
+	f.close()
+	print("Done!")
 end
 
 print("Complete!")

@@ -1,0 +1,37 @@
+LUA
+---
+
+bit
+coroutine
+math
+string
+table
+
+
+COMPUTERCRAFT
+-------------
+
+fs
+http
+os
+peripheral
+redstone
+term  [initially]
+turtle
+
+
+CRAFTOS
+-------
+colors
+colours
+disk (peripheral)
+gps
+io (fs)
+keys
+parallel (coroutine)
+rednet (peripheral, os)
+shell (os, parallel)  [loaded by shell program into subenvironment]
+term  [when loaded separately, refers back to CC term]
+textutils
+vector
+window

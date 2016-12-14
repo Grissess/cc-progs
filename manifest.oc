@@ -1,0 +1,4 @@
+lib/libtedit.lua apis/libtedit
+bin/vim.lua programs/vim
+bin/bootstrap.lua programs/bootstrap
+.manifest manifest.oc

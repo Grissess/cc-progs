@@ -1,4 +1,7 @@
-REVISION = 29
+local libtedit = {}
+
+REVISION = 30
+libtedit.REVISION = REVISION
 
 colorschema = {
 	full = {
@@ -28,6 +31,7 @@ colorschema = {
 		status = colors.lightGray,
 	},
 }
+libtedit.colorschema = colorschema
 
 colormap = {
 	[colors.white] = "0",
@@ -47,11 +51,13 @@ colormap = {
 	[colors.red] = "e",
 	[colors.black] = "f",
 }
+libtedit.colormap = colormap
 
 revcolmap = {}
 for col, chr in pairs(colormap) do
 	revcolmap[chr] = col
 end
+lobtedit.revcolmap = revcolmap
 
 highlighter = {
 	new = function(classes)
@@ -74,6 +80,7 @@ highlighter = {
 		return fg
 	end,
 }
+libtedit.highlighter = highlighter
 
 syntaxes = {
 	none = highlighter.new({}),
@@ -94,6 +101,7 @@ syntaxes = {
 		error = {"!="},
 	}),
 }
+libtedit.syntaxes = syntaxes
 
 function term_blit(term, text, fg)
 	if term.blit ~= nil then
@@ -113,6 +121,7 @@ function term_blit(term, text, fg)
 		idx = idx + 1
 	end
 end
+libtedit.term_blit = term_blit
 
 buffer = {
 	new = function(text)
@@ -215,3 +224,6 @@ buffer = {
 		self.dirty = true
 	end,
 }
+libtedit.buffer = buffer
+
+return libtedit

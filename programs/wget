@@ -1,5 +1,13 @@
-if http == nil then
-	error("No HTTP support, sorry")
+local CC = os.loadAPI ~= nil
+
+if CC then
+	if http == nil then
+		error("No HTTP support, sorry")
+	end
+else
+	local internet = require('internet')
+	local shell = require('shell')
+	local filesystem = require('filesystem')
 end
 
 local args = {...}
@@ -14,16 +22,24 @@ if #args >= 2 then
 	path = shell.resolve(args[2])
 end
 
-local req = http.get(uri)
-if req == nil then
-	error("Request failed")
-end
-if req.getResponseCode() ~= 200 then
-	error("Request failed with status ", req.getResponseCode())
-end
+if CC then
+	local req = http.get(uri)
+	if req == nil then
+		error("Request failed")
+	end
+	if req.getResponseCode() ~= 200 then
+		error("Request failed with status ", req.getResponseCode())
+	end
 
-local f = fs.open(path, "w")
-f.write(req.readAll())
-f.close()
+	local f = fs.open(path, "w")
+	f.write(req.readAll())
+	f.close()
+else
+	local f = filesystem.open(path, "w")
+	for data in internet.request(uri) do
+		f:write(data)
+	end
+	f:close()
+end
 
 print("Complete!")
