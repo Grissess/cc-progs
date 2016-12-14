@@ -62,7 +62,7 @@ local function http_get(uri)
 			print("Failed: HTTP status ", req.getResponseCode())
 			req.close()
 		end
-		local buffer = return req.readAll()
+		local buffer = req.readAll()
 		req.close()
 		return buffer
 	else
