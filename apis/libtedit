@@ -155,19 +155,19 @@ else
 		if #text <= 0 then return end
 		if #text ~= #fg then error("text and fg must be of same length") end
 		local idx = 1
-		local rx = 1
-		local sx = 1
+		local curx = 1
+		local stx = 1
 		local curcol = nil
 		local buffer = ""
 		while idx <= #text do
 			if revcolmap[fg:sub(idx, idx)] ~= curcol then
 				if #buffer > 0 then
 					buffer = buffer:gsub('()\t', function(i) return string.rep(" ", ((-(i + idx - 1)) % ts)) end)
-					gpu.set(sx, line, buffer)
-					rx = rx + #buffer
+					gpu.set(stx, line, buffer)
+					curx = curx + #buffer
 				end
 				buffer = ""
-				sx = rx
+				stx = curx
 				curcol = revcolmap[fg:sub(idx, idx)]
 				gpu.setForeground(real_colors[curcol])
 			end
@@ -175,7 +175,7 @@ else
 			idx = idx + 1
 		end
 		if #buffer > 0 then
-			gpu.set(sidx, line, buffer)
+			gpu.set(stx, line, buffer)
 		end
 	end
 end
