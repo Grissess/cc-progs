@@ -1,4 +1,4 @@
-REVISION = 30
+REVISION = 31
 
 local CC = os.loadAPI ~= nil
 
@@ -667,7 +667,11 @@ while running do
 	end
 	local oldstatus = buf.status
 	buf.status = "[" .. mode .. ":" .. buf.cy .. "/" .. #buf.lines .. "," .. buf.cx .. "] " .. buf.status
-	buf:blit(term)
+	if CC then
+		buf:blit(term)
+	else
+		buf:blit(component.gpu)
+	end
 	buf.status = oldstatus
 end
 

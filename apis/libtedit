@@ -1,7 +1,16 @@
 local libtedit = {}
 
-REVISION = 30
+REVISION = 31
 libtedit.REVISION = REVISION
+
+local CC = os.loadAPI ~= nil
+
+if not CC then
+	term = require('term')
+	colors = require('colors')
+	colors.lightGray = colors.silver
+	colors.lightBlue = colors.lightblue
+end
 
 colorschema = {
 	full = {
@@ -103,24 +112,67 @@ syntaxes = {
 }
 libtedit.syntaxes = syntaxes
 
-function term_blit(term, text, fg)
-	if term.blit ~= nil then
-		term.blit(text, fg, string.rep(" ", #text))
-		return
-	end
-	if #text <= 0 then return end
-	if #text ~= #fg then error("text and fg must be of same length") end
-	local idx = 1
-	local curcol = nil
-	while idx <= #text do
-		if revcolmap[fg:sub(idx, idx)] ~= curcol then
-			curcol = revcolmap[fg:sub(idx, idx)]
-			term.setTextColor(curcol)
+if CC then
+	function term_blit(term, text, fg)
+		if term.blit ~= nil then
+			term.blit(text, fg, string.rep(" ", #text))
+			return
 		end
-		term.write(text:sub(idx, idx))
-		idx = idx + 1
+		if #text <= 0 then return end
+		if #text ~= #fg then error("text and fg must be of same length") end
+		local idx = 1
+		local curcol = nil
+		while idx <= #text do
+			if revcolmap[fg:sub(idx, idx)] ~= curcol then
+				curcol = revcolmap[fg:sub(idx, idx)]
+				term.setTextColor(curcol)
+			end
+			term.write(text:sub(idx, idx))
+			idx = idx + 1
+		end
 	end
-end
+else
+	local real_colors = {
+		[colors.black] = 0x191919,  -- Avoid invisibility
+		[color.red] = 0x993333,
+		[colors.green] = 0x667F33,
+		[colors.brown] = 0x664C33,
+		[colors.blue] = 0x334CB2,
+		[colors.purple] = 0x7F3FB2,
+		[colors.cyan] = 0x4C7F99,
+		[colors.silver] = 0x999999,
+		[colors.gray]= 0x4C4C4C,
+		[colors.pink] = 0xF27FA5,
+		[colors.lime] = 0x7FCC19,
+		[colors.yellow] = 0xE5E533,
+		[colors.lightblue] = 0x6699D8,
+		[colors.magenta] = 0xB24CD8,
+		[colors.orange] = 0xD87F33,
+		[colors.white] = 0xFFFFFF,
+	}
+	libtedit.real_colors = real_colors
+	function term_blit(gpu, text, fg, line)
+		if #text <= 0 then return end
+		if #text ~= #fg then error("text and fg must be of same length") end
+		local idx = 1
+		local sidx = 1
+		local curcol = nil
+		local buffer = ""
+		while idx <= #text do
+			if revcolmap[fg:sub(idx, idx)] ~= curcol then
+				if #buffer > 0 then
+					gpu.set(sidx, line, buffer)
+				end
+				sidx = idx
+				curcol = revcolmap[fg:sub(idx, idx)]
+				gpu.setForeground(real_colors[curcol])
+			end
+			buffer = buffer .. text:sub(idx, idx)
+		end
+		if #buffer > 0 then
+			gpu.set(sidx, line, buffer)
+		end
+	end
 libtedit.term_blit = term_blit
 
 buffer = {
@@ -165,40 +217,65 @@ buffer = {
 		self.dirty = true
 	end,
 
-	blit = function(self, term)
-		local tw, th = term.getSize()
+	blit = function(self, disp)
+		local tw, th
+		if CC then
+			tw, th = disp.getSize()
+		else
+			tw, th = disp.getResolution()
+		end
 		local bh = math.floor((#self.status + tw - 1) / tw)
 		local ts = th - bh
 		self.width, self.height = tw, ts
 		local tx, ty = 1, 1
 		local bx, by = self.sx, self.sy
-		term.setBackgroundColor(colors.black)
+		if CC then
+			disp.setBackgroundColor(colors.black)
+		else
+			disp.setBackground(0x000000)
+		end
 		local colset
-		if term.isColor() then
+		if (not CC) or disp.isColor() then
 			colset = colorschema.full
 		else
 			colset = colorschema.gray
 		end
 
-		term.clear()
+		if CC then
+			disp.clear()
+		else
+			disp.fill(1, 1, tw, th, ' ')
+		end
 		while ty <= ts and by <= #self.lines do
 			local str = self.lines[by]:sub(bx, bx + tw - 1)
 			if #str > 0 then
-				term.setCursorPos(1, ty)
 				local fg = self.syntax:highlight(str, colset)
-				term_blit(term, str, fg)
+				if CC then 
+					disp.setCursorPos(1, ty)
+					term_blit(disp, str, fg)
+				else
+					term_blit(disp, str, fg, ty)
+				end
 			end
 			ty = ty + 1
 			by = by + 1
 		end
 		self.dirty = false
 
-		term.setTextColor(colset.status or colset.default)
+		if CC then
+			disp.setTextColor(colset.status or colset.default)
+		else
+			disp.setForeground(libtedit.real_colors[colset.status or colset.default])
+		end
 		local text = self.status
 		local ly = ts + 1
 		while #text > 0 do
-			term.setCursorPos(1, ly)
-			term.write(text)
+			if CC then
+				disp.setCursorPos(1, ly)
+				disp.write(text)
+			else
+				disp.set(1, ly, text)
+			end
 			ly = ly + 1
 			text = text:sub(tw)
 		end
