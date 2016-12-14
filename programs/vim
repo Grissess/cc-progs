@@ -1,4 +1,4 @@
-REVISION = 37
+REVISION = 38
 
 local CC = os.loadAPI ~= nil
 
@@ -587,6 +587,16 @@ local modes = {
 	end,
 }
 
+if not CC then
+	local tmid = event.timer(2, function()
+		local x, y = term.getCursor()
+		local c, fg, bg = component.gpu.get(x, y)
+		component.gpu.setForegroud(bg)
+		component.gpu.setBackgroud(fg)
+		component.gpu.set(x, y, c)
+	end, math.huge)
+end
+
 buf.status = "oc-progs vim rev " .. REVISION .. " libtedit " .. libtedit.REVISION .. " - Grissess"
 if CC then
 	buf:blit(term)
@@ -660,5 +670,6 @@ if CC then
 else
 	term.clear()
 	component.gpu.setForeground(0xFFFFFF)
+	event.cancel(tmid)
 end
 print("[exited vim]")

@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 37
+REVISION = 38
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -162,7 +162,7 @@ else
 		while idx <= #text do
 			if revcolmap[fg:sub(idx, idx)] ~= curcol then
 				if #buffer > 0 then
-					buffer = buffer:gsub('()\t', function(i) return string.rep(" ", ((-(i + idx - 1)) % ts)) end)
+					buffer = buffer:gsub('()\t', function(i) return string.rep(" ", ((-(i + idx)) % ts)) end)
 					gpu.set(stx, line, buffer)
 					curx = curx + #buffer
 				end
