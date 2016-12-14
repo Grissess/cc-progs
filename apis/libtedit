@@ -173,6 +173,7 @@ else
 			gpu.set(sidx, line, buffer)
 		end
 	end
+end
 libtedit.term_blit = term_blit
 
 buffer = {
