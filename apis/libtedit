@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 35
+REVISION = 36
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -151,7 +151,7 @@ else
 		[colors.white] = 0xFFFFFF,
 	}
 	libtedit.real_colors = real_colors
-	function term_blit(gpu, text, fg, line)
+	function term_blit(gpu, text, fg, line, ts)
 		if #text <= 0 then return end
 		if #text ~= #fg then error("text and fg must be of same length") end
 		local idx = 1
@@ -161,7 +161,7 @@ else
 		while idx <= #text do
 			if revcolmap[fg:sub(idx, idx)] ~= curcol then
 				if #buffer > 0 then
-					gpu.set(sidx, line, buffer)
+					gpu.set(sidx, line, buffer:gsub('()\t', function(i) return string.rep(" ", -(i + idx - 1) % ts) end))
 				end
 				buffer = ""
 				sidx = idx
@@ -189,7 +189,7 @@ buffer = {
 			nlidx = text:find("\n")
 		end
 		table.insert(lines, text)  -- guaranteed to be at least one empty line
-		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, width = 51, height = 19, dirty = true, syntax = syntaxes.lua, status = ""}, {__index = buffer})
+		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, width = 51, height = 19, dirty = true, syntax = syntaxes.lua, status = "", tabstop = 8}, {__index = buffer})
 	end,
 
 	clampxy = function(self, x, y)
@@ -257,7 +257,7 @@ buffer = {
 					disp.setCursorPos(1, ty)
 					term_blit(disp, str, fg)
 				else
-					term_blit(disp, str, fg, ty)
+					term_blit(disp, str, fg, ty, self.tabstop)
 				end
 			end
 			ty = ty + 1

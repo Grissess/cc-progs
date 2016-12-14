@@ -1,4 +1,4 @@
-REVISION = 35
+REVISION = 36
 
 local CC = os.loadAPI ~= nil
 
@@ -659,5 +659,6 @@ if CC then
 	term.setTextColor(colors.white)
 else
 	term.clear()
+	component.gpu.setForeground(0xFFFFFF)
 end
 print("[exited vim]")
