@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 36
+REVISION = 37
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -155,16 +155,19 @@ else
 		if #text <= 0 then return end
 		if #text ~= #fg then error("text and fg must be of same length") end
 		local idx = 1
-		local sidx = 1
+		local rx = 1
+		local sx = 1
 		local curcol = nil
 		local buffer = ""
 		while idx <= #text do
 			if revcolmap[fg:sub(idx, idx)] ~= curcol then
 				if #buffer > 0 then
-					gpu.set(sidx, line, (buffer:gsub('()\t', function(i) return string.rep(" ", -(i + idx - 1) % ts) end)))
+					buffer = buffer:gsub('()\t', function(i) return string.rep(" ", ((-(i + idx - 1)) % ts)) end)
+					gpu.set(sx, line, buffer)
+					rx = rx + #buffer
 				end
 				buffer = ""
-				sidx = idx
+				sx = rx
 				curcol = revcolmap[fg:sub(idx, idx)]
 				gpu.setForeground(real_colors[curcol])
 			end
