@@ -1,4 +1,4 @@
-REVISION = 4
+REVISION = 5
 
 print('cc-progs bootstrapper rev ' .. REVISION .. ' - Grissess')
 
@@ -90,11 +90,13 @@ for line in man_str:gmatch("[^\r\n]+") do
 	print("Writing to ", lpath, "...")
 	if CC then
 		f = fs.open(lpath, "w")
+		f.write(data)
+		f.close()
 	else
 		f = filesystem.open(lpath, "w")
+		f:write(data)
+		f:close()
 	end
-	f.write(data)
-	f.close()
 	print("Done!")
 end
 

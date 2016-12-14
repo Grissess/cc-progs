@@ -9,7 +9,11 @@ else
 	event = require('event')
 	shell = require('shell')
 	keyboard = require('keyboard')
+	filesystem = require('filesystem')
 	keys = keyboard.keys
+	fs = {}
+	fs.exists = filesystem.exists
+	fs.isDir = filesystem.isDirectory
 end
 
 local args = {...}
