@@ -1,4 +1,4 @@
-REVISION = 33
+REVISION = 34
 
 local CC = os.loadAPI ~= nil
 
@@ -44,91 +44,60 @@ options = {
 	autoindent = true,
 }
 
-if CC then
-	unprintable_map = {
-		[keys.enter] = true,
-		[keys.backspace] = true,
-		[keys.leftCtrl] = true,
-		[keys.leftShift] = true,
-		[keys.leftAlt] = true,
-		[keys.rightCtrl] = true,
-		[keys.rightShift] = true,
-		[keys.rightAlt] = true,
-		[keys.capsLock] = true,
-		[keys.numLock] = true,
-		[keys.scollLock] = true,  -- XXX sic
-		[keys.up] = true,
-		[keys.down] = true,
-		[keys.left] = true,
-		[keys.right] = true,
-		[keys.home] = true,
-		[keys['end']] = true,
-		[keys.insert] = true,
-		[keys.delete] = true,
-		[keys.pageUp] = true,
-		[keys.pageDown] = true,
-		[keys.f1] = true,
-		[keys.f2] = true,
-		[keys.f3] = true,
-		[keys.f4] = true,
-		[keys.f5] = true,
-		[keys.f6] = true,
-		[keys.f7] = true,
-		[keys.f8] = true,
-		[keys.f9] = true,
-		[keys.f10] = true,
-		[keys.f11] = true,
-		[keys.f12] = true,
-		[keys.kana] = true,
-		[keys.convert] = true,
-		[keys.noconvert] = true,
-		[keys.stop] = true,
-		[keys.kanji] = true,
-		[keys.ax] = true,
-	}
-else
-	unprintable_map = {
-		[keys.enter] = true,
-		[keys.back] = true,
-		[keys.lcontrol] = true,
-		[keys.lshift] = true,
-		[keys.lmenu] = true,
-		[keys.rcontrol] = true,
-		[keys.rshift] = true,
-		[keys.rmenu] = true,
-		[keys.capital] = true,
-		[keys.numlock] = true,
-		[keys.scroll] = true,  -- XXX sic
-		[keys.up] = true,
-		[keys.down] = true,
-		[keys.left] = true,
-		[keys.right] = true,
-		[keys.home] = true,
-		[keys['end']] = true,
-		[keys.insert] = true,
-		[keys.delete] = true,
-		[keys.pageUp] = true,
-		[keys.pageDown] = true,
-		[keys.f1] = true,
-		[keys.f2] = true,
-		[keys.f3] = true,
-		[keys.f4] = true,
-		[keys.f5] = true,
-		[keys.f6] = true,
-		[keys.f7] = true,
-		[keys.f8] = true,
-		[keys.f9] = true,
-		[keys.f10] = true,
-		[keys.f11] = true,
-		[keys.f12] = true,
-		[keys.kana] = true,
-		[keys.convert] = true,
-		[keys.noconvert] = true,
-		[keys.stop] = true,
-		[keys.kanji] = true,
-		[keys.ax] = true,
-	}
+if not CC then
+	keys.back = keys.backspace
+	keys.leftCtrl = keys.lcontrol
+	keys.leftShift = keys.lshift
+	keys.leftAlt = keys.lmenu
+	keys.rightCtrl = keys.rcontrol
+	keys.rightShift = keys.rshift
+	keys.rightAlt = keys.rmenu
+	keys.capsLock = keys.capital
+	keys.numLock = keys.numlock
+	keys.scollLock = keys.scroll  -- XXX sic
 end
+
+unprintable_map = {
+	[keys.enter] = true,
+	[keys.backspace] = true,
+	[keys.leftCtrl] = true,
+	[keys.leftShift] = true,
+	[keys.leftAlt] = true,
+	[keys.rightCtrl] = true,
+	[keys.rightShift] = true,
+	[keys.rightAlt] = true,
+	[keys.capsLock] = true,
+	[keys.numLock] = true,
+	[keys.scollLock] = true,  -- XXX sic
+	[keys.up] = true,
+	[keys.down] = true,
+	[keys.left] = true,
+	[keys.right] = true,
+	[keys.home] = true,
+	[keys['end']] = true,
+	[keys.insert] = true,
+	[keys.delete] = true,
+	[keys.pageUp] = true,
+	[keys.pageDown] = true,
+	[keys.f1] = true,
+	[keys.f2] = true,
+	[keys.f3] = true,
+	[keys.f4] = true,
+	[keys.f5] = true,
+	[keys.f6] = true,
+	[keys.f7] = true,
+	[keys.f8] = true,
+	[keys.f9] = true,
+	[keys.f10] = true,
+	[keys.f11] = true,
+	[keys.f12] = true,
+	[keys.kana] = true,
+	[keys.convert] = true,
+	[keys.noconvert] = true,
+	[keys.stop] = true,
+	[keys.kanji] = true,
+	[keys.ax] = true,
+}
 
 function is_unprintable(key)
 	return unprintable_map[key] == true

@@ -1,5 +1,5 @@
 !Manifest revision 1
-!Library versions 33
+!Library versions 34
 lib/libtedit.lua apis/libtedit
 bin/vim.lua programs/vim
 bin/bootstrap.lua programs/bootstrap
