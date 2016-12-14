@@ -66,7 +66,7 @@ revcolmap = {}
 for col, chr in pairs(colormap) do
 	revcolmap[chr] = col
 end
-lobtedit.revcolmap = revcolmap
+libtedit.revcolmap = revcolmap
 
 highlighter = {
 	new = function(classes)
@@ -134,7 +134,7 @@ if CC then
 else
 	local real_colors = {
 		[colors.black] = 0x191919,  -- Avoid invisibility
-		[color.red] = 0x993333,
+		[colors.red] = 0x993333,
 		[colors.green] = 0x667F33,
 		[colors.brown] = 0x664C33,
 		[colors.blue] = 0x334CB2,

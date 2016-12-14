@@ -301,7 +301,11 @@ end
 
 function cmd_error(errstr)
 	buf.status = errstr
-	buf:blit(term)
+	if CC then
+		buf:blit(term)
+	else
+		buf:blit(component.gpu)
+	end
 	os.sleep(1)
 end
 
@@ -615,7 +619,11 @@ local modes = {
 }
 
 buf.status = "oc-progs vim rev " .. REVISION .. " libtedit " .. libtedit.REVISION .. " - Grissess"
-buf:blit(term)
+if CC then
+	buf:blit(term)
+else
+	buf:blit(component.gpu)
+end
 
 while running do
 	if CC then
