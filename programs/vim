@@ -651,14 +651,15 @@ while running do
 	else
 		local ev, p1, p2, p3, p4 = event.pull()
 		if ev == "key_down" then
-			if is_unprintable(p3) then
+			if p2 == 0 then
 				if p3 == keys.rmenu then
 					newmode = "normal"
 				else
 					newmode = modes[mode](nil, p3)
 				end
 			else
-				newmode = modes[modes](string.char(p2), nil)
+				local cr = string.char(p2)
+				newmode = modes[modes](cr, nil)
 			end
 		end
 		if ev == "touch" then
@@ -684,7 +685,11 @@ while running do
 	buf.status = oldstatus
 end
 
-term.clear()
-term.setCursorPos(1, 1)
-term.setTextColor(colors.white)
+if CC then
+	term.clear()
+	term.setCursorPos(1, 1)
+	term.setTextColor(colors.white)
+else
+	term.clear()
+end
 print("[exited vim]")

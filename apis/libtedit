@@ -168,6 +168,7 @@ else
 				gpu.setForeground(real_colors[curcol])
 			end
 			buffer = buffer .. text:sub(idx, idx)
+			idx = idx + 1
 		end
 		if #buffer > 0 then
 			gpu.set(sidx, line, buffer)
