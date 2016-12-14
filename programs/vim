@@ -45,7 +45,7 @@ options = {
 }
 
 if not CC then
-	keys.back = keys.backspace
+	keys.backspace = keys.back
 	keys.leftCtrl = keys.lcontrol
 	keys.leftShift = keys.lshift
 	keys.leftAlt = keys.lmenu
@@ -97,49 +97,6 @@ unprintable_map = {
 	[keys.kanji] = true,
 	[keys.ax] = true,
 }
-else
-	unprintable_map = {
-		[keys.enter] = true,
-		[keys.back] = true,
-		[keys.lcontrol] = true,
-		[keys.lshift] = true,
-		[keys.lmenu] = true,
-		[keys.rcontrol] = true,
-		[keys.rshift] = true,
-		[keys.rmenu] = true,
-		[keys.capital] = true,
-		[keys.numlock] = true,
-		[keys.scroll] = true,
-		[keys.up] = true,
-		[keys.down] = true,
-		[keys.left] = true,
-		[keys.right] = true,
-		[keys.home] = true,
-		[keys['end']] = true,
-		[keys.insert] = true,
-		[keys.delete] = true,
-		[keys.pageUp] = true,
-		[keys.pageDown] = true,
-		[keys.f1] = true,
-		[keys.f2] = true,
-		[keys.f3] = true,
-		[keys.f4] = true,
-		[keys.f5] = true,
-		[keys.f6] = true,
-		[keys.f7] = true,
-		[keys.f8] = true,
-		[keys.f9] = true,
-		[keys.f10] = true,
-		[keys.f11] = true,
-		[keys.f12] = true,
-		[keys.kana] = true,
-		[keys.convert] = true,
-		[keys.noconvert] = true,
-		[keys.stop] = true,
-		[keys.kanji] = true,
-		[keys.ax] = true,
-	}
-end
 
 function is_unprintable(key)
 	return unprintable_map[key] == true
