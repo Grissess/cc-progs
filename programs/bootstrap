@@ -2,16 +2,17 @@ REVISION = 2
 
 print('cc-progs bootstrapper rev ' .. REVISION .. ' - Grissess')
 
-local CC = os.loadAPI
+local CC = os.loadAPI ~= nil
 local HTTP_ROOT = "https://raw.githubusercontent.com/Grissess/cc-progs/master/"
 
 print('Is ComputerCraft:', CC)
 print('HTTP root:', HTTP_ROOT)
 
+local DISK_ROOT
 if CC then
-	local DISK_ROOT = "/disk"
+	DISK_ROOT = "/disk"
 else
-	local DISK_ROOT = "/usr"
+	DISK_ROOT = "/usr"
 end
 
 local rand = math.floor(65536 * math.random())
@@ -29,8 +30,8 @@ if CC then
 		error("HTTP isn't supported, sorry")
 	end
 else
-	local internet = require('internet')
-	local filesystem = require('filesystem')
+	internet = require('internet')
+	filesystem = require('filesystem')
 end
 
 local resp
@@ -68,7 +69,7 @@ local function http_get(uri)
 	else
 		local buffer = ''
 		for data in internet.request(uri) do
-			buffer += data
+			buffer = buffer .. data
 		end
 		return buffer
 	end

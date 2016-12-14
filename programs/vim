@@ -5,11 +5,11 @@ local CC = os.loadAPI ~= nil
 if CC then
 	os.loadAPI("/disk/apis/libtedit")
 else
-	local libtedit = require('libtedit')
-	local event = require('event')
-	local shell = require('shell')
-	local keyboard = require('keyboard')
-	local keys = keyboard.keys
+	libtedit = require('libtedit')
+	event = require('event')
+	shell = require('shell')
+	keyboard = require('keyboard')
+	keys = keyboard.keys
 end
 
 local args = {...}
