@@ -162,7 +162,7 @@ else
 		while idx <= #text do
 			if revcolmap[fg:sub(idx, idx)] ~= curcol then
 				if #buffer > 0 then
-					buffer = buffer:gsub('()\t', function(i) return string.rep(" ", ((-(i + idx)) % ts)) end)
+					while buffer:find('\t') ~= nil do buffer = buffer:gsub('()\t', function(i) return string.rep(" ", (ts - (i-1) % ts)) end, 1) end
 					gpu.set(stx, line, buffer)
 					curx = curx + #buffer
 				end

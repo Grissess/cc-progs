@@ -588,11 +588,11 @@ local modes = {
 }
 
 if not CC then
-	local tmid = event.timer(2, function()
+	tmid = event.timer(0.5, function()
 		local x, y = term.getCursor()
 		local c, fg, bg = component.gpu.get(x, y)
-		component.gpu.setForegroud(bg)
-		component.gpu.setBackgroud(fg)
+		component.gpu.setForeground(bg)
+		component.gpu.setBackground(fg)
 		component.gpu.set(x, y, c)
 	end, math.huge)
 end
