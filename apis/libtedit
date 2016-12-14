@@ -161,7 +161,7 @@ else
 		while idx <= #text do
 			if revcolmap[fg:sub(idx, idx)] ~= curcol then
 				if #buffer > 0 then
-					gpu.set(sidx, line, buffer:gsub('()\t', function(i) return string.rep(" ", -(i + idx - 1) % ts) end))
+					gpu.set(sidx, line, (buffer:gsub('()\t', function(i) return string.rep(" ", -(i + idx - 1) % ts) end)))
 				end
 				buffer = ""
 				sidx = idx
