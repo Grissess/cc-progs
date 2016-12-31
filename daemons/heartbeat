@@ -24,3 +24,5 @@ dmn.init = function(self, prt, tmout)
 		end
 	end)
 end
+
+return dmn

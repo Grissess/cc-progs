@@ -205,11 +205,12 @@ libdaemon.list = list
 
 local function try_load(name)
 	for pth in libdaemon.DAEMON_PATH:gmatch("[^;]+") do
-		local rpth = string:gsub("?", name)
+		local rpth = pth:gsub("?", name)
 		if filesystem.exists(rpth) then
 			return dofile(rpth)
 		end
 	end
+	return false, 'failed to locate daemon'
 end
 libdaemon.try_load = try_load
 
