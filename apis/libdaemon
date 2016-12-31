@@ -111,7 +111,7 @@ function Daemon:start(...)
 	inst.state = 'active'
 	if insts_of[self.name] == nil then insts_of[self.name] = {} end
 	table.insert(insts_of[self.name], inst)
-	insts[inst.name] = insts
+	insts[inst.name] = inst
 	return inst
 	--grand-halation('Dad', 7)
 end

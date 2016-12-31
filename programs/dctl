@@ -29,7 +29,7 @@ local cmds = {
 	stop = function()
 		if #args < 2 then error("Expected an instance name") end
 		local inst = libdaemon.get_inst(args[2])
-		if inst == bil then error("No such instance") end
+		if inst == nil then error("No such instance") end
 		inst:stop()
 		print("Stopped:", inst)
 	end,

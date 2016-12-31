@@ -1,5 +1,6 @@
 local libdaemon = require('libdaemon')
 local component = require('component')
+local computer = require('computer')
 
 local DEFAULT = {
 	PORT = 7,
