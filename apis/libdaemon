@@ -19,9 +19,9 @@ libdaemon.insts_of = {}
 local loggers = {}
 libdaemon.loggers = loggers
 
-local function log(ev, ...)
+local function log(ev, nm, ...)
 	for idx, logger in ipairs(loggers) do
-		pcall(logger, ev, ...)
+		pcall(logger, ev, nm, ...)
 	end
 end
 libdaemon.log = log
@@ -29,14 +29,14 @@ libdaemon.log = log
 local logfile = filesystem.open('/tmp/daemon.log', 'a')
 libdaemon.logfile = logfile
 
-table.insert(loggers, function(ev, dmn, ...)
-	logfile:write('[' .. dmn.name .. '] ' .. ev .. ': ' .. table.concat({...}, '\t') .. '\n')
+table.insert(loggers, function(ev, nm, ...)
+	logfile:write('[' .. nm .. '] ' .. ev .. ': ' .. table.concat({...}, '\t') .. '\n')
 end)
 
 libdaemon.LOG_PORT = 12345
-table.insert(loggers, function(ev, dmn, ...)
+table.insert(loggers, function(ev, nm, ...)
 	if component.isAvailable('modem') then
-		component.modem.broadcast(libdaemon.LOG_PORT, dmn.name, ev, ...)
+		component.modem.broadcast(libdaemon.LOG_PORT, nm, ev, ...)
 	end
 end)
 
@@ -67,7 +67,7 @@ local function func_name(f)
 end
 
 function Daemon:timer(tmout, callback, times)
-	log("dbg/timer", tmout, func_name(callback), times)
+	log("dbg/timer", self.name, tmout, func_name(callback), times)
 	if times == nil then
 		times = math.huge
 	end
@@ -75,12 +75,12 @@ function Daemon:timer(tmout, callback, times)
 	table.insert(self.timers, {tmout = tmout, callback = callback, times = times})
 	if self.state == 'active' then
 		self.tmids[#self.timers] = event.timer(tmout, callback, times)
-		log("dbg/timer/up", self.tmids[#self.timers], tmout, func_name(callback), times)
+		log("dbg/timer/up", self.name, self.tmids[#self.timers], tmout, func_name(callback), times)
 	end
 end
 
 function Daemon:listen(ev, callback)
-	log("dbg/listen", ev, func_name(callback))
+	log("dbg/listen", self.name, ev, func_name(callback))
 	callback = self:protect(callback)
 	if self.events[ev] == nil then
 		self.events[ev] = {}
@@ -88,7 +88,7 @@ function Daemon:listen(ev, callback)
 	table.insert(self.events[ev], callback)
 	if self.state == 'active' then
 		event.listen(ev, callback)
-		log("dbg/listen/up", ev, func_name(callback))
+		log("dbg/listen/up", self.name, ev, func_name(callback))
 	end
 end
 
@@ -99,15 +99,15 @@ function Daemon:start(...)
 	inst:init(...)
 	for idx, tmrspec in ipairs(inst.timers) do
 		inst.tmids[idx] = event.timer(tmrspec.tmout, tmrspec.callback, tmrspec.times)
-		log("dbg/timer/up", inst.tmids[idx], tmrspec.tmout, func_name(tmrspec.callback), tmrspec.times)
+		log("dbg/timer/up", self.name, inst.tmids[idx], tmrspec.tmout, func_name(tmrspec.callback), tmrspec.times)
 	end
 	for evn, cbs in pairs(inst.events) do
 		for idx, cb in ipairs(cbs) do
 			event.listen(evn, cb)
-			log("dbg/listen/up", evn, func_name(cb))
+			log("dbg/listen/up", self.name, evn, func_name(cb))
 		end
 	end
-	log("event/up", inst.name)
+	log("event/up", self.name, inst.name)
 	inst.state = 'active'
 	if insts_of[self.name] == nil then insts_of[self.name] = {} end
 	table.insert(insts_of[self.name], inst)
@@ -124,17 +124,17 @@ function Daemon:stop()
 	for idx, tmid in pairs(self.tmids) do
 		local tmspec = self.timers[idx]
 		if tmspec == nil then
-			log("error/timer/down/nil", tmid, idx)
+			log("error/timer/down/nil", self.name, tmid, idx)
 		else
-			log("dbg/timer/down", tmid, tmspec.tmout, func_name(tmspec.callback), tmspec.times)
+			log("dbg/timer/down", self.name, tmid, tmspec.tmout, func_name(tmspec.callback), tmspec.times)
 		end
 		event.cancel(tmid)
 	end
 	for evn, cbs in pairs(self.events) do
 		for idx, cb in ipairs(cbs) do
-			log("dbg/listen/down", evn, func_name(cb))
+			log("dbg/listen/down", self.name, evn, func_name(cb))
 			if not event.ignore(evn, cb) then
-				log("error/listen/down/nil", evn, func_name(cb))
+				log("error/listen/down/nil", self.name, evn, func_name(cb))
 			end
 		end
 	end
