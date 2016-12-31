@@ -1,0 +1,46 @@
+local libdaemon = require('libdaemon')
+local component = require('component')
+
+local args = {...}
+
+if #args < 1 then
+	print('dctl CMD -- control daemons')
+	print('CMD may be:')
+	print('  load <name> - load (but do not start) a daemon')
+	print('  start <name> <args>... - start loaded daemon, passing it args--gives an instance name')
+	print('  stop <inst> - stop running daemon')
+	print('  unload <name> - unload a loaded daemon, stopping all of its running instances')
+	return 1
+end
+
+local cmds = {
+	load = function()
+		if #args < 2 then error("Expected a daemon name") end
+		local res = libdaemon.try_load(args[2])
+		print("Load result:", res)
+	end,
+	start = function()
+		if #args < 2 then error("Expected a daemon name") end
+		local dmn = libdaemon.get(args[2])
+		if dmn == nil then error("Daemon not loaded--have you tried load?") end
+		local inst = dmn:start(table.unpack(args, 3))
+		print("Started as " .. inst.name .. ":", inst)
+	end,
+	stop = function()
+		if #args < 2 then error("Expected an instance name") end
+		local inst = libdaemon.get_inst(args[2])
+		if inst == bil then error("No such instance") end
+		inst:stop()
+		print("Stopped:", inst)
+	end,
+	unload = function()
+		if #args < 2 then error("Expected a daemon name") end
+		libdaemon.remove(args[2])
+		print("Unloaded!")
+	end,
+}
+
+local handler = cmds[args[1]]
+if handler == nil then error("Bad command--see help") end
+
+handler()

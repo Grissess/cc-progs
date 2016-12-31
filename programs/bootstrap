@@ -1,4 +1,4 @@
-REVISION = 6
+REVISION = 7
 
 print('cc-progs bootstrapper rev ' .. REVISION .. ' - Grissess')
 
@@ -92,10 +92,12 @@ for line in man_str:gmatch("[^\r\n]+") do
 		local f
 		print("Writing to ", lpath, "...")
 		if CC then
+			fs.makeDir(fs.getDir(lpath))
 			f = fs.open(lpath, "w")
 			f.write(data)
 			f.close()
 		else
+			filesystem.makeDirectory(filesystem.path(lpath))
 			f = filesystem.open(lpath, "w")
 			f:write(data)
 			f:close()

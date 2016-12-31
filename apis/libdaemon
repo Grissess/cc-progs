@@ -1,0 +1,214 @@
+local libdaemon = {}
+
+local process = require('process')
+local event = require('event')
+local filesystem = require('filesystem')
+local component = require('component')
+
+libdaemon.DAEMON_PATH = "/opt/daemon/?.lua;/opt/daemon/?;/usr/opt/daemon/?.lua;/usr/opt/daemon/?"
+
+local all = {}
+libdaemon.all = all
+
+local insts = {}
+libdaemon.insts = insts
+
+local insts_of = {}
+libdaemon.insts_of = {}
+
+local loggers = {}
+libdaemon.loggers = loggers
+
+local function log(ev, ...)
+	for idx, logger in ipairs(loggers) do
+		pcall(logger, ev, ...)
+	end
+end
+libdaemon.log = log
+
+local logfile = filesystem.open('/tmp/daemon.log', 'a')
+libdaemon.logfile = logfile
+
+table.insert(loggers, function(ev, dmn, ...)
+	logfile:write('[' .. dmn.name .. '] ' .. ev .. ': ' .. table.concat({...}, '\t') .. '\n')
+end)
+
+libdaemon.LOG_PORT = 12345
+table.insert(loggers, function(ev, dmn, ...)
+	if component.isAvailable('modem') then
+		component.modem.broadcast(libdaemon.LOG_PORT, dmn.name, ev, ...)
+	end
+end)
+
+libdaemon.INST_ID = 1
+
+local Daemon = {}
+Daemon.mt = {
+	__index = Daemon,
+}
+
+function Daemon:protect(cb)
+	return function(...)
+		local res = {pcall(cb, ...)}
+		if res[1] then
+			return table.unpack(res, 2)
+		else
+			log('error', self.name, table.unpack(res, 2))
+		end
+	end
+end
+
+local function func_name(f)
+	local info = debug.getinfo(callback, "n")
+	if info.name ~= nil then
+		return info.name
+	end
+	return "<anonymous>"
+end
+
+function Daemon:timer(tmout, callback, times)
+	log("dbg/timer", tmout, func_name(callback), times)
+	if times == nil then
+		times = math.huge
+	end
+	callback = self:protect(callback)
+	table.insert(self.timers, {tmout = tmout, callback = callback, times = times})
+	if self.state == 'active' then
+		self.tmid[#self.timers] = event.timer(tmout, callback, times)
+		log("dbg/timer/up", self.tmid[#self.timers], tmout, func_name(callback), times)
+	end
+end
+
+function Daemon:listen(ev, callback)
+	log("dbg/listen", ev, func_name(callback))
+	callback = self:protect(callback)
+	if self.events[ev] == nil then
+		self.events[ev] = {}
+	end
+	table.insert(self.events[ev], callback)
+	if self.state == 'active' then
+		event.listen(ev, callback)
+		log("dbg/listen/up", ev, func_name(callback))
+	end
+end
+
+-- On a template
+function Daemon:start(...)
+	local inst = setmetatable({args = {...}, name = self.name .. "." .. libdaemon.INST_ID }, {__index = self})
+	libdaemon.INST_ID = libdaemon.INST_ID + 1
+	inst:init(...)
+	for idx, tmrspec in ipairs(inst.timers) do
+		inst.tmid[idx] = event.timer(tmrspec.tmout, tmrspec.callback, tmrspec.times)
+		log("dbg/timer/up", inst.tmid[idx], tmrspec.tmout, func_name(tmrspec.callback), tmrspec.times)
+	end
+	for evn, cbs in pairs(inst.events) do
+		for idx, cb in ipairs(cbs) do
+			event.listen(evn, cb)
+			log("dbg/listen/up", evn, func_name(cb))
+		end
+	end
+	log("event/up", inst.name)
+	inst.state = 'active'
+	if insts_of[self.name] == nil then insts_of[self.name] = {} end
+	table.insert(insts_of[self.name], inst)
+	insts[inst.name] = insts
+	return inst
+	--grand-halation('Dad', 7)
+end
+
+function Daemon:stop()
+	if self.state ~= 'active' then
+		log("error/stop/rpt", self.name)
+		return false, 'already stopped'
+	end
+	for idx, tmid in pairs(self.tmid) do
+		local tmspec = self.timers[idx]
+		if tmspec == nil then
+			log("error/timer/down/nil", tmid, idx)
+		else
+			log("dbg/timer/down", tmid, tmspec.tmout, func_name(tmspec.callback), tmspec.times)
+		end
+		event.cancel(tmid)
+	end
+	for evn, cbs in pairs(self.events) do
+		for idx, cb in ipairs(cbs) do
+			log("dbg/listen/down", evn, func_name(cb))
+			if not event.ignore(evn, cb) then
+				log("error/listen/down/nil", evn, func_name(cb))
+			end
+		end
+	end
+	self:cleanup(table.unpack(self.args))
+	log("event/down", self.name)
+	self.state = 'stopped'
+	return true, nil
+end
+
+local function _do_nothing(...) end
+
+local function new(name)
+	if name == nil then
+		name = process.info().command
+	end
+	if all[name] ~= nil then
+		log("error/new/rpt", name)
+		error("Already started: " .. name)
+	end
+	log("dbg/new", name)
+	local inst = setmetatable({
+		name = name,
+		state = 'prestart',
+		timers = {},
+		tmids = {},
+		events = {},
+		init = _do_nothing,
+		cleanup = _do_nothing,
+	}, Daemon.mt)
+	all[name] = inst
+	return inst
+end
+libdaemon.new = new
+
+local function get(name)
+	return all[name]
+end
+libdaemon.get = get
+
+local function get_inst(name)
+	return insts[name]
+end
+libdaemon.get_inst = get_inst
+
+local function remove(name)
+	local dmn = all[name]
+	if dmn == nil then
+		log("error/remove/nil", name)
+		error("Isn't loaded: " .. name)
+	end
+	local ins = insts_of[name]
+	if ins ~= nil then
+		for idx, i in ipairs(ins) do
+			if i.state == 'active' then
+				i:stop()
+			end
+		end
+	end
+	all[name] = nil
+	log("dbg/remove", name)
+end
+libdaemon.remove = remove
+
+local function list()
+	return all
+end
+libdaemon.list = list
+
+local function try_load(name)
+	for pth in libdaemon.DAEMON_PATH:gmatch("[^;]+") do
+		local rpth = string:gsub("?", name)
+		if filesystem.exists(rpth) then
+			return dofile(rpth)
+		end
+	end
+end
+libdaemon.try_load = try_load

@@ -1,6 +1,6 @@
-!Manifest revision 1
-!Library versions 38
+!Manifest revision 2
+bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 bin/vim.lua programs/vim
-bin/bootstrap.lua programs/bootstrap
+daemon/heartbeat.lua daemons/hearbeat
 .manifest manifest.oc
