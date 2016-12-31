@@ -18,7 +18,7 @@ dmn.init = function(self, prt, tmout)
 	self.tmout = tmout
 	self:timer(self.tmout, function()
 		for cm in component.list("modem") do
-			component.invoke(cm, "broadcast", self.port, 'HB', computer.address(), computer.uptime())
+			component.invoke(cm, "broadcast", self.prt, 'HB', computer.address(), computer.uptime())
 		end
 		for cm in component.list("tunnel") do
 			component.invoke(cm, "send", 'HB', computer.address(), computer.uptime())

@@ -141,6 +141,7 @@ function Daemon:stop()
 	self:cleanup(table.unpack(self.args))
 	log("event/down", self.name)
 	self.state = 'stopped'
+	insts[self.name] = nil
 	return true, nil
 end
 
