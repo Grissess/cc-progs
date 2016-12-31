@@ -1,0 +1,5 @@
+local args = {...}
+
+if #args < 1 then error("Usage: unload <libname>") end
+
+package.loaded[args[1]] = nil
