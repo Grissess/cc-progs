@@ -2,5 +2,5 @@
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 bin/vim.lua programs/vim
-daemon/heartbeat.lua daemons/hearbeat
+daemon/heartbeat.lua daemons/heartbeat
 .manifest manifest.oc
