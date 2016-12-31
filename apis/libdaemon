@@ -74,8 +74,8 @@ function Daemon:timer(tmout, callback, times)
 	callback = self:protect(callback)
 	table.insert(self.timers, {tmout = tmout, callback = callback, times = times})
 	if self.state == 'active' then
-		self.tmid[#self.timers] = event.timer(tmout, callback, times)
-		log("dbg/timer/up", self.tmid[#self.timers], tmout, func_name(callback), times)
+		self.tmids[#self.timers] = event.timer(tmout, callback, times)
+		log("dbg/timer/up", self.tmids[#self.timers], tmout, func_name(callback), times)
 	end
 end
 
@@ -94,12 +94,12 @@ end
 
 -- On a template
 function Daemon:start(...)
-	local inst = setmetatable({args = {...}, name = self.name .. "." .. libdaemon.INST_ID }, {__index = self})
+	local inst = setmetatable({args = {...}, name = self.name .. "." .. libdaemon.INST_ID, tmids = {}}, {__index = self})
 	libdaemon.INST_ID = libdaemon.INST_ID + 1
 	inst:init(...)
 	for idx, tmrspec in ipairs(inst.timers) do
-		inst.tmid[idx] = event.timer(tmrspec.tmout, tmrspec.callback, tmrspec.times)
-		log("dbg/timer/up", inst.tmid[idx], tmrspec.tmout, func_name(tmrspec.callback), tmrspec.times)
+		inst.tmids[idx] = event.timer(tmrspec.tmout, tmrspec.callback, tmrspec.times)
+		log("dbg/timer/up", inst.tmids[idx], tmrspec.tmout, func_name(tmrspec.callback), tmrspec.times)
 	end
 	for evn, cbs in pairs(inst.events) do
 		for idx, cb in ipairs(cbs) do
@@ -121,7 +121,7 @@ function Daemon:stop()
 		log("error/stop/rpt", self.name)
 		return false, 'already stopped'
 	end
-	for idx, tmid in pairs(self.tmid) do
+	for idx, tmid in pairs(self.tmids) do
 		local tmspec = self.timers[idx]
 		if tmspec == nil then
 			log("error/timer/down/nil", tmid, idx)
