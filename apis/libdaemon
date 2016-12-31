@@ -212,3 +212,5 @@ local function try_load(name)
 	end
 end
 libdaemon.try_load = try_load
+
+return libdaemon
