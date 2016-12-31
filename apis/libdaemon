@@ -59,7 +59,7 @@ function Daemon:protect(cb)
 end
 
 local function func_name(f)
-	local info = debug.getinfo(callback, "n")
+	local info = debug.getinfo(f, "n")
 	if info.name ~= nil then
 		return info.name
 	end
