@@ -10,7 +10,7 @@ if not CC then
 	colors = {
 		white = 0,
 		orange = 1,
-		magenta = 2
+		magenta = 2,
 		lightblue = 3,
 		lightBlue = 3,
 		yellow = 4,
