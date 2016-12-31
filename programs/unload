@@ -2,4 +2,8 @@ local args = {...}
 
 if #args < 1 then error("Usage: unload <libname>") end
 
-package.loaded[args[1]] = nil
+if package.loaded[args[1]] == nil then
+	print("warning: wasn't loaded")
+else
+	package.loaded[args[1]] = nil
+end

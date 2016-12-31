@@ -17,8 +17,7 @@ end
 local cmds = {
 	load = function()
 		if #args < 2 then error("Expected a daemon name") end
-		local res = libdaemon.try_load(args[2])
-		print("Load result:", res)
+		print("Load result:", libdaemon.try_load(args[2]))
 	end,
 	start = function()
 		if #args < 2 then error("Expected a daemon name") end
@@ -44,6 +43,7 @@ local cmds = {
 		for name, dmn in pairs(libdaemon.all) do
 			print('', name, dmn)
 		end
+		print('Running instances:')
 		for name, inst in pairs(libdaemon.insts) do
 			print('', name, inst)
 		end

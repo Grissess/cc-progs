@@ -5,5 +5,5 @@ lib/libdaemon.lua apis/libdaemon
 bin/vim.lua programs/vim
 bin/dctl.lua programs/dctl
 bin/unload.lua programs/unload
-daemon/heartbeat.lua daemons/heartbeat
+opt/daemon/heartbeat.lua daemons/heartbeat
 .manifest manifest.oc

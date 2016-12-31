@@ -5,5 +5,5 @@ programs/dctl programs/dctl
 programs/wget programs/wget
 apis/libtedit apis/libtedit
 apis/libdaemon apis/libdaemon
-daemon/heartbeat daemons/heartbeat
+opt/daemon/heartbeat daemons/heartbeat
 .manifest manifest.cc
