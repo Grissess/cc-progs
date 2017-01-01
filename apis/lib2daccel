@@ -148,7 +148,7 @@ end
 
 function Accel:set(x, y, text, vertical)
 	for idx = 1, #text do
-		local ch = text[idx]
+		local ch = text:sub(idx, idx)
 		if self:valid(x, y) then
 			local cell = self.lines[y][x]
 			cell.ch, cell.fg, cell.bg = ch, self.fg, self.bg
