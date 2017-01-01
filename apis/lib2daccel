@@ -18,6 +18,7 @@ local function new(dev)
 	res:flush(true)
 	return res
 end
+lib2daccel.new = new
 
 function Accel:clear()
 	if self.w == nil or self.h == nil then
