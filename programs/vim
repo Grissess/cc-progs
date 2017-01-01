@@ -1,4 +1,4 @@
-REVISION = 38
+REVISION = 39
 
 local CC = os.loadAPI ~= nil
 
@@ -601,7 +601,7 @@ if not CC then
 	acprox = accel:proxy()
 end
 
-buf.status = "oc-progs vim rev " .. REVISION .. " libtedit " .. libtedit.REVISION .. " - Grissess"
+buf.status = "oc-progs vim rev " .. REVISION .. " libtedit " .. libtedit.REVISION .. " lib2daccel " .. lib2daccel.REVISION .." - Grissess"
 if CC then
 	buf:blit(term)
 else

@@ -1,5 +1,8 @@
 local lib2daccel = {}
 
+REVISION = 1
+lib2daccel.REVISION = REVISION
+
 local Accel = {}
 Accel.mt = {
 	__index = Accel,
@@ -202,3 +205,5 @@ end
 function Accel:setForeground(fg)
 	self.fg = fg
 end
+
+return lib2daccel
