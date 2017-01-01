@@ -86,6 +86,9 @@ function Accel:flush(purge)
 			for x = 1, self.w do
 				local cur_cell = self.lines[y][x]
 				local disp_cell = self.disp_lines[y][x]
+				if not disp_cell then
+					disp_cell = {ch = ' ', fg = 0xFFFFFF, bg = 0}
+				end
 				if (cur_cell.ch ~= disp_cell.ch) or
 					(cur_cell.bg ~= disp_cell.bg) or
 					(cur_cell.fg ~= disp_cell.fg) then
