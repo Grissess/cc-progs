@@ -94,6 +94,9 @@ function Accel:flush(purge)
 					(cur_cell.fg ~= disp_cell.fg) then
 					if cur_x ~= nil then
 						if cur_cell.fg == cur_fg and cur_cell.bg == cur_bg then
+							if cur_buf == nil then
+								cur_buf = ''
+							end
 							cur_buf = cur_buf .. cur_cell.ch
 							do_blit = false
 						end
