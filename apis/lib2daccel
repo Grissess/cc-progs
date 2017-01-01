@@ -97,6 +97,9 @@ function Accel:flush(purge)
 							if cur_buf == nil then
 								cur_buf = ''
 							end
+							if cur_cell.ch == nil then
+								cur_cell.ch = ' '
+							end
 							cur_buf = cur_buf .. cur_cell.ch
 							do_blit = false
 						end
