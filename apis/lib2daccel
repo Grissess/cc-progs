@@ -207,4 +207,19 @@ function Accel:setForeground(fg)
 	self.fg = fg
 end
 
+local function _make_passthrough(meth)
+	return function(self, ...)
+		return self.dev[meth](...)
+	end
+end
+
+Accel.maxDepth = _make_passthrough('maxDepth')
+Accel.getDepth = _make_passthrough('getDepth')
+Accel.setDepth = _make_passthrough('setDepth')
+Accel.maxResolution = _make_passthrough('maxResolution')
+Accel.getResolution = _make_passthrough('getResolution')
+Accel.setResolution = _make_passthrough('setResolution')
+Accel.getScreen = _make_passthrough('getScreen')
+Accel.bind = _make_passthrough('bind')
+
 return lib2daccel
