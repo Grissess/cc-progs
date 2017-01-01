@@ -6,6 +6,7 @@ if CC then
 	os.loadAPI("/disk/apis/libtedit")
 else
 	libtedit = require('libtedit')
+	lib2daccel = require('lib2daccel')
 	component = require('component')
 	event = require('event')
 	shell = require('shell')
