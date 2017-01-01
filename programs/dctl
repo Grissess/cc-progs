@@ -11,6 +11,7 @@ if #args < 1 then
 	print('  stop <inst> - stop running daemon')
 	print('  unload <name> - unload a loaded daemon, stopping all of its running instances')
 	print('  list - lists instances and daemons')
+	print('  show - idem')
 	return 1
 end
 
@@ -49,6 +50,7 @@ local cmds = {
 		end
 	end,
 }
+cmds.show = cmds.list
 
 local handler = cmds[args[1]]
 if handler == nil then error("Bad command--see help") end
