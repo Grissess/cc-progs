@@ -318,7 +318,7 @@ buffer = {
 		local line = self.lines[y]
 		local rx = 1
 		for i = 1, math.min(#line, x) do
-			if line[i] == '\t' then
+			if line:sub(i, i) == '\t' then
 				rx = rx + (self.tabstop - (i-1) % self.tabstop)
 			else
 				rx = rx + 1
