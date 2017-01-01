@@ -317,7 +317,7 @@ buffer = {
 		x, y = self:clampxy(x, y)
 		local line = self.lines[y]
 		local rx = 1
-		for i = 1, math.min(#line, x) do
+		for i = 1, math.min(#line, x - 1) do
 			if line:sub(i, i) == '\t' then
 				rx = rx + (self.tabstop - (i-1) % self.tabstop)
 			else
