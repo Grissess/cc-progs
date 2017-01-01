@@ -1,0 +1,204 @@
+local lib2daccel = {}
+
+local Accel = {}
+Accel.mt = {
+	__index = Accel,
+}
+
+local function new(dev)
+	local res = setmetatable({
+		dev = dev,
+		fg = 0xFFFFFF,
+		bg = 0,
+	}, Accel.mt)
+	res:clear()
+	res:flush(true)
+	return res
+end
+
+function Accel:clear()
+	if self.w == nil or self.h == nil then
+		self.w, self.h = self.dev.getResolution()
+	end
+	self.lines = {}
+	for y = 1, self.h do
+		local row = {}
+		for x = 1, self.w do
+			table.insert(row, {
+				ch = ' ',
+				fg = 0xFFFFFF,
+				bg = 0,
+			})
+		end
+		table.insert(self.lines, row)
+	end
+end
+
+function Accel:flush(purge)
+	if purge then
+		self.disp_lines = {}
+		for y = 1, self.h do
+			local disp_row = {}
+			local cell = self.lines[y][1]
+			local cur_fg, cur_bg, cur_buf = cell.fg, cell.bg, cell.ch
+			local cur_x = 1
+			for x = 2, self.w do
+				cell = self.lines[y][x]
+				if cell.fg ~= cur_fg or cell.bg ~= cur_bg then
+					self.dev.setForeground(cur_fg)
+					self.dev.setBackground(cur_bg)
+					self.dev.set(cur_x, y, cur_buf)
+					cur_x = x
+					cur_fg, cur_bg, cur_buf = cell.fg, cell.bg, cell.ch
+				else
+					cur_buf = cur_buf .. cell.ch
+				end
+				table.insert(disp_row, {
+					ch = cell.ch,
+					fg = cell.fg,
+					bg = cell.bg,
+				})
+			end
+			self.dev.setForeground(cur_fg)
+			self.dev.setBackground(cur_bg)
+			self.dev.set(cur_x, y, cur_buf)
+			table.insert(self.disp_lines, disp_row)
+		end
+	else
+	--[[
+		The core of this algorithm is that we want to make the fewest calls to
+		the GPU as possible; to achieve this goal, we consider that processor
+		time is cheap, and look to optimize the number of calls to set() to
+		bring our current lines buffer to the current disp_lines buffer. In
+		general, this means we must look for spans in which cells differ in
+		characters, but colors remain the same.
+		Note that vertical blitting might be better in certain cases, but all
+		the ways I could figure to truly optimize the covering appeared to be
+		in NP, and processor time isn't *that* cheap...
+	]]--
+		for y = 1, self.h do
+			local disp_row = {}
+			local cur_x, cur_fg, cur_bg, cur_buf, do_blit = nil, nil, nil, '', true
+			for x = 1, self.w do
+				local cur_cell = self.lines[y][x]
+				local disp_cell = self.disp_lines[y][x]
+				if (cur_cell.ch ~= disp_cell.ch) or
+					(cur_cell.bg ~= disp_cell.bg) or
+					(cur_cell.fg ~= disp_cell.fg) then
+					if cur_x ~= nil then
+						if cur_cell.fg == cur_fg and cur_cell.bg == cur_bg then
+							cur_buf = cur_buf .. cur_cell.ch
+							do_blit = false
+						end
+					else
+						cur_x, cur_fg, cur_bg, cur_buf = x, cur_cell.fg, cur_cell.bg, cur_cell.ch
+						do_blit = false
+					end
+				end
+				if cur_x and do_blit then
+					self.dev.setForeground(cur_fg)
+					self.dev.setBackground(cur_bg)
+					self.dev.set(cur_x, y, cur_buf)
+					cur_x, cur_fg, cur_bg, cur_buf = nil, nil, nil, ''
+				end
+				do_blit = true
+				disp_cell.ch, disp_cell.fg, disp_cell.bg = cur_cell.ch, cur_cell.fg, cur_cell.bg
+			end
+			if cur_x then
+				self.dev.setForeground(cur_fg)
+				self.dev.setBackground(cur_bg)
+				self.dev.set(cur_x, y, cur_buf)
+			end
+		end
+	end
+end
+
+function Accel:valid(x, y)
+	return 1 <= x and x <= self.w and 1 <= y and y <= self.h
+end
+
+local function _proxy_inner(self, k)
+	return function(...)
+		return self.self[k](self.self, ...)
+	end
+end
+
+local _proxy_mt = {__index = _proxy_inner}
+
+function Accel:proxy()
+	return setmetatable({
+		self = self,
+		address = self.dev.address,
+		type = self.dev.type,
+	}, _proxy_mt)
+end
+
+function Accel:set(x, y, text, vertical)
+	for idx = 1, #text do
+		local ch = text[idx]
+		if self:valid(x, y) then
+			local cell = self.lines[y][x]
+			cell.ch, cell.fg, cell.bg = ch, self.fg, self.bg
+		end
+		if vertical then
+			y = y + 1
+			if y > self.h then
+				x = x + 1
+				y = 1
+			end
+		else
+			x = x + 1
+			if x > self.w then
+				y = y + 1
+				x = 1
+			end
+		end
+	end
+end
+
+function Accel:get(x, y)
+	if self:valid(x, y) then
+		local cell = self.lines[y][x]
+		return cell.ch, cell.fg, cell.bg, nil, nil
+	end
+	return nil
+end
+
+function Accel:fill(x, y, w, h, ch)
+	for sy = y, y + h - 1 do
+		for sx = x, x + w - 1 do
+			if self:valid(sx, sy) then
+				local cell = self.lines[sy][sx]
+				cell.ch, cell.fg, cell.bg = ch, self.fg, self.bg
+			end
+		end
+	end
+end
+
+function Accel:copy(x, y, w, h, dx, dy)
+	for sy = y, y + h - 1 do
+		for sx = x, x + w - 1 do
+			local tx, ty = sx + dx, sy + dy
+			if self:valid(sx, sy) and self:valid(dx, dy) then
+				local src, dst = self.lines[sy][sx], self.lines[dy][dx]
+				dst.ch, dst.fg, dst.bg = src.ch, src.fg, src.bg
+			end
+		end
+	end
+end
+
+function Accel:getBackground()
+	return self.bg, false
+end
+
+function Accel:setBackground(bg)
+	self.bg = bg
+end
+
+function Accel:getForeground()
+	return self.fg, false
+end
+
+function Accel:setForeground(fg)
+	self.fg = fg
+end

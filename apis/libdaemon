@@ -92,9 +92,24 @@ function Daemon:listen(ev, callback)
 	end
 end
 
+local function deep_copy(t)
+	if type(t) ~= 'table' then return t end
+	local res = {}
+	for k, v in pairs(t) do
+		res[deep_copy(k)] = deep_copy(v)
+	end
+	return res
+end
+
 -- On a template
 function Daemon:start(...)
-	local inst = setmetatable({args = {...}, name = self.name .. "." .. libdaemon.INST_ID, tmids = {}}, {__index = self})
+	local inst = setmetatable({
+		args = {...},
+		name = self.name .. "." .. libdaemon.INST_ID,
+		tmids = {},
+		timers = deep_copy(self.timers),
+		events = deep_copy(self.events),
+	}, {__index = self})
 	libdaemon.INST_ID = libdaemon.INST_ID + 1
 	inst:init(...)
 	for idx, tmrspec in ipairs(inst.timers) do

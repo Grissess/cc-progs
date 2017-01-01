@@ -303,12 +303,28 @@ buffer = {
 			text = text:sub(tw)
 		end
 
+		local vcx, vcy = self:virtual(self.cx, self.cy)
+
 		if CC then
-			term.setCursorPos(self.cx - self.sx + 1, self.cy - self.sy + 1)
+			term.setCursorPos(vcx - self.sx + 1, vcy - self.sy + 1)
 		else
-			term.setCursor(self.cx - self.sx + 1, self.cy - self.sy + 1)
+			term.setCursor(vcx - self.sx + 1, vcy - self.sy + 1)
 		end
 		term.setCursorBlink(true)
+	end,
+
+	virtual = function(self, x, y)
+		x, y = self:clampxy(x, y)
+		local line = self.lines[y]
+		local rx = 1
+		for i = 1, math.min(#line, x) do
+			if line[i] == '\t' then
+				rx = rx + (self.tabstop - (i-1) % self.tabstop)
+			else
+				rx = rx + 1
+			end
+		end
+		return rx, y
 	end,
 
 	insert = function(self, text)

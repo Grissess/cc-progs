@@ -2,6 +2,7 @@
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
+lib/lib2daccel.lua apis/lib2daccel
 bin/vim.lua programs/vim
 bin/dctl.lua programs/dctl
 bin/unload.lua programs/unload

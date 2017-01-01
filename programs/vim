@@ -595,13 +595,17 @@ if not CC then
 		component.gpu.setBackground(fg)
 		component.gpu.set(x, y, c)
 	end, math.huge)
+
+	accel = lib2daccel.new(component.gpu)
+	acprox = accel:proxy()
 end
 
 buf.status = "oc-progs vim rev " .. REVISION .. " libtedit " .. libtedit.REVISION .. " - Grissess"
 if CC then
 	buf:blit(term)
 else
-	buf:blit(component.gpu)
+	buf:blit(acprox)
+	accel:flush()
 end
 
 while running do
@@ -658,7 +662,8 @@ while running do
 	if CC then
 		buf:blit(term)
 	else
-		buf:blit(component.gpu)
+		buf:blit(acprox)
+		accel:flush()
 	end
 	buf.status = oldstatus
 end
