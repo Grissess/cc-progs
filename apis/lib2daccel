@@ -31,6 +31,7 @@ function Fb.copy(fb)
 		inst.fgs[i] = fb.fgs[i]
 		inst.bgs[i] = fb.bgs[i]
 	end
+	return inst
 end
 
 function Fb:clear()
