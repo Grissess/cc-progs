@@ -143,41 +143,36 @@ function Accel:flush(purge)
 	]]--
 		for y = 1, self.h do
 			local cur_x, cur_fg, cur_bg, cur_buf, do_blit = nil, nil, nil, '', true
-			for x = 1, self.w do
+			local x = 1
+			while x <= self.w do
 				local cur_cell = Cell(self.rfb:get(x, y))
 				local disp_cell = Cell(self.dfb:get(x, y))
 				if (cur_cell.ch ~= disp_cell.ch) or
 					(cur_cell.bg ~= disp_cell.bg) or
 					(cur_cell.fg ~= disp_cell.fg) then
-					if cur_x ~= nil then
-						if cur_cell.fg == cur_fg and cur_cell.bg == cur_bg then
-							if cur_buf == nil then
-								cur_buf = ''
-							end
-							if cur_cell.ch == nil then
-								cur_cell.ch = ' '
-							end
-							cur_buf = cur_buf .. cur_cell.ch
-							do_blit = false
+					local sx, nx = x + 1
+					local buf = cur_cell.ch
+					while nx <= self.w do
+						cur_cell = Cell(self.rfb:get(nx, y))
+						disp_cell = Cell(self.dfb:get(nx, y))
+						if cur_cell.ch == disp_cell.ch or
+							cur_cell.fg ~= disp_cell.fg or
+							cur_cell.bg ~= disp_cell.bg then
+							break
 						end
-					else
-						cur_x, cur_fg, cur_bg, cur_buf = x, cur_cell.fg, cur_cell.bg, cur_cell.ch
-						do_blit = false
+						buf = buf .. cur_cell.ch
+						nx = nx + 1
 					end
+					for ix = sx, nx - 1 do
+						self.dfb:set(ix, y, self.rfb:get(ix, y))
+					end
+					self.dev.setForeground(cur_cell.fg)
+					self.dev.setBackground(cur_cell.bg)
+					self.dev.set(sx, y, buf)
+					x = nx
+				else
+					x = x + 1
 				end
-				if cur_x and do_blit then
-					self.dev.setForeground(cur_fg)
-					self.dev.setBackground(cur_bg)
-					self.dev.set(cur_x, y, cur_buf)
-					cur_x, cur_fg, cur_bg, cur_buf = nil, nil, nil, ''
-				end
-				do_blit = true
-				self.dfb:set(x, y, self.rfb:get(x, y))
-			end
-			if cur_x then
-				self.dev.setForeground(cur_fg)
-				self.dev.setBackground(cur_bg)
-				self.dev.set(cur_x, y, cur_buf)
 			end
 		end
 	end
