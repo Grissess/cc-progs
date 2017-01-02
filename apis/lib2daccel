@@ -1,6 +1,6 @@
 local lib2daccel = {}
 
-REVISION = 2
+REVISION = 3
 lib2daccel.REVISION = REVISION
 
 local Fb = {}
