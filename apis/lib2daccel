@@ -150,6 +150,7 @@ function Accel:flush(purge)
 				if (cur_cell.ch ~= disp_cell.ch) or
 					(cur_cell.bg ~= disp_cell.bg) or
 					(cur_cell.fg ~= disp_cell.fg) then
+					local fg, bg = cur_cell.fg, cur_cell.bg
 					local sx, nx = x, x + 1
 					local buf = cur_cell.ch
 					while nx <= self.w do
@@ -166,8 +167,8 @@ function Accel:flush(purge)
 					for ix = sx, nx - 1 do
 						self.dfb:set(ix, y, self.rfb:get(ix, y))
 					end
-					self.dev.setForeground(cur_cell.fg)
-					self.dev.setBackground(cur_cell.bg)
+					self.dev.setForeground(fg)
+					self.dev.setBackground(bg)
 					self.dev.set(sx, y, buf)
 					x = nx
 				else
