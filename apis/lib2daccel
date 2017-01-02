@@ -45,6 +45,8 @@ function Fb:clear()
 end
 
 function Fb:set(x, y, ch, fg, bg)
+	x = x - 1
+	y = y - 1
 	local idx = y * self.w + x
 	if ch ~= nil then
 		self.chs[idx] = ch
@@ -58,6 +60,8 @@ function Fb:set(x, y, ch, fg, bg)
 end
 
 function Fb:get(x, y)
+	x = x - 1
+	y = y - 1
 	local idx = y * self.w + x
 	if idx < 0 or idx >= self.w * self.h then
 		error('Illegal Fb index ' .. idx .. '(x=' .. x .. ', y=' .. y .. ')')
