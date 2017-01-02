@@ -59,6 +59,9 @@ end
 
 function Fb:get(x, y)
 	local idx = y * self.w + x
+	if idx < 0 or idx >= self.w * self.h then
+		error('Illegal Fb index ' .. idx .. '(x=' .. x .. ', y=' .. y .. ')')
+	end
 	return self.chs[idx], self.fgs[idx], self.bgs[idx]
 end
 
