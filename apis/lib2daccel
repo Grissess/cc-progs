@@ -1,7 +1,74 @@
 local lib2daccel = {}
 
-REVISION = 1
+REVISION = 2
 lib2daccel.REVISION = REVISION
+
+local Fb = {}
+lib2daccel.Fb = Fb
+Fb.mt = {
+	__index = Fb
+}
+
+function Fb.new(w, h)
+	local res = setmetatable({
+		w = w,
+		h = h,
+	}, Fb.mt)
+	res:clear()
+	return res
+end
+
+function Fb.copy(fb)
+	local inst = setmetatable({
+		w = fb.w,
+		h = fb.h,
+	}, Fb.mt)
+	inst.chs = {}
+	inst.fgs = {}
+	inst.bgs = {}
+	for i = 0, inst.w * inst.h - 1 do
+		inst.chs[i] = fb.chs[i]
+		inst.fgs[i] = fb.fgs[i]
+		inst.bgs[i] = fb.bgs[i]
+	end
+end
+
+function Fb:clear()
+	self.chs = {}
+	self.fgs = {}
+	self.bgs = {}
+	for i = 0, self.w * self.h - 1 do
+		self.chs[i] = ' '
+		self.fgs[i] = 0xFFFFFF
+		self.bgs[i] = 0
+	end
+end
+
+function Fb:set(x, y, ch, fg, bg)
+	local idx = y * self.w + x
+	if ch ~= nil then
+		self.chs[idx] = ch
+	end
+	if fg ~= nil then
+		self.fgs[idx] = fg
+	end
+	if bg ~= nil then
+		self.bgs[idx] = bg
+	end
+end
+
+function Fb:set(x, y)
+	local idx = y * self.w + x
+	return self.chs[idx], self.fgs[idx], self.bgs[idx]
+end
+
+function Cell(ch, fg, bg)
+	return {
+		ch = ch,
+		fg = fg,
+		bg = bg,
+	}
+end
 
 local Accel = {}
 Accel.mt = {
@@ -24,30 +91,21 @@ function Accel:clear()
 	if self.w == nil or self.h == nil then
 		self.w, self.h = self.dev.getResolution()
 	end
-	self.lines = {}
-	for y = 1, self.h do
-		local row = {}
-		for x = 1, self.w do
-			table.insert(row, {
-				ch = ' ',
-				fg = 0xFFFFFF,
-				bg = 0,
-			})
-		end
-		table.insert(self.lines, row)
+	if self.rfb == nil then
+		self.rfb = Fb.new(self.w, self.h)
+	else
+		self.rfb:clear()
 	end
 end
 
 function Accel:flush(purge)
 	if purge then
-		self.disp_lines = {}
 		for y = 1, self.h do
-			local disp_row = {}
-			local cell = self.lines[y][1]
+			local cell = Cell(self.rfb:get(1, y))
 			local cur_fg, cur_bg, cur_buf = cell.fg, cell.bg, cell.ch
 			local cur_x = 1
 			for x = 2, self.w do
-				cell = self.lines[y][x]
+				cell = Cell(self.rfb:get(x, y))
 				if cell.fg ~= cur_fg or cell.bg ~= cur_bg then
 					self.dev.setForeground(cur_fg)
 					self.dev.setBackground(cur_bg)
@@ -57,17 +115,12 @@ function Accel:flush(purge)
 				else
 					cur_buf = cur_buf .. cell.ch
 				end
-				table.insert(disp_row, {
-					ch = cell.ch,
-					fg = cell.fg,
-					bg = cell.bg,
-				})
 			end
 			self.dev.setForeground(cur_fg)
 			self.dev.setBackground(cur_bg)
 			self.dev.set(cur_x, y, cur_buf)
-			table.insert(self.disp_lines, disp_row)
 		end
+		self.dfb = Fb.copy(self.rfb)
 	else
 	--[[
 		The core of this algorithm is that we want to make the fewest calls to
@@ -81,14 +134,10 @@ function Accel:flush(purge)
 		in NP, and processor time isn't *that* cheap...
 	]]--
 		for y = 1, self.h do
-			local disp_row = {}
 			local cur_x, cur_fg, cur_bg, cur_buf, do_blit = nil, nil, nil, '', true
 			for x = 1, self.w do
-				local cur_cell = self.lines[y][x]
-				local disp_cell = self.disp_lines[y][x]
-				if not disp_cell then
-					disp_cell = {ch = ' ', fg = 0xFFFFFF, bg = 0}
-				end
+				local cur_cell = Cell(self.rfb:get(x, y))
+				local disp_cell = Cell(self.dfb:get(x, y))
 				if (cur_cell.ch ~= disp_cell.ch) or
 					(cur_cell.bg ~= disp_cell.bg) or
 					(cur_cell.fg ~= disp_cell.fg) then
@@ -115,7 +164,7 @@ function Accel:flush(purge)
 					cur_x, cur_fg, cur_bg, cur_buf = nil, nil, nil, ''
 				end
 				do_blit = true
-				disp_cell.ch, disp_cell.fg, disp_cell.bg = cur_cell.ch, cur_cell.fg, cur_cell.bg
+				self.dfb:set(x, y, self.rfb:get(x, y))
 			end
 			if cur_x then
 				self.dev.setForeground(cur_fg)
@@ -150,8 +199,7 @@ function Accel:set(x, y, text, vertical)
 	for idx = 1, #text do
 		local ch = text:sub(idx, idx)
 		if self:valid(x, y) then
-			local cell = self.lines[y][x]
-			cell.ch, cell.fg, cell.bg = ch, self.fg, self.bg
+			self.rfb:set(x, y, ch, self.fg, self.bg)
 		end
 		if vertical then
 			y = y + 1
@@ -171,8 +219,7 @@ end
 
 function Accel:get(x, y)
 	if self:valid(x, y) then
-		local cell = self.lines[y][x]
-		return cell.ch, cell.fg, cell.bg, nil, nil
+		return self.rfb:get(x, y)
 	end
 	return nil
 end
@@ -181,8 +228,7 @@ function Accel:fill(x, y, w, h, ch)
 	for sy = y, y + h - 1 do
 		for sx = x, x + w - 1 do
 			if self:valid(sx, sy) then
-				local cell = self.lines[sy][sx]
-				cell.ch, cell.fg, cell.bg = ch, self.fg, self.bg
+				self.rfb:set(sx, sy, ch, self.fg, self.bg)
 			end
 		end
 	end
@@ -193,8 +239,7 @@ function Accel:copy(x, y, w, h, dx, dy)
 		for sx = x, x + w - 1 do
 			local tx, ty = sx + dx, sy + dy
 			if self:valid(sx, sy) and self:valid(dx, dy) then
-				local src, dst = self.lines[sy][sx], self.lines[dy][dx]
-				dst.ch, dst.fg, dst.bg = src.ch, src.fg, src.bg
+				self.rfb:set(dx, dy, self.rfb:get(sx, sy))
 			end
 		end
 	end

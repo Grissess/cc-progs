@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 38
+REVISION = 39
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -171,6 +171,8 @@ else
 	function term_blit(gpu, text, fg, line, ts)
 		if #text <= 0 then return end
 		if #text ~= #fg then error("text and fg must be of same length") end
+		--[[
+		lib2daccel handles most of this now
 		local idx = 1
 		local curx = 1
 		local stx = 1
@@ -193,6 +195,23 @@ else
 		end
 		if #buffer > 0 then
 			gpu.set(stx, line, buffer)
+		end
+		]]--
+		local rx = 1
+		for idx = 1, #text do
+			local ch = text:sub(idx, idx)
+			local col = real_colors[revcolmap[fg:sub(idx, idx)]]
+			gpu.setForeground(col)
+			local nx = rx + 1
+			if ch == '\t' then
+				nx = rx + ts - (rx-1) % ts
+				for x = rx, nx - 1 do
+					gpu.set(x, line, ' ')
+				end
+			else
+				gpu.set(rx, line, ch)
+			end
+			rx = nx
 		end
 	end
 end
