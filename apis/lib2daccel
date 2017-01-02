@@ -150,7 +150,7 @@ function Accel:flush(purge)
 				if (cur_cell.ch ~= disp_cell.ch) or
 					(cur_cell.bg ~= disp_cell.bg) or
 					(cur_cell.fg ~= disp_cell.fg) then
-					local sx, nx = x + 1
+					local sx, nx = x, x + 1
 					local buf = cur_cell.ch
 					while nx <= self.w do
 						cur_cell = Cell(self.rfb:get(nx, y))
