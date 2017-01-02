@@ -418,6 +418,9 @@ local modes = {
 	delete = function(char, key)
 		if char == "d" then
 			table.remove(buf.lines, buf.cy)
+			if #buf.lines < 1 then
+				table.insert(buf.lines, '')
+			end
 			buf:setcursor(buf.cx, buf.cy)
 			buf.status = "Line deleted"
 		end
