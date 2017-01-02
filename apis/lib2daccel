@@ -106,7 +106,7 @@ function Accel:clear()
 end
 
 function Accel:flush(purge)
-	if purge then
+	if purge or self.dfb == nil then
 		for y = 1, self.h do
 			local cell = Cell(self.rfb:get(1, y))
 			local cur_fg, cur_bg, cur_buf = cell.fg, cell.bg, cell.ch
