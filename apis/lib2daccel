@@ -57,7 +57,7 @@ function Fb:set(x, y, ch, fg, bg)
 	end
 end
 
-function Fb:set(x, y)
+function Fb:get(x, y)
 	local idx = y * self.w + x
 	return self.chs[idx], self.fgs[idx], self.bgs[idx]
 end
