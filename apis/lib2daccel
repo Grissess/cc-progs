@@ -107,6 +107,7 @@ function Accel:clear()
 end
 
 function Accel:flush(purge)
+	local ops = 0
 	if purge or self.dfb == nil then
 		for y = 1, self.h do
 			local cell = Cell(self.rfb:get(1, y))
@@ -118,6 +119,7 @@ function Accel:flush(purge)
 					self.dev.setForeground(cur_fg)
 					self.dev.setBackground(cur_bg)
 					self.dev.set(cur_x, y, cur_buf)
+					ops = ops + 1
 					cur_x = x
 					cur_fg, cur_bg, cur_buf = cell.fg, cell.bg, cell.ch
 				else
@@ -127,6 +129,7 @@ function Accel:flush(purge)
 			self.dev.setForeground(cur_fg)
 			self.dev.setBackground(cur_bg)
 			self.dev.set(cur_x, y, cur_buf)
+			ops = ops + 1
 		end
 		self.dfb = Fb.copy(self.rfb)
 	else
@@ -170,6 +173,7 @@ function Accel:flush(purge)
 					self.dev.setForeground(fg)
 					self.dev.setBackground(bg)
 					self.dev.set(sx, y, buf)
+					ops = ops + 1
 					x = nx
 				else
 					x = x + 1
@@ -177,6 +181,7 @@ function Accel:flush(purge)
 			end
 		end
 	end
+	return ops
 end
 
 function Accel:valid(x, y)

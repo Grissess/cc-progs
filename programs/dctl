@@ -9,6 +9,8 @@ if #args < 1 then
 	print('  load <name> - load (but do not start) a daemon')
 	print('  start <name> <args>... - start loaded daemon, passing it args--gives an instance name')
 	print('  stop <inst> - stop running daemon')
+	print('  restart <inst> <args>... - stop the instance, then start it again')
+	print('  reload <inst> - same as above, but use the same args as when it was started')
 	print('  unload <name> - unload a loaded daemon, stopping all of its running instances')
 	print('  list - lists instances and daemons')
 	print('  show - idem')
@@ -33,6 +35,24 @@ local cmds = {
 		if inst == nil then error("No such instance") end
 		inst:stop()
 		print("Stopped:", inst)
+	end,
+	restart = function()
+		if #args < 2 then error("Expected an instance name") end
+		local inst = libdaemon.get_inst(args[2])
+		if inst == nil then error("No such instance") end
+		inst:stop()
+		print("Stopped:", inst)
+		inst = inst.template:start(table.unpack(args, 3))
+		print("Started as " .. inst.name .. ":", inst)
+	end,
+	reload = function()
+		if #args < 2 then error("Expected an instance name") end
+		local inst = libdaemon.get_inst(args[2])
+		if inst == nil then error("No such instance") end
+		inst:stop()
+		print("Stopped:", inst)
+		inst = inst.template:start(table.unpack(inst.args))
+		print("Started as " .. inst.name .. ":", inst)
 	end,
 	unload = function()
 		if #args < 2 then error("Expected a daemon name") end

@@ -109,6 +109,7 @@ function Daemon:start(...)
 		tmids = {},
 		timers = deep_copy(self.timers),
 		events = deep_copy(self.events),
+		template = self,
 	}, {__index = self})
 	libdaemon.INST_ID = libdaemon.INST_ID + 1
 	inst:init(...)
