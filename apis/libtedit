@@ -91,6 +91,9 @@ highlighter = {
 	end,
 
 	highlight = function(self, text, cs)
+		if not cs then
+			return string.rep('0', #text)
+		end
 		local fg = string.rep(colormap[cs.default], #text)
 		for class, matches in pairs(self.classes) do
 			for idx, match in ipairs(matches) do
