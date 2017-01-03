@@ -101,7 +101,7 @@ function Daemon:config(data)
 		if not f then
 			return nil, err
 		end
-		data = f:read("a")
+		data = f:read("*a")
 		f:close()
 		return serialization.unserialize(data)
 	else
