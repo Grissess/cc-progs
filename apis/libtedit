@@ -312,7 +312,7 @@ buffer = {
 		end
 		self.dirty = false
 
-		if not monochrome then
+		if not self.monochrome then
 			if CC then
 				disp.setTextColor(colset.status or colset.default)
 			else
