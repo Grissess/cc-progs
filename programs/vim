@@ -1,4 +1,4 @@
-REVISION = 39
+REVISION = 40
 
 local CC = os.loadAPI ~= nil
 
@@ -676,7 +676,9 @@ while running do
 		buf:blit(acprox)
 		local stime = computer.uptime()
 		local ops = accel:flush()
-		component.modem.broadcast(12345, 'RIs', ops, computer.uptime() - stime)
+		if options.debug then
+			component.modem.broadcast(12345, 'RIs', ops, computer.uptime() - stime)
+		end
 	end
 	buf.status = oldstatus
 end
