@@ -79,7 +79,7 @@ local cmds = {
 			print(nm)
 		end
 	end,
-	showcfg = function()
+	defaults = function()
 		if #args < 2 then error("Expected a daemon name") end
 		local dmn = libdaemon.get(args[2])
 		if dmn == nil then error("Daemon not loaded--have you tried load?") end
