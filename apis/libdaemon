@@ -239,7 +239,7 @@ local function available()
 		local iter, obj = filesystem.list(dpth)
 		if iter then
 			for fname in iter, obj do
-				table.insert(res, filesystem.concat(dpth, fname))
+				res[fname] = true
 			end
 		end
 	end

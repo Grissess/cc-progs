@@ -72,9 +72,9 @@ local cmds = {
 		end
 	end,
 	available = function()
-		print('Available daemons')
+		print('Apparently available daemons:')
 		local av = libdaemon.available()
-		for idx, nm in ipairs(av) do
+		for nm, _ in pairs(av) do
 			print(nm)
 		end
 	end,
