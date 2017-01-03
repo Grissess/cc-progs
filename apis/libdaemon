@@ -4,8 +4,10 @@ local process = require('process')
 local event = require('event')
 local filesystem = require('filesystem')
 local component = require('component')
+local serialization = require('serialization')
 
 libdaemon.DAEMON_PATH = "/opt/daemon/?.lua;/opt/daemon/?;/usr/opt/daemon/?.lua;/usr/opt/daemon/?"
+libdaemon.CONFIG_DIR = "/etc/daemon/"
 
 local all = {}
 libdaemon.all = all
@@ -92,6 +94,27 @@ function Daemon:listen(ev, callback)
 	end
 end
 
+function Daemon:config(data)
+	local fname = self.template.name
+	if data == nil then
+		local f, err = io.open(filesystem.concat(libdaemon.CONFIG_DIR, fname), 'r')
+		if not f then
+			return nil, err
+		end
+		data = f:read("a")
+		f:close()
+		return serialization.unserialize(data)
+	else
+		local f, err = io.open(filesystem.concat(libdaemon.CONFIG_DIR, fname), 'w')
+		if not f then
+			return false, err
+		end
+		f:write(serialization.serialize(data))
+		f:close()
+		return true
+	end
+end
+
 local function deep_copy(t)
 	if type(t) ~= 'table' then return t end
 	local res = {}
@@ -112,6 +135,13 @@ function Daemon:start(...)
 		template = self,
 	}, {__index = self})
 	libdaemon.INST_ID = libdaemon.INST_ID + 1
+	inst.cfg = inst:config()
+	if not inst.cfg then
+		inst.cfg = {}
+	end
+	if self.defaults then
+		inst.cfg = setmetatable(inst.cfg, {__index = self.defaults})
+	end
 	inst:init(...)
 	for idx, tmrspec in ipairs(inst.timers) do
 		inst.tmids[idx] = event.timer(tmrspec.tmout, tmrspec.callback, tmrspec.times)

@@ -16,6 +16,7 @@ if #args < 1 then
 	print('  show - idem')
 	print('  available - show a (possibly incomplete) list of files that look like loadable daemons')
 	print('  avail - idem')
+	print('  defaults <name> - shows default configuration values for a daemon')
 	return 1
 end
 
@@ -76,6 +77,19 @@ local cmds = {
 		local av = libdaemon.available()
 		for nm, _ in pairs(av) do
 			print(nm)
+		end
+	end,
+	showcfg = function()
+		if #args < 2 then error("Expected a daemon name") end
+		local dmn = libdaemon.get(args[2])
+		if dmn == nil then error("Daemon not loaded--have you tried load?") end
+		print("Default config for " .. dmn.name .. ":")
+		if dmn.defaults == nil then
+			print("(no defaults)")
+		else
+			for k, v in pairs(dmn.defaults) do
+				print(tostring(k) .. " = " .. tostring(v))
+			end
 		end
 	end,
 }

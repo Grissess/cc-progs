@@ -2,23 +2,17 @@ local libdaemon = require('libdaemon')
 local component = require('component')
 local computer = require('computer')
 
-local DEFAULT = {
-	PORT = 7,
-	TMOUT = 1,
-}
-
 local dmn = libdaemon.new('heartbeat')
 
+dmn.defaults = {
+	port = 7,
+	tmout = 1,
+}
+
 dmn.init = function(self, prt, tmout)
-	if prt == nil then prt = DEFAULT.PORT end
-	prt = tonumber(prt)
-	if tmout == nil then tmout = DEFAULT.TMOUT end
-	tmout = tonumber(tmout)
-	self.prt = prt
-	self.tmout = tmout
-	self:timer(self.tmout, function()
+	self:timer(self.cfg.tmout, function()
 		for cm in component.list("modem") do
-			component.invoke(cm, "broadcast", self.prt, 'HB', computer.address(), computer.uptime())
+			component.invoke(cm, "broadcast", self.cfg.port, 'HB', computer.address(), computer.uptime())
 		end
 		for cm in component.list("tunnel") do
 			component.invoke(cm, "send", 'HB', computer.address(), computer.uptime())
