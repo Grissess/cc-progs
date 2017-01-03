@@ -14,6 +14,8 @@ if #args < 1 then
 	print('  unload <name> - unload a loaded daemon, stopping all of its running instances')
 	print('  list - lists instances and daemons')
 	print('  show - idem')
+	print('  available - show a (possibly incomplete) list of files that look like loadable daemons')
+	print('  avail - idem')
 	return 1
 end
 
@@ -69,8 +71,16 @@ local cmds = {
 			print('', name, inst)
 		end
 	end,
+	available = function()
+		print('Available daemons')
+		local av = libdaemon.available()
+		for idx, nm in ipairs(av) do
+			print(nm)
+		end
+	end,
 }
 cmds.show = cmds.list
+cmds.avail = cmds.available
 
 local handler = cmds[args[1]]
 if handler == nil then error("Bad command--see help") end

@@ -231,4 +231,20 @@ local function try_load(name)
 end
 libdaemon.try_load = try_load
 
+-- FIXME: only works for daemon files
+local function available()
+	local res = {}
+	for pth in libdaemon.DAEMON_PATH:gmatch("[^;]+") do
+		local dpth = filesystem.path(pth)
+		local iter, obj = filesystem.list(dpth)
+		if iter then
+			for fname in iter, obj do
+				table.insert(res, filesystem.concat(dpth, fname))
+			end
+		end
+	end
+	return res
+end
+libdaemon.available = available
+
 return libdaemon
