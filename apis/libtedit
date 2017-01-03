@@ -114,14 +114,14 @@ libtedit.highlighter = highlighter
 syntaxes = {
 	none = highlighter.new({}),
 	lua = highlighter.new({  -- TODO: All of these need some contextual awareness
-		oper = {"%{", "%}", ",", "%(", "%)", "%+"},
+		oper = {"%{", "%}", ",", "%(", "%)", "%+", "%=%=", "%~%=", "%<", "%>", "%<%=", "%>%="},
 		member = {"%.", ":"},
 		digit = {"%d"},
-		keyword = {"function", "if", "then", "else", "while", "for", "in", "do", "end", "return", "local", "true", "false", "nil", "and", "or"},
+		keyword = {"function", "if", "then", "else", "while", "repeat", "until", "for", "in", "do", "end", "return", "local", "true", "false", "nil", "and", "or"},
 		func = {  -- FIXME
 			"setmetatable", "getmetatable", "pairs", "ipairs", "unpack", "error", "print",
 			"tonumber", "tostring",
-			"table%.insert", "table%.remove", "table%.concat", "table%.unpack",
+			"table%.insert", "table%.remove", "table%.concat", "table%.unpack", "table%.pack",
 			"string%.rep", "string%.find", "string%.match", "string%.gmatch", "string%.gsub",
 			"io.open",
 		},
