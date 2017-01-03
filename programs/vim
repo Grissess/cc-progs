@@ -19,7 +19,7 @@ else
 	fs.isDir = filesystem.isDirectory
 end
 
-local args = {...}
+local args, options = shell.parse(...)
 
 local text = ""
 local path = nil
@@ -33,6 +33,12 @@ if #args > 0 then
 end
 
 local buf = libtedit.buffer.new(text)
+if options.color == "low" then
+	buf.colset = libtedit.colorschema.gray
+end
+if options.color == "none" then
+	buf.monochrome = true
+end
 local op = nil
 local reg = ""
 local entry = ""

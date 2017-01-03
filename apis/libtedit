@@ -168,7 +168,7 @@ else
 		[colors.white] = 0xFFFFFF,
 	}
 	libtedit.real_colors = real_colors
-	function term_blit(gpu, text, fg, line, ts)
+	function term_blit(gpu, text, fg, line, ts, mc)
 		if #text <= 0 then return end
 		if #text ~= #fg then error("text and fg must be of same length") end
 		--[[
@@ -200,8 +200,10 @@ else
 		local rx = 1
 		for idx = 1, #text do
 			local ch = text:sub(idx, idx)
-			local col = real_colors[revcolmap[fg:sub(idx, idx)]]
-			gpu.setForeground(col)
+			if not mc then
+				local col = real_colors[revcolmap[fg:sub(idx, idx)]]
+				gpu.setForeground(col)
+			end
 			local nx = rx + 1
 			if ch == '\t' then
 				nx = rx + ts - (rx-1) % ts
@@ -277,10 +279,13 @@ buffer = {
 			disp.setBackground(0x000000)
 		end
 		local colset
-		if (not CC) or disp.isColor() then
-			colset = colorschema.full
-		else
-			colset = colorschema.gray
+		if not self.monochrome then
+			colset = self.colset
+			if (not colset) and ((not CC) or disp.isColor()) then
+				colset = colorschema.full
+			else
+				colset = colorschema.gray
+			end
 		end
 
 		if CC then
@@ -296,7 +301,7 @@ buffer = {
 					disp.setCursorPos(1, ty)
 					term_blit(disp, str, fg)
 				else
-					term_blit(disp, str, fg, ty, self.tabstop)
+					term_blit(disp, str, fg, ty, self.tabstop, self.monochrome)
 				end
 			end
 			ty = ty + 1
@@ -304,10 +309,12 @@ buffer = {
 		end
 		self.dirty = false
 
-		if CC then
-			disp.setTextColor(colset.status or colset.default)
-		else
-			disp.setForeground(libtedit.real_colors[colset.status or colset.default])
+		if not monochrome then
+			if CC then
+				disp.setTextColor(colset.status or colset.default)
+			else
+				disp.setForeground(libtedit.real_colors[colset.status or colset.default])
+			end
 		end
 		local text = self.status
 		local ly = ts + 1
