@@ -1,5 +1,6 @@
 local libdaemon = require('libdaemon')
 local component = require('component')
+local event = require('event')
 
 local args = {...}
 
@@ -17,6 +18,7 @@ if #args < 1 then
 	print('  available - show a (possibly incomplete) list of files that look like loadable daemons')
 	print('  avail - idem')
 	print('  defaults <name> - shows default configuration values for a daemon')
+	print('  logcat - prints out (fresh) debug log entries while running, press any key to stop')
 	return 1
 end
 
@@ -90,6 +92,21 @@ local cmds = {
 			for k, v in pairs(dmn.defaults) do
 				print(tostring(k) .. " = " .. tostring(v))
 			end
+		end
+	end,
+	logcat = function()
+		table.insert(libdaemon.loggers, print)
+		event.pull('key_up')
+		local found = false
+		for idx, v in ipairs(libdaemon.loggers) do
+			if v == print then
+				table.remove(libdaemon.loggers, idx)
+				found = true
+				break
+			end
+		end
+		if not found then
+			print('WARNING: did not remove logging function, you may still get spam')
 		end
 	end,
 }

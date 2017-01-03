@@ -115,6 +115,10 @@ function Daemon:config(data)
 	end
 end
 
+function Daemon:log(ev, ...)
+	log(ev, self.name, ...)
+end
+
 local function deep_copy(t)
 	if type(t) ~= 'table' then return t end
 	local res = {}

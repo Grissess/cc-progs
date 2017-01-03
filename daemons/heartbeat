@@ -7,10 +7,14 @@ local dmn = libdaemon.new('heartbeat')
 dmn.defaults = {
 	port = 7,
 	tmout = 1,
+	loglevel = 0,
 }
 
 dmn.init = function(self, prt, tmout)
 	self:timer(self.cfg.tmout, function()
+		if self.cfg.loglevel >= 1 then
+			self:log("beat")
+		end
 		for cm in component.list("modem") do
 			component.invoke(cm, "broadcast", self.cfg.port, 'HB', computer.address(), computer.uptime())
 		end
