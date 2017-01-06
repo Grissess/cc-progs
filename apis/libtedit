@@ -117,7 +117,7 @@ syntaxes = {
 		oper = {"%{", "%}", ",", "%(", "%)", "%+", "%=%=", "%~%=", "%<", "%>", "%<%=", "%>%="},
 		member = {"%.", ":"},
 		digit = {"%d"},
-		keyword = {"function", "if", "then", "else", "while", "repeat", "until", "for", "in", "do", "end", "return", "local", "true", "false", "nil", "and", "or"},
+		keyword = {"function", "if", "then", "else", "while", "repeat", "until", "for", "in", "do", "end", "return", "local", "true", "false", "nil", "and", "or", "not", "self"},
 		func = {  -- FIXME
 			"setmetatable", "getmetatable", "pairs", "ipairs", "unpack", "error", "print",
 			"tonumber", "tostring",
@@ -171,36 +171,14 @@ else
 		[colors.white] = 0xFFFFFF,
 	}
 	libtedit.real_colors = real_colors
-	function term_blit(gpu, text, fg, line, ts, mc)
+	function term_blit(gpu, text, syn, cs, line, ts, mc)
 		if #text <= 0 then return end
-		if #text ~= #fg then error("text and fg must be of same length") end
-		--[[
-		lib2daccel handles most of this now
-		local idx = 1
-		local curx = 1
-		local stx = 1
-		local curcol = nil
-		local buffer = ""
-		while idx <= #text do
-			if revcolmap[fg:sub(idx, idx)] ~= curcol then
-				if #buffer > 0 then
-					while buffer:find('\t') ~= nil do buffer = buffer:gsub('()\t', function(i) return string.rep(" ", (ts - (i-1) % ts)) end, 1) end
-					gpu.set(stx, line, buffer)
-					curx = curx + #buffer
-				end
-				buffer = ""
-				stx = curx
-				curcol = revcolmap[fg:sub(idx, idx)]
-				gpu.setForeground(real_colors[curcol])
-			end
-			buffer = buffer .. text:sub(idx, idx)
-			idx = idx + 1
-		end
-		if #buffer > 0 then
-			gpu.set(stx, line, buffer)
-		end
-		]]--
+		-- lib2daccel handles acceleration for this, so this is intentionally naive
 		local rx = 1
+		local fg
+		if not mc then
+			fg = syn:highlight(text, cs)
+		end
 		for idx = 1, #text do
 			local ch = text:sub(idx, idx)
 			if not mc then
@@ -299,12 +277,11 @@ buffer = {
 		while ty <= ts and by <= #self.lines do
 			local str = self.lines[by]:sub(bx, bx + tw - 1)
 			if #str > 0 then
-				local fg = self.syntax:highlight(str, colset)
 				if CC then 
 					disp.setCursorPos(1, ty)
-					term_blit(disp, str, fg)
+					term_blit(disp, str, self.syntax, colset)
 				else
-					term_blit(disp, str, fg, ty, self.tabstop, self.monochrome)
+					term_blit(disp, str, self.syntax, colset, ty, self.tabstop, self.monochrome)
 				end
 			end
 			ty = ty + 1

@@ -96,7 +96,7 @@ local cmds = {
 	end,
 	logcat = function()
 		table.insert(libdaemon.loggers, print)
-		event.pull('key_up')
+		event.pull('key_down')
 		local found = false
 		for idx, v in ipairs(libdaemon.loggers) do
 			if v == print then
