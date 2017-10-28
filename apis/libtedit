@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 42
+REVISION = 43
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -232,8 +232,12 @@ buffer = {
 		self.cx, self.cy = self:clampxy(x, y)
 		if self.cy < self.sy then self.sy = self.cy end
 		if self.cy > self.sy + self.height - 1 then self.sy = self.cy - self.height + 1 end
-		if self.cx < self.sx then self.sx = self.cx end
-		if self.cx > self.sx + self.width - 1 then self.sx = self.cx - self.width + 1 end
+		if self.wrap then
+			self.sx = 1
+		else
+			if self.cx < self.sx then self.sx = self.cx end
+			if self.cx > self.sx + self.width - 1 then self.sx = self.cx - self.width + 1 end
+		end
 		self.dirty = true
 	end,
 
@@ -350,21 +354,21 @@ buffer = {
 		x, y = self:virtual(x, y)
 		if not self.wrap then return x, y end
 		local bx, by = self.sx, self.sy
-		local tw
+		local tw, th
 		if CC then
-			tw = disp.getSize()
+			tw, th = disp.getSize()
 		else
-			tw = disp.getResolution()
+			tw, th = disp.getResolution()
 		end
 		local ly = 1
-		while true do
+		while ly <= th do
 			local offset = 0
 			if bx ~= self.sx then offset = 1 end
 			if y < by then
 				return #self.lines[by - 1], by - 1
 			end
 			if y == by and x >= bx and x < bx + tw - offset then
-				return x - bx + offset, ly
+				return x - bx + offset + 1, ly
 			end
 			if #self.lines[by]:sub(bx) > tw then
 				bx = bx + self.sx - offset
@@ -374,6 +378,7 @@ buffer = {
 			end
 			ly = ly + 1
 		end
+		return tw, th
 	end,
 
 	insert = function(self, text)
