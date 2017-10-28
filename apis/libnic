@@ -1,0 +1,39 @@
+local libnic = {}
+libnic.REVISION = 1
+
+local event = require('event')
+local component = require('component')
+
+libnic.ALL_NICS = {}
+libnic.NIC_KINDS = {
+	modem = true,
+	tunnel = true,
+}
+
+function libnic.is_nic_kind(kind)
+	return libnic.NIC_KINDS[kind] and true or false
+end
+
+for addr, kind in component.list() do
+	if libnic.is_nic_kind(kind) then
+		libnic.ALL_NICS[addr] = kind
+	end
+end
+
+event.listen("component_added", function(ev, addr, kind)
+	if libnic.is_nic_kind(kind) then libnic.ALL_NICS[addr] = kind end
+end)
+
+event.listen("component_removed", function(ev, addr, kind)
+	if libnic.ALL_NICS[addr] ~= nil then libnic.ALL_NICS[addr] = nil end
+end)
+
+function libnic.broadcast_all(port, ...)
+	for addr, kind in pairs(libnic.ALL_NICS) do
+		if kind == "modem" then
+			component.invoke(addr, "broadcast", port, ...)
+		elseif kind == "tunnel" then
+			component.invoke(addr, "send", ...)
+		end
+	end
+end

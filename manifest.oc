@@ -1,10 +1,13 @@
-!Manifest revision 3
+!Manifest revision 4
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
 lib/lib2daccel.lua apis/lib2daccel
+lib/libnic.lua apis/libnic
+lib/libhwproxy.lua apis/libhwproxy
 bin/vim.lua programs/vim
 bin/dctl.lua programs/dctl
 bin/unload.lua programs/unload
 opt/daemon/heartbeat.lua daemons/heartbeat
+opt/daemon/hwproxyd.lua daemons/hwproxyd
 .manifest manifest.oc

@@ -1,0 +1,71 @@
+local serialization = require('serialization')
+local component = require('component')
+
+local libdaemon = require('libdaemon')
+local libhwproxy = require('libhwproxy')
+local libnic = require('libnic')
+
+local dmn = libdaemon.new('hwproxyd')
+
+dmn.defaults = {
+	forbidden = {},
+}
+
+local handlers = {
+	IVK = function(self, lnic, rnic, req_id, addr, meth, args)
+		args = serialization.unserialize(args)
+
+		if self.cfg.forbidden[addr] then
+			component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, false, serialization.serialize({"access denied"}))
+			return
+		end
+
+		local result = {pcall(component.invoke, addr, meth, table.unpack(args))}
+		local success = table.remove(result, 1)
+		component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, success, serialization.serialize(result))
+	end,
+	DOC = function(self, lnic, rnic, req_id, addr, meth)
+		if self.cfg.forbidden[addr] then
+			component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, false, serialization.serialize({"access defined"}))
+			return
+		end
+
+		local result = {pcall(component.doc, addr, meth)}
+		local success = table.remove(result, 1)
+		component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, success, serialization.serialize(result))
+	end,
+	GLS = function(self, lnic, rnic)
+		local list = {}
+		for addr, kind in component.list() do
+			list[addr] = kind
+		end
+		component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "LST", serialization.serialize(list))
+	end,
+}
+
+dmn.init = function(self)
+	self:listen("modem_message", function(ev, lnic, rnic, port, dist, ...)
+		if port ~= libhwproxy.PORT then return end
+		local args = {...}
+
+		if args[1] ~= libhwproxy.HEADER then return end
+		if args[2] == nil then return end
+
+		local handler = handlers[args[2]]
+		if handler == nil then return end
+
+		handler(self, lnic, rnic, table.unpack(args, 3))
+	end)
+
+	self:listen("component_added", function(ev, addr, kind)
+		if self.cfg.forbidden[addr] then return end
+		libnic.broadcast_all(libhwproxy.PORT, libhwproxy.HEADER, "REG", addr, kind)
+	end)
+
+	self:listen("component_removed", function(ev, addr, kind)
+		if self.cfg.forbidden[addr] then return end
+		libnic.broadcast_all(libhwproxy.PORT, libhwproxy.HEADER, "UNR", addr, kind)
+	end)
+end
+
+return dmn

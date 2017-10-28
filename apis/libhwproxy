@@ -1,0 +1,189 @@
+local libhwproxy = {}
+libhwproxy.REVISION = 1
+
+local component = require('component')
+local event = require('event')
+local serialization = require('serialization')
+
+local libnic = require('libnic')
+
+libhwproxy.PORT = 12019
+libhwproxy.HEADER = "HWP"
+libhwproxy.REMOTE_COMPONENTS = {}  -- component addr -> {lnic=..., rnic=..., kind=...}
+libhwproxy.CUR_REQ_ID = 1
+libhwproxy.FLYING_REQUESTS = {}
+libhwproxy.LOCAL_INST = tostring(math.random()):sub(3, 6)
+
+libhwproxy.handlers = {
+	REG = function(lnic, rnic, addr, kind)
+		libhwproxy.REMOTE_COMPONENTS[addr] = {
+			lnic = lnic,
+			rnic = rnic,
+			kind = kind,
+		}
+	end,
+	UNR = function(lnic, rnic, addr)
+		libhwproxy.REMOTE_COMPONENTS[addr] = nil
+	end,
+	LST = function(lnic, rnic, data)
+		data = serialization.unserialize(data)
+		for addr, kind in pairs(data) do
+			libhwproxy.REMOTE_COMPONENTS[addr] = {
+				lnic = lnic,
+				rnic = rnic,
+				kind = kind,
+			}
+		end
+	end,
+	CPL = function(lnic, rnic, req_id, success, ret)
+		local req = libhwproxy.FLYING_REQUESTS[req_id]
+		if req == nil then return end
+
+		req.complete = true
+		req.success = success
+		req.ret = serialization.unserialize(ret)
+	end,
+}
+
+event.listen("modem_message", function(ev, lnic, rnic, port, dist, ...)
+	if port ~= libhwproxy.PORT then return end
+	local args = {...}
+
+	if args[1] ~= libhwproxy.HEADER then return end
+	if args[2] == nil then return end
+
+	local handler = libhwproxy.handlers[args[2]]
+	if handler == nil then return end
+
+	handler(lnic, rnic, table.unpack(args, 3))
+end)
+
+function libhwproxy.update_all()
+	libnic.broadcast_all(libhwproxy.PORT, libhwproxy.HEADER, "GLS")
+end
+
+function libhwproxy.new_req_id()
+	local req_id = libhwproxy.LOCAL_INST .. '.' .. libhwproxy.CUR_REQ_ID
+	libhwproxy.CUR_REQ_ID = libhwproxy.CUR_REQ_ID + 1
+	libhwproxy.FLYING_REQUESTS[req_id] = {complete = false}
+	return req_id
+end
+
+function libhwproxy.invoke_async(addr, meth, ...)
+	local cmp = libhwproxy.REMOTE_COMPONENTS[addr]
+	if cmp == nil then
+		return nil, "no known component"
+	end
+
+	local req_id = libhwproxy.new_req_id()
+	local args = {...}
+
+	component.invoke(cmp.lnic, "send", cmp.rnic, libhwproxy.PORT, libhwproxy.HEADER, "IVK", req_id, addr, meth, serialization.serialize(args))
+	return req_id
+end
+
+function libhwproxy.doc_async(addr, meth)
+	local cmp = libhwproxy.REMOTE_COMPONENTS[addr]
+	if cmp == nil then
+		return nil, "no known component"
+	end
+
+	local req_id = libhwproxy.new_req_id()
+	component.invoke(cmp.lnic, "send", cmp.rnic, libhwproxy.PORT, libhwproxy.HEADER, "DOC", req_id, addr, meth)
+	return req_id
+end
+
+function libhwproxy.req_is_done(req_id)
+	local req = libhwproxy.FLYING_REQUESTS[req_id]
+
+	if req == nil then return true end
+	return req.complete
+end
+
+function libhwproxy.req_finalize(req_id)
+	local req = libhwproxy.FLYING_REQUESTS[req_id]
+
+	if req == nil then
+		error("no such request")
+	end
+
+	libhwproxy.FLYING_REQUESTS[req_id] = nil
+
+	if not req.complete then
+		error("request not yet done")
+	end
+
+	if not req.success then
+		error(req.ret[1])
+	end
+
+	return table.unpack(req.ret)
+end
+
+function libhwproxy.wait_for_req(req_id)
+	repeat
+		event.pull("modem_message")
+	until libhwproxy.req_is_done(req_id)
+
+	return libhwproxy.req_finalize(req_id)
+end
+
+function libhwproxy.invoke(addr, meth, ...)
+	local cmp = component.get(addr)
+	if cmp ~= nil then
+		return component.invoke(cmp, meth, ...)
+	end
+
+	local req_id = libhwproxy.invoke_async(addr, meth, ...)
+
+	return libhwproxy.wait_for_req(req_id)
+end
+
+function libhwproxy.doc(addr, meth)
+	local cmp = component.get(addr)
+	if cmp ~= nil then
+		return component.doc(cmp, meth)
+	end
+
+	local req_id = libhwproxy.doc_async(addr, meth)
+
+	return libhwproxy.wait_for_req(req_id)
+end
+
+local proxy_meth_mt = {
+	__call = function(self, ...)
+		return libhwproxy.invoke(self.proxy.addr, self.meth, ...)
+	end,
+	__tostring = function(self)
+		return libhwproxy.doc(self.proxy.addr, self.meth)
+	end,
+}
+
+local proxy_mt = {
+	__index = function(self, k)
+		self[k] = setmetatable({
+			proxy = self,
+			meth = k,
+		}, proxy_meth_mt)
+		return rawget(self, k)
+	end,
+}
+
+function libhwproxy.proxy(addr)
+	-- Prefer deferring to the local system first
+	local cmp = component.get(addr)
+	if cmp ~= nil then
+		return component.proxy(cmp)
+	end
+
+	cmp = libhwproxy.REMOTE_COMPONENTS[addr]
+	if cmp == nil then
+		return nil, "no known component"
+	end
+
+	return setmetatable({
+		addr = addr,
+		cmp = cmp,
+		type = cmp.kind,
+	}, proxy_mt)
+end
