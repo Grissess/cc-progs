@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 41
+REVISION = 42
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -360,7 +360,10 @@ buffer = {
 		while true do
 			local offset = 0
 			if bx ~= self.sx then offset = 1 end
-			if y == ly and x >= bx and x < bx + tw - offset then
+			if y < by then
+				return #self.lines[by - 1], by - 1
+			end
+			if y == by and x >= bx and x < bx + tw - offset then
 				return x - bx + offset, ly
 			end
 			if #self.lines[by]:sub(bx) > tw then
