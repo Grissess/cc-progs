@@ -211,7 +211,7 @@ buffer = {
 			nlidx = text:find("\n")
 		end
 		table.insert(lines, text)  -- guaranteed to be at least one empty line
-		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, width = 51, height = 19, dirty = true, syntax = syntaxes.lua, status = "", tabstop = 8}, {__index = buffer})
+		return setmetatable({lines = lines, cx = 1, cy = 1, sx = 1, sy = 1, width = 51, height = 19, dirty = true, syntax = syntaxes.lua, status = "", tabstop = 8, wrap = true}, {__index = buffer})
 	end,
 
 	clampxy = function(self, x, y)
@@ -254,6 +254,7 @@ buffer = {
 		self.width, self.height = tw, ts
 		local tx, ty = 1, 1
 		local bx, by = self.sx, self.sy
+		local orig_bx = bx
 		if CC then
 			disp.setBackgroundColor(colors.black)
 		else
@@ -275,7 +276,14 @@ buffer = {
 			disp.fill(1, 1, tw, th, ' ')
 		end
 		while ty <= ts and by <= #self.lines do
-			local str = self.lines[by]:sub(bx, bx + tw - 1)
+			local str, aw
+			if bx == orig_bx then
+				str = self.lines[by]:sub(bx, bx + tw - 1)
+				aw = tw
+			else
+				str = '$' .. self.lines[by]:sub(bx, bx + tw - 2)
+				aw = tw - 1
+			end
 			if #str > 0 then
 				if CC then 
 					disp.setCursorPos(1, ty)
@@ -285,7 +293,12 @@ buffer = {
 				end
 			end
 			ty = ty + 1
-			by = by + 1
+			if self.wrap and #self.lines[by]:sub(bx) > tw then
+				bx = bx + aw
+			else
+				bx = orig_bx
+				by = by + 1
+			end
 		end
 		self.dirty = false
 
@@ -309,7 +322,7 @@ buffer = {
 			text = text:sub(tw)
 		end
 
-		local vcx, vcy = self:virtual(self.cx, self.cy)
+		local vcx, vcy = self:to_screen(self.cx, self.cy, disp)
 
 		if CC then
 			term.setCursorPos(vcx - self.sx + 1, vcy - self.sy + 1)
@@ -331,6 +344,33 @@ buffer = {
 			end
 		end
 		return rx, y
+	end,
+
+	to_screen = function(self, x, y, disp)
+		x, y = self:virtual(x, y)
+		if not self.wrap then return x, y end
+		local bx, by = self.sx, self.sy
+		local tw
+		if CC then
+			tw = disp.getSize()
+		else
+			tw = disp.getResolution()
+		end
+		local ly = 1
+		while true do
+			local offset = 0
+			if bx ~= self.sx then offset = 1 end
+			if y == ly and x >= bx and x < bx + tw - offset then
+				return x - bx + offset, ly
+			end
+			if #self.lines[by]:sub(bx) > tw then
+				bx = bx + self.sx - offset
+			else
+				bx = self.sx
+				by = by + 1
+			end
+			ly = ly + 1
+		end
 	end,
 
 	insert = function(self, text)
