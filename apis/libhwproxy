@@ -1,5 +1,5 @@
 local libhwproxy = {}
-libhwproxy.REVISION = 1
+libhwproxy.REVISION = 2
 
 local component = require('component')
 local event = require('event')
@@ -187,3 +187,5 @@ function libhwproxy.proxy(addr)
 		type = cmp.kind,
 	}, proxy_mt)
 end
+
+return libhwproxy

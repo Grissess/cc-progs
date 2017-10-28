@@ -1,5 +1,5 @@
 local libnic = {}
-libnic.REVISION = 1
+libnic.REVISION = 2
 
 local event = require('event')
 local component = require('component')
@@ -37,3 +37,5 @@ function libnic.broadcast_all(port, ...)
 		end
 	end
 end
+
+return libnic
