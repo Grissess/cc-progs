@@ -1,5 +1,5 @@
 local libnic = {}
-libnic.REVISION = 2
+libnic.REVISION = 3
 
 local event = require('event')
 local component = require('component')
@@ -34,6 +34,14 @@ function libnic.broadcast_all(port, ...)
 			component.invoke(addr, "broadcast", port, ...)
 		elseif kind == "tunnel" then
 			component.invoke(addr, "send", ...)
+		end
+	end
+end
+
+function libnic.open_all(port)
+	for addr, kind in pairs(libnic.ALL_NICS) do
+		if kind == "modem" then
+			component.invoke(addr, "open", port)
 		end
 	end
 end

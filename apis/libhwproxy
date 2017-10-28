@@ -1,5 +1,5 @@
 local libhwproxy = {}
-libhwproxy.REVISION = 2
+libhwproxy.REVISION = 3
 
 local component = require('component')
 local event = require('event')
@@ -13,6 +13,8 @@ libhwproxy.REMOTE_COMPONENTS = {}  -- component addr -> {lnic=..., rnic=..., kin
 libhwproxy.CUR_REQ_ID = 1
 libhwproxy.FLYING_REQUESTS = {}
 libhwproxy.LOCAL_INST = tostring(math.random()):sub(3, 6)
+
+libnic.open_all(libhwproxy.PORT)
 
 libhwproxy.handlers = {
 	REG = function(lnic, rnic, addr, kind)
