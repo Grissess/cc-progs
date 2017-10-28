@@ -1,5 +1,5 @@
 local libhwproxy = {}
-libhwproxy.REVISION = 3
+libhwproxy.REVISION = 4
 
 local component = require('component')
 local event = require('event')
@@ -95,6 +95,17 @@ function libhwproxy.doc_async(addr, meth)
 	return req_id
 end
 
+function libhwproxy.methods_async(addr)
+	local cmp = libhwproxy.REMOTE_COMPONENTS[addr]
+	if cmp == nil then
+		return nil, "no known component"
+	end
+
+	local req_id = libhwproxy.new_req_id()
+	component.invoke(cmp.lnic, "send", cmp.rnic, libhwproxy.PORT, libhwproxy.HEADER, "MTH", req_id, addr)
+	return req_id
+end
+
 function libhwproxy.req_is_done(req_id)
 	local req = libhwproxy.FLYING_REQUESTS[req_id]
 
@@ -152,14 +163,16 @@ function libhwproxy.doc(addr, meth)
 	return libhwproxy.wait_for_req(req_id)
 end
 
-local proxy_meth_mt = {
-	__call = function(self, ...)
-		return libhwproxy.invoke(self.proxy.addr, self.meth, ...)
-	end,
-	__tostring = function(self)
-		return libhwproxy.doc(self.proxy.addr, self.meth)
-	end,
-}
+function libhwproxy.methods(addr)
+	local cmp = component.get(addr)
+	if cmp ~= nil then
+		return component.methods(cmp)
+	end
+
+	local req_id = libhwproxy.methods_async(addr)
+
+	return libhwproxy.wait_for_req(req_id)
+end
 
 local proxy_mt = {
 	__index = function(self, k)
@@ -171,7 +184,9 @@ local proxy_mt = {
 	end,
 }
 
-function libhwproxy.proxy(addr)
+function libhwproxy.proxy(addr, preload)
+	if preload == nil then preload = true end
+
 	-- Prefer deferring to the local system first
 	local cmp = component.get(addr)
 	if cmp ~= nil then
@@ -183,11 +198,49 @@ function libhwproxy.proxy(addr)
 		return nil, "no known component"
 	end
 
-	return setmetatable({
+	local proxy = setmetatable({
 		addr = addr,
 		cmp = cmp,
 		type = cmp.kind,
 	}, proxy_mt)
+
+	if preload then 
+		for mname, direct in pairs(libhwproxy.methods(addr)) do
+			_ = proxy[mname]  -- XXX side effects
+		end
+	end
+
+	return proxy
+end
+
+function libhwproxy.list_remote(kind, exact)
+	local cmps = {}
+	for addr, cmp in pairs(libhwproxy.REMOTE_COMPONENTS) do
+		if kind ~= nil then
+			if exact then
+				if cmp.kind == kind then cmps[addr] = kind end
+			else
+				if cmp.kind:find(kind, 1, true) then cmps[addr] = kind end
+			end
+		else
+			cmps[addr] = kind
+		end
+	end
+
+	return pairs(cmps)
+end
+
+function libhwproxy.list(kind, exact)
+	local cmps = {}
+	for addr, kind in libhwproxy.list_remote(kind, exact) do
+		cmps[addr] = kind
+	end
+
+	for addr, kind in component.list(kind, exact) do
+		cmps[addr] = kind
+	end
+
+	return pairs(cmps)
 end
 
 return libhwproxy

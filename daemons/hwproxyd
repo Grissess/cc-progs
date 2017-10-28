@@ -34,6 +34,16 @@ local handlers = {
 		local success = table.remove(result, 1)
 		component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, success, serialization.serialize(result))
 	end,
+	MTH = function(self, lnic, rnic, req_id, addr)
+		if self.cfg.forbidden[addr] then
+			component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, false, serialization.serialize({"access defined"}))
+			return
+		end
+
+		local result = {pcall(component.methods, addr)}
+		local success = table.remove(result, 1)
+		component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, success, serialization.serialize(result))
+	end,
 	GLS = function(self, lnic, rnic)
 		local list = {}
 		for addr, kind in component.list() do
