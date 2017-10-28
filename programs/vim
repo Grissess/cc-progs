@@ -1,4 +1,4 @@
-REVISION = 40
+REVISION = 41
 
 local CC = os.loadAPI ~= nil
 

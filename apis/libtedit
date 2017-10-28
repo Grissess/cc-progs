@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 40
+REVISION = 41
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
