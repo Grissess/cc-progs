@@ -33,12 +33,22 @@ if #args > 0 then
 end
 
 local buf = libtedit.buffer.new(text)
+
+if (not CC) and component.gpu.getDepth() == 1 then
+	buf.monochrome = true
+end
+
 if options.color == "low" then
 	buf.colset = libtedit.colorschema.gray
 end
 if options.color == "none" then
 	buf.monochrome = true
 end
+if options.color == "full" then
+	buf.monochrome = false
+	buf.colset = libtedit.colorschema.full
+end
+
 local op = nil
 local reg = ""
 local entry = ""
