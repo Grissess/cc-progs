@@ -1,5 +1,5 @@
 local libhwproxy = {}
-libhwproxy.REVISION = 4
+libhwproxy.REVISION = 5
 
 local component = require('component')
 local event = require('event')
@@ -176,10 +176,9 @@ end
 
 local proxy_mt = {
 	__index = function(self, k)
-		self[k] = setmetatable({
-			proxy = self,
-			meth = k,
-		}, proxy_meth_mt)
+		self[k] = function(...)
+			libhwproxy.invoke(self.addr, k, ...)
+		end
 		return rawget(self, k)
 	end,
 }
