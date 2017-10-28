@@ -371,7 +371,7 @@ buffer = {
 				return x - bx + offset + 1, ly
 			end
 			if #self.lines[by]:sub(bx) > tw then
-				bx = bx + self.sx - offset
+				bx = bx + tw - offset
 			else
 				bx = self.sx
 				by = by + 1
