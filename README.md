@@ -24,7 +24,7 @@ software, and you are welcome to take it and adapt it to your needs.
 
 # Projects so far
 
-## `libdaemon` and `dctl`
+## `libdaemon`, `dctl`, and `daemon_load`
 
 This is a flexible framework for implementing and controlling
 *daemons*--applications that run in the background, primarily responding to
@@ -38,6 +38,13 @@ from the others.
 
 The `dctl` program is the primary method of user interaction with daemons.
 Refer to its help (by running it without arguments) for details.
+
+The `daemon_load` program is a stub that attempts to load a daemon with the
+same name as the file basename as itself. Unless a daemon called "daemon_load"
+exists in your system, this will probably fail if called directly. The intent
+is to copy this into the OpenOS distribution's `/etc/rc.d/` as a script with
+the appropriate name, then use `rc dmn enable` (for a daemon named `dmn`) to
+have that daemon start automatically on boot.
 
 ## `vim`, `libtedit`, and `lib2daccel`
 

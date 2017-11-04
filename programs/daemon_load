@@ -1,0 +1,12 @@
+local libdaemon = require('libdaemon')
+local process = require('process')
+
+local name = process.info().command
+
+print('RC: Loading daemon ' .. name)
+
+assert(libdaemon.try_load(name))
+local dmn = libdaemon.get(name)
+assert(dmn ~= nil, "daemon not loaded")
+local inst = dmn:start()
+print('RC: Loaded as ' .. inst.name)

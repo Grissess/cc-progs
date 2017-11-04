@@ -242,4 +242,12 @@ function libhwproxy.list(kind, exact)
 	return pairs(cmps)
 end
 
+function libhwproxy.install()
+	package.loaded.component = libhwproxy
+end
+
+function libhwproxy.uninstall()
+	package.loaded.component = component
+end
+
 return libhwproxy
