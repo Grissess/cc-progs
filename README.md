@@ -39,12 +39,15 @@ from the others.
 The `dctl` program is the primary method of user interaction with daemons.
 Refer to its help (by running it without arguments) for details.
 
-The `daemon_load` program is a stub that attempts to load a daemon with the
-same name as the file basename as itself. Unless a daemon called "daemon_load"
-exists in your system, this will probably fail if called directly. The intent
-is to copy this into the OpenOS distribution's `/etc/rc.d/` as a script with
-the appropriate name, then use `rc dmn enable` (for a daemon named `dmn`) to
-have that daemon start automatically on boot.
+The `daemon_load` program reads the file `/etc/daemon.cfg`, which it
+unserializes (executes, essentially), and determines if the object has a
+`start` key which is a table; if it does, the keys of the table are interpreted
+as daemon names to start. There is presently no way to pass parameters into the
+daemon (use the `/etc/daemon/dmn` configuration file for a daemon called `dmn`
+in the same serialized format), nor is there any way to start more than one
+daemon. Note that the environment for deserialization is empty, so while
+functions can be created (unlike serialization.serialize would allow), no
+upcalls can be made.
 
 ## `vim`, `libtedit`, and `lib2daccel`
 

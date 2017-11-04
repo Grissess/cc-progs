@@ -1,12 +1,30 @@
 local libdaemon = require('libdaemon')
-local process = require('process')
+local serialization = require('serialization')
 
-local name = process.info().command
+local function load_daemon(name)
+	print('RC/daemon_load: Loading daemon ' .. name)
+	assert(libdaemon.try_load(name))
+	local dmn = libdaemon.get(name)
+	assert(dmn ~= nil, "daemon not loaded")
+	local inst = dmn:start()
+	print('RC/daemon_load: Loaded as ' .. inst.name)
+end
 
-print('RC: Loading daemon ' .. name)
+print('RC/daemon_load: Reading configuration')
 
-assert(libdaemon.try_load(name))
-local dmn = libdaemon.get(name)
-assert(dmn ~= nil, "daemon not loaded")
-local inst = dmn:start()
-print('RC: Loaded as ' .. inst.name)
+local cfg, err = io.open('/etc/daemon.cfg', 'r')
+if not cfg then
+	print('RC/daemon_load: Failed:', err)
+	return
+end
+
+local data = serialization.unserialize(cfg:read("*a"))
+if type(data.start) ~= "table" then
+	print('RC/daemon_load: No start key, nothing to start')
+	return
+end
+
+for name, _ in pairs(data.start) do
+	load_daemon(name)
+end
+print('RC/daemon_load: Done.')
