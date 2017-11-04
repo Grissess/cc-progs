@@ -1,5 +1,5 @@
 local libhwproxy = {}
-libhwproxy.REVISION = 6
+libhwproxy.REVISION = 7
 
 local component = require('component')
 local event = require('event')
@@ -217,12 +217,12 @@ function libhwproxy.list_remote(kind, exact)
 	for addr, cmp in pairs(libhwproxy.REMOTE_COMPONENTS) do
 		if kind ~= nil then
 			if exact then
-				if cmp.kind == kind then cmps[addr] = kind end
+				if cmp.kind == kind then cmps[addr] = cmp.kind end
 			else
-				if cmp.kind:find(kind, 1, true) then cmps[addr] = kind end
+				if cmp.kind:find(kind, 1, true) then cmps[addr] = cmp.kind end
 			end
 		else
-			cmps[addr] = kind
+			cmps[addr] = cmp.kind
 		end
 	end
 
