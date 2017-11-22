@@ -1,4 +1,4 @@
-!Manifest revision 5
+!Manifest revision 6
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
@@ -12,3 +12,4 @@ bin/daemon_load.lua programs/daemon_load
 opt/daemon/heartbeat.lua daemons/heartbeat
 opt/daemon/hwproxyd.lua daemons/hwproxyd
 .manifest manifest.oc
+COPYING COPYING
