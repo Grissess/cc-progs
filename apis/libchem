@@ -1,0 +1,318 @@
+local libchem = {}
+local liblua = require('liblua')
+
+REVISION = 1
+libchem.REVISION = 1
+
+local POT_SET = {}
+local POT_SEQ = {}
+local i = 1
+while i <= 256 do
+	POT_SET[i] = true
+	table.insert(POT_SEQ, i)
+	i = i * 2
+end
+libchem.POT_SET = POT_SET
+libchem.POT_SEQ = POT_SEQ
+
+local function is_power_of_two(n)
+	return POT_SET[n]
+end
+libchem.is_power_of_two = is_power_of_two
+
+libchem.BitSet = {mt = {
+	__tostring = function(self)
+		return '{' .. table.concat(liblua.set_to_seq(self), ", ") .. '}'
+	end,
+}}
+
+local function set_bits_of(n)
+	local bits = {}
+	if n < 0 then return setmetatable({}, libchem.BitSet.mt) end
+
+	for i = #POT_SEQ, 1, -1 do
+		if n >= POT_SEQ[i] then
+			n = n - POT_SEQ[i]
+			bits[POT_SEQ[i]] = true
+		end
+	end
+
+	return setmetatable(bits, libchem.BitSet.mt)
+end
+libchem.set_bits_of = set_bits_of
+
+local ElementSet = {}
+libchem.ElementSet = ElementSet
+
+function ElementSet.new()
+	return setmetatable({}, ElementSet.mt)
+end
+
+function ElementSet:get(n)
+	return self[n] or 0
+end
+
+function ElementSet:add(n, q)
+	self[n] = (self[n] or 0) + q
+	return self
+end
+
+function ElementSet:add_item_descriptor(it)
+	if it == nil then return false, "no descriptor" end
+	if it.name ~= "minechem:minechemElement" then return false, "not an element" end
+	self:add(it.damage, it.size)
+	return true
+end
+
+function ElementSet:protons()
+	local total = 0
+	for anum, q in pairs(self) do
+		total = total + anum * q
+	end
+	return total
+end
+
+function ElementSet:valid()
+	for anum, q in pairs(self) do
+		if type(anum) ~= "number" then return false end
+		if anum < 1 or anum > 113 then return false end
+		if type(q) ~= "number" then return false end
+		if q < 0 then return false end
+	end
+	return true
+end
+
+function ElementSet:copy()
+	return setmetatable(liblua.shallow_copy(self), ElementSet.mt)
+end
+
+function ElementSet:optimize()
+	local torem = {}
+	for anum, q in pairs(self) do
+		if q == 0 then torem[anum] = true end
+	end
+	for anum, _ in pairs(torem) do
+		self[anum] = nil
+	end
+	return self
+end
+
+function ElementSet:is_binarized()
+	for anum, q in pairs(self) do
+		if (q ~= nil and q ~= 0) and not is_power_of_two(anum) then return false, anum end
+	end
+	return true
+end
+
+function ElementSet:to_string()
+	local strings = {}
+	for anum, q in pairs(self) do
+		table.insert(strings, tostring(anum) .. "x" .. tostring(q))
+	end
+	return "{ElementSet: " .. table.concat(strings, ", ") .. "}"
+end
+
+ElementSet.mt = {
+	__index = ElementSet,
+	__tostring = ElementSet.to_string,
+}
+
+setmetatable(ElementSet, {__call = function(_, ...) return ElementSet.new(...) end})
+
+--
+
+local Step = {}
+libchem.Step = Step
+
+function Step.fission(cfg, anum, q)
+	return setmetatable({
+		type = "fission",
+		anum = anum,
+		q = q,
+		input = cfg,
+		result = cfg:copy():add(anum, -q):add(math.floor(anum / 2), 2 * q),
+	}, Step.mt)
+end
+
+function Step.fusion(cfg, an1, an2, q)
+	return setmetatable({
+		type = "fusion",
+		an1 = an1,
+		an2 = an2,
+		q = q,
+		input = cfg,
+		result = cfg:copy():add(an1, -q):add(an2, -q):add(an1 + an2, q),
+	}, Step.mt)
+end
+
+function Step.add(cfg, anum, q)
+	return setmetatable({
+		type = "add",
+		anum = anum,
+		q = q,
+		input = cfg,
+		result = cfg:copy():add(anum, q),
+	}, Step.mt)
+end
+
+function Step:to_string()
+	return Step.to_string_funcs[self.type](self)
+end
+
+Step.to_string_funcs = {}
+
+function Step.to_string_funcs:fission()
+	return '<Fission splitting ' .. tostring(self.q) .. ' of element ' .. tostring(self.anum) .. '>'
+end
+
+function Step.to_string_funcs:fusion()
+	return '<Fusion adding ' .. tostring(self.q) .. ' of elements ' .. tostring(self.an1) .. ' and ' .. tostring(self.an2) .. '>'
+end
+
+function Step.to_string_funcs:add()
+	return '<Add ' .. tostring(self.q) .. ' of ' ..tostring(self.anum) .. '>'
+end
+
+Step.mt = {
+	__index = Step,
+	__tostring = Step.to_string,
+}
+
+--
+
+local Path = {}
+libchem.Path = Path
+
+function Path.from(es)
+	return setmetatable({head=es, steps={}, tail=es}, Path.mt)
+end
+
+function Path:add(stepf, ...)
+	local step = stepf(self.tail, ...)
+	table.insert(self.steps, step)
+	self.tail = step.result
+	return self
+end
+
+function Path:extend(other)
+	for _, step in ipairs(other.steps) do
+		table.insert(self.steps, step)
+	end
+	self.tail = self.steps[#self.steps].result
+	return self
+end
+
+function Path.binarize(es)
+	local path = Path.from(es)
+
+	while true do
+		local bin, anum = path.tail:is_binarized()
+		if bin then return path end
+
+		local q = path.tail:get(anum)
+		local step = nil
+		if anum % 2 == 1 then
+			local hq = path.tail:get(1)
+			if hq > 0 then
+				step = {libchem.Step.fusion, anum, 1, math.min(q, hq)}
+			end
+		end
+
+		if step == nil then
+			step = {libchem.Step.fission, anum, q}
+		end
+
+		path:add(table.unpack(step))
+	end
+end
+
+local function less_than_f(k, v, t, ret, f, p)
+	return v < p
+end
+
+local function greater_than_f(k, v, t, ret, f, p)
+	return v > p
+end
+
+function Path.binary_solve(es, pot, q)
+	local path = Path.from(es)
+
+	local less = liblua.reverse(liblua.filter(POT_SEQ, less_than_f, pot))
+	local greater = liblua.filter(POT_SEQ, greater_than_f, pot)
+
+	while path.tail:get(pot) < q do
+		local success = false
+
+		for _, anum in ipairs(less) do
+			local aq = path.tail:get(anum)
+			if aq > 1 then
+				path:add(libchem.Step.fusion, anum, anum, math.floor(aq / 2))
+				success = true
+				break
+			end
+		end
+
+		if not success then
+			for _, anum in ipairs(greater) do
+				local aq = path.tail:get(anum)
+				if aq > 0 then
+					path:add(libchem.Step.fission, anum, aq)
+					success = true
+					break
+				end
+			end
+
+			if not success then
+				return false, "failed to fulfill request", path
+			end
+		end
+	end
+
+	return true, path
+end
+
+function Path.general_solve(es, anum, q)
+	local path = Path.from(es)
+	local bits = liblua.set_to_seq(set_bits_of(anum))
+	table.sort(bits)
+	bits = liblua.reverse(bits)
+
+	for _, pot in ipairs(bits) do
+		local success, res = Path.binary_solve(path.tail, pot, q)
+		if not success then
+			return false, "failed to binary solve:" .. res
+		end
+		path:extend(res):add(libchem.Step.add, pot, -q)
+	end
+
+	local lanum = 0
+	for _, pot in ipairs(bits) do
+		path:add(libchem.Step.add, pot, q)
+		if lanum == 0 then
+			lanum = pot
+		else
+			path:add(libchem.Step.fusion, pot, lanum, q)
+			lanum = lanum + pot
+		end
+	end
+
+	return true, path
+end
+
+function Path.solve(es, anum, q)
+	local path = Path.binarize(es)
+	local success, res = Path.general_solve(path.tail, anum, q)
+	if not success then
+		return false, "failed to general solve:" .. res
+	end
+	path:extend(res)
+	return true, path
+end
+
+Path.mt = {
+	__index = Path,
+}
+
+setmetatable(Path, {__call = function(_, ...) return Path.from(...) end})
+
+return libchem

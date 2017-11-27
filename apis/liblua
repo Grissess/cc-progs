@@ -1,0 +1,98 @@
+local liblua = {}
+
+function liblua.map(t, f, p, iter)
+	local ret = {}
+
+	if iter == nil then iter = pairs end
+
+	for k, v in iter(t) do
+		local rk, rv = f(k, v, t, ret, f, p)
+		if rk ~= nil then
+			ret[rk] = rv
+		end
+	end
+
+	return ret
+end
+
+function liblua.filter(t, f, p, iter)
+	return liblua.map(t, function(k, v, t, ret, thisf, p)
+		if f(k, v, t, ret, f, p) then
+			return k, v
+		end
+	end, p, iter)
+end
+
+function liblua.constant_function(k)
+	return function()
+		return k
+	end
+end
+
+liblua.always_true = liblua.constant_function(true)
+liblua.always_false = liblua.constant_function(false)
+function liblua.noop() end
+function liblua.identity(...) return ... end
+
+local function seq_to_set_f(k, v)
+	return v, true
+end
+
+function liblua.seq_to_set(t)
+	return liblua.map(t, seq_to_set_f, nil, ipairs)
+end
+
+local function set_to_seq_f(k, v, t, ret)
+	table.insert(ret, k)
+end
+
+function liblua.set_to_seq(t)
+	return liblua.map(t, set_to_seq_f)
+end
+
+local function keys_set_f(k, v)
+	return k, true
+end
+
+function liblua.keys_set(t)
+	return liblua.map(t, keys_set_f)
+end
+
+function liblua.keys_seq(t)
+	return liblua.set_to_seq(liblua.keys_set(t))
+end
+
+liblua.values_set = liblua.seq_to_set
+
+function liblua.values_seq(t)
+	return liblua.set_to_seq(liblua.values_set(t))
+end
+
+function liblua.is_empty(t)
+	return next(t) == nil
+end
+
+function liblua.shallow_copy(t)
+	return liblua.map(t, liblua.identity)
+end
+
+local function deep_value_copy_f(k, v, t, ret, f)
+	if type(v) == "table" then
+		return k, liblua.map(v, f)
+	end
+	return k, v
+end
+
+function liblua.deep_value_copy(t)
+	return libblua.map(t, deep_value_copy_f)
+end
+
+local function reverse_f(k, v, t, ret)
+	return #t - k + 1, v
+end
+
+function liblua.reverse(t)
+	return liblua.map(t, reverse_f, nil, ipairs)
+end
+
+return liblua
