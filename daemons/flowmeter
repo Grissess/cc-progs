@@ -1,5 +1,6 @@
 local component = require('component')
 local computer = require('computer')
+local sides = require('sides')
 
 local libdaemon = require('libdaemon')
 
