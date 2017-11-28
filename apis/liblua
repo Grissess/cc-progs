@@ -84,7 +84,32 @@ local function deep_value_copy_f(k, v, t, ret, f)
 end
 
 function liblua.deep_value_copy(t)
-	return libblua.map(t, deep_value_copy_f)
+	return liblua.map(t, deep_value_copy_f)
+end
+
+local function deep_key_copy_f(k, v, t, ret, f)
+	if type(k) == "table" then
+		return liblua.map(k, f), v
+	end
+	return k, v
+end
+
+function liblua.deep_key_copy(t)
+	return liblua.map(t, deep_key_copy_f)
+end
+
+local function deep_copy_f(k, v, t, ret, f)
+	if type(k) == "table" then
+		k = liblua.map(k, f)
+	end
+	if type(v) == "table" then
+		v = liblua.map(v, f)
+	end
+	return k, v
+end
+
+function liblua.deep_copy(t)
+	return liblua.map(t, deep_copy_f)
 end
 
 local function reverse_f(k, v, t, ret)

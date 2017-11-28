@@ -70,10 +70,13 @@ function dmn:init()
 	local last_abs = nil
 	local last_uptime = nil
 	function set_flow_dir(inbound)
+		self:log("Transition begins")
 		if inbound then
 			rs.setOutput(self.cfg.inflow_side, 15)
 			rs.setOutput(self.cfg.outflow_side, 0)
+			self:log("Transition inbound POINT A:", state, last_abs, last_uptime)
 			if state == "outbound" and last_abs ~= nil and last_uptime ~= nil then
+				self:log("Transition inboung POINT B")
 				local upt = computer.uptime()
 				local abs = hnd.get_ratio(meter)
 				local delta_t = upt - last_upt
@@ -111,9 +114,11 @@ function dmn:init()
 			self:log("WARNING: Pegged the outflow side of the meter, don't trust the results.")
 		end
 		if ratio >= self.cfg.max_ratio then
+			self:log("Transition to outflow.")
 			set_flow_dir(false)
 		end
 		if ratio <= self.cfg.min_ratio then
+			self:log("Transition to inflow.")
 			set_flow_dir(true)
 		end
 	end)
