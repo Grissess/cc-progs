@@ -7,8 +7,8 @@ local libdaemon = require('libdaemon')
 local dmn = libdaemon.new('flowmeter')
 
 dmn.defaults = {
-	inflow_side = sides.front,
-	outflow_side = sides.back,
+	inflow_side = sides.back,
+	outflow_side = sides.front,
 	max_ratio = 0.75,
 	min_ratio = 0.25,
 	timeout = 0.05,
