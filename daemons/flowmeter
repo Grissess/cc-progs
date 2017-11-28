@@ -27,6 +27,10 @@ local handlers = {
 	},
 }
 
+local function time_avg_string(rate)
+	return "(avg " .. rate .. " u/s, " .. (rate * 20) .. " u/t)"
+end
+
 function dmn:init()
 	local rs = nil
 
@@ -80,7 +84,7 @@ function dmn:init()
 			if state == "outbound" and last_abs ~= nil and last_uptime ~= nil then
 				local delta_t = upt - last_uptime
 				local delta_u = last_abs - abs
-				self:log("Discharged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
+				self:log("Discharged " .. delta_u .. " units in " .. delta_t .. " seconds " .. time_avg_string(delta_u / delta_t))
 				last_update = upt
 				last_abs = abs
 				last_uptime = upt
@@ -92,7 +96,7 @@ function dmn:init()
 			if state == "inbound" and last_abs ~= nil and last_uptime ~= nil then
 				local delta_t = upt - last_uptime
 				local delta_u = abs - last_abs
-				self:log("Charged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
+				self:log("Charged " .. delta_u .. " units in " .. delta_t .. " seconds " .. time_avg_string(delta_u / delta_t))
 				last_update = upt
 				last_abs = abs
 				last_uptime = upt
@@ -111,7 +115,7 @@ function dmn:init()
 			local abs = hnd.get_abs(meter)
 			local delta_t = upt - last_uptime
 			local delta_u = math.abs(abs - last_abs)
-			self:log("Currently " .. state .. " for " .. delta_t .. "s with delta " .. delta_u .. " units (avg " .. (delta_u / delta_t) .. " u/s)")
+			self:log("Currently " .. state .. " for " .. delta_t .. "s with delta " .. delta_u .. " units " .. time_avg_string(delta_u / delta_t))
 			last_update = upt
 		end
 		
