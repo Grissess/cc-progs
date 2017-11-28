@@ -76,7 +76,7 @@ function dmn:init()
 			rs.setOutput(self.cfg.inflow_side, 15)
 			rs.setOutput(self.cfg.outflow_side, 0)
 			if state == "outbound" and last_abs ~= nil and last_uptime ~= nil then
-				local delta_t = upt - last_upt
+				local delta_t = upt - last_uptime
 				local delta_u = last_abs - abs
 				self:log("Discharged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
 			end
@@ -85,7 +85,7 @@ function dmn:init()
 			rs.setOutput(self.cfg.inflow_side, 0)
 			rs.setOutput(self.cfg.outflow_side, 15)
 			if state == "inbound" and last_abs ~= nil and last_uptime ~= nil then
-				local delta_t = upt - last_upt
+				local delta_t = upt - last_uptime
 				local delta_u = abs - last_abs
 				self:log("Charged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
 			end
