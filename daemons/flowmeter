@@ -28,7 +28,7 @@ local handlers = {
 }
 
 local function time_avg_string(rate)
-	return "(avg " .. rate .. " u/s, " .. (rate * 20) .. " u/t)"
+	return "(avg " .. rate .. " u/s, " .. (rate / 20) .. " u/t)"
 end
 
 function dmn:init()
