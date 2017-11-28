@@ -70,36 +70,29 @@ function dmn:init()
 	local last_abs = nil
 	local last_uptime = nil
 	function set_flow_dir(inbound)
-		self:log("Transition begins")
+		local upt = computer.uptime()
+		local abs = hnd.get_ratio(meter)
 		if inbound then
 			rs.setOutput(self.cfg.inflow_side, 15)
 			rs.setOutput(self.cfg.outflow_side, 0)
-			self:log("Transition inbound POINT A:", state, last_abs, last_uptime)
 			if state == "outbound" and last_abs ~= nil and last_uptime ~= nil then
-				self:log("Transition inboung POINT B")
-				local upt = computer.uptime()
-				local abs = hnd.get_ratio(meter)
 				local delta_t = upt - last_upt
 				local delta_u = last_abs - abs
 				self:log("Discharged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
-				last_abs = abs
-				last_uptime = upt
 			end
 			state = "inbound"
 		else
 			rs.setOutput(self.cfg.inflow_side, 0)
 			rs.setOutput(self.cfg.outflow_side, 15)
 			if state == "inbound" and last_abs ~= nil and last_uptime ~= nil then
-				local upt = computer.uptime()
-				local abs = hnd.get_ratio(meter)
 				local delta_t = upt - last_upt
 				local delta_u = abs - last_abs
 				self:log("Charged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
-				last_abs = abs
-				last_uptime = upt
 			end
 			state = "outbound"
 		end
+		last_abs = abs
+		last_uptime = upt
 	end
 
 	set_flow_dir(true)
@@ -107,18 +100,16 @@ function dmn:init()
 	self:timer(self.cfg.timeout, function()
 		local ratio = hnd.get_ratio(meter)
 		
-		if ratio == 1.0 then
+		if ratio == 1.0 and state == "inflow" then
 			self:log("WARNING: Pegged the inflow side of the meter, don't trust the results.")
 		end
-		if ratio == 0.0 then
+		if ratio == 0.0 and state == "outflow" then
 			self:log("WARNING: Pegged the outflow side of the meter, don't trust the results.")
 		end
 		if ratio >= self.cfg.max_ratio then
-			self:log("Transition to outflow.")
 			set_flow_dir(false)
 		end
 		if ratio <= self.cfg.min_ratio then
-			self:log("Transition to inflow.")
 			set_flow_dir(true)
 		end
 	end)
