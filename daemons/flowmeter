@@ -81,6 +81,7 @@ function dmn:init()
 				local delta_t = upt - last_uptime
 				local delta_u = last_abs - abs
 				self:log("Discharged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
+				last_update = upt
 			end
 			state = "inbound"
 		else
@@ -90,12 +91,12 @@ function dmn:init()
 				local delta_t = upt - last_uptime
 				local delta_u = abs - last_abs
 				self:log("Charged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
+				last_update = upt
 			end
 			state = "outbound"
 		end
 		last_abs = abs
 		last_uptime = upt
-		last_update = upt
 	end
 
 	set_flow_dir(true)
