@@ -121,6 +121,8 @@ function dmn:init()
 			local delta_u = math.abs(abs - last_abs)
 			self:log("Currently " .. state .. " for " .. delta_t .. "s with delta " .. delta_u .. " units " .. time_avg_string(delta_u / delta_t))
 			last_update = upt
+			last_uptime = upt
+			last_abs = abs
 		end
 		
 		if ratio == 1.0 and state == "inflow" then
