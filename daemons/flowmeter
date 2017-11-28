@@ -12,6 +12,7 @@ dmn.defaults = {
 	max_ratio = 0.75,
 	min_ratio = 0.25,
 	timeout = 0.05,
+	incr_timeout = 15,
 }
 
 local handlers = {
@@ -69,6 +70,7 @@ function dmn:init()
 	local state = "inbound"
 	local last_abs = nil
 	local last_uptime = nil
+	local last_update = computer.uptime()
 	function set_flow_dir(inbound)
 		local upt = computer.uptime()
 		local abs = hnd.get_abs(meter)
@@ -93,12 +95,22 @@ function dmn:init()
 		end
 		last_abs = abs
 		last_uptime = upt
+		last_update = upt
 	end
 
 	set_flow_dir(true)
 
 	self:timer(self.cfg.timeout, function()
 		local ratio = hnd.get_ratio(meter)
+
+		if last_uptime ~= nil and last_abs ~= nil and computer.uptime() >= self.cfg.incr_timeout + last_update then
+			local upt = computer.uptime()
+			local abs = hnd.get_abs(meter)
+			local delta_t = upt - last_uptime
+			local delta_u = math.abs(abs - last_abs)
+			self:log("Currently " .. state .. " for " .. delta_t .. "s with delta " .. delta_u .. " units (avg " .. (delta_u / delta_t) .. " u/s)")
+			last_update = upt
+		end
 		
 		if ratio == 1.0 and state == "inflow" then
 			self:log("WARNING: Pegged the inflow side of the meter, don't trust the results.")
