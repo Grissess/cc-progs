@@ -71,7 +71,7 @@ function dmn:init()
 	local last_uptime = nil
 	function set_flow_dir(inbound)
 		local upt = computer.uptime()
-		local abs = hnd.get_ratio(meter)
+		local abs = hnd.get_abs(meter)
 		if inbound then
 			rs.setOutput(self.cfg.inflow_side, 15)
 			rs.setOutput(self.cfg.outflow_side, 0)
