@@ -95,4 +95,12 @@ function liblua.reverse(t)
 	return liblua.map(t, reverse_f, nil, ipairs)
 end
 
+local function invert_f(k, v)
+	return v, k
+end
+
+function liblua.invert(t)
+	return liblua.map(t, invert_f)
+end
+
 return liblua

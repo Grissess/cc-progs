@@ -1,0 +1,121 @@
+local component = require('component')
+local computer = require('computer')
+
+local libdaemon = require('libdaemon')
+
+local dmn = libdaemon.new('flowmeter')
+
+dmn.defaults = {
+	inflow_side = sides.front,
+	outflow_side = sides.back,
+	max_ratio = 0.75,
+	min_ratio = 0.25,
+	timeout = 0.05,
+}
+
+local handlers = {
+	tankblock = {
+		get_ratio = function(proxy)
+			local info = proxy.getTankInfo()
+			return info.amount / info.capacity
+		end,
+		get_abs = function(proxy)
+			return proxy.getTankInfo().amount
+		end,
+	},
+}
+
+function dmn:init()
+	local rs = nil
+
+	if self.cfg.redstone ~= nil then
+		local addr, err = component.get(self.cfg.redstone)
+		if addr == nil then
+			self:log("failed to get redstone " .. self.cfg.redstone .. ": " .. err .. " (falling back)")
+		else
+			rs = component.proxy(addr)
+		end
+	end
+
+	if rs == nil then
+		rs = component.redstone
+	end
+
+	self:log("Using " .. rs.address .. " for redstone IO")
+
+	local meter = nil
+
+	if self.cfg.meter ~= nil then
+		local addr, err = component.get(self.cfg.meter)
+		if addr == nil then
+			self:log("failed to get meter " .. self.cfg.meter .. ": " .. err .. " (falling back)")
+		else
+			meter = component.proxy(addr)
+		end
+	end
+
+	if meter == nil then
+		self:log("WARNING: Using a fallback component for metering. You should manually specify meter in the config!")
+		meter = component.tankblock
+	end
+
+	local hnd = handlers[meter.type]
+
+	if hnd == nil then
+		error("no handler for meter component of type " .. meter.type)
+	end
+
+	local state = "inbound"
+	local last_abs = nil
+	local last_uptime = nil
+	function set_flow_dir(inbound)
+		if inbound then
+			rs.setOutput(self.cfg.inflow_side, 15)
+			rs.setOutput(self.cfg.outflow_side, 0)
+			if state == "outbound" and last_abs ~= nil and last_uptime ~= nil then
+				local upt = computer.uptime()
+				local abs = hnd.get_ratio(meter)
+				local delta_t = upt - last_upt
+				local delta_u = last_abs - abs
+				self:log("Discharged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
+				last_abs = abs
+				last_uptime = upt
+			end
+			state = "inbound"
+		else
+			rs.setOutput(self.cfg.inflow_side, 0)
+			rs.setOutput(self.cfg.outflow_side, 15)
+			if state == "inbound" and last_abs ~= nil and last_uptime ~= nil then
+				local upt = computer.uptime()
+				local abs = hnd.get_ratio(meter)
+				local delta_t = upt - last_upt
+				local delta_u = abs - last_abs
+				self:log("Charged " .. delta_u .. " units in " .. delta_t .. " seconds (avg " .. (delta_u / delta_t) .. " u/s)")
+				last_abs = abs
+				last_uptime = upt
+			end
+			state = "outbound"
+		end
+	end
+
+	set_flow_dir(true)
+
+	self:timer(self.cfg.timeout, function()
+		local ratio = hnd.get_ratio(meter)
+		
+		if ratio == 1.0 then
+			self:log("WARNING: Pegged the inflow side of the meter, don't trust the results.")
+		end
+		if ratio == 0.0 then
+			self:log("WARNING: Pegged the outflow side of the meter, don't trust the results.")
+		end
+		if ratio >= self.cfg.max_ratio then
+			set_flow_dir(false)
+		end
+		if ratio <= self.cfg.min_ratio then
+			set_flow_dir(true)
+		end
+	end)
+end
+
+return dmn
