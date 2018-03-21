@@ -1,0 +1,198 @@
+local libtelnet = {}
+
+local event = require('event')
+local component = require('component')
+
+local liblua = require('liblua')
+
+libtelnet.codes = {
+	IAC = 255,
+	DONT = 254,
+	DO = 253,
+	WONT = 252,
+	WILL = 251,
+	SB = 250,
+	GA = 249,
+	EL = 248,
+	EC = 247,
+	AYT = 246,
+	AO = 245,
+	IP = 244,
+	BREAK = 243,
+	DM = 242,
+	NOP = 241,
+	SE = 240,
+}
+
+liblua.invert_in_place(libtelnet.codes)
+
+libtelnet.code_str = liblua.map(libtelnet.codes, function(k, v)
+	if type(k) == 'string' then
+		return k, string.char(v)
+	end
+end)
+
+libtelnet.options = {
+	TRANSMIT_BINARY = 0,
+	ECHO = 1,
+	SUPPRESS_GO_AHEAD = 3,
+	STATUS = 5,
+	TIMING_MARK = 6,
+	EXOPL = 255,
+	END_OF_RECORD = 25,
+	NAWS = 31,
+	TERMINAL_SPEED = 32,
+	TERMINAL_TYPE = 24,
+	X_DISPLAY_LOCATION = 35,
+	-- XXX more exist
+}
+
+liblua.invert_in_place(libtelnet.options)
+
+local active_streams = setmetatable({}, {__mode = "k"})
+libtelnet.active_streams = active_streams
+
+local function u16_to_be(v)
+	return string.char(bit32.band(bit32.lshift(v, 8), 255)) .. string.char(bit32.band(v, 255))
+end
+
+event.listen("screen_resized", function(ev, scr, w, h)
+	if component.isAvailable("gpu") and component.gpu.getScreen() == scr then
+		for ts, _ in pairs(active_streams) do
+			if ts.local_opts[libtelnet.options.NAWS] then
+				ts.stream:sub_begin(libtelnet.options.NAWS)
+				ts:write(u16_to_be(w), true)
+				ts:write(u16_to_be(h), true)
+				ts.stream:sub_end(libtelnet.options.NAWS)
+			end
+		end
+	end
+end)
+
+local TelnetStream = {}
+ilbtelnet.TelnetStream = TelnetStream
+
+function TelnetStream.new(stream)
+	local res = setmetatable({
+		stream = stream,
+		local_opts = {},
+		remote_opts = {},
+		echo_buffer = '',
+	}, TelnetStream.mt)
+	active_streams[res] = true
+	return res
+end
+
+function TelnetStream:close()
+	return self.socket:close()
+end
+
+function TelnetStream:write(data, no_echo)
+	local escaped = data:gsub(
+		libtelnet.code_str.IAC
+		libtelnet.code_str.IAC:rep(2),
+	)
+	if self.local_opts[libtelnet.options.ECHO] and not no_echo then
+		self.echo_buffer = self.echo_buffer .. data
+	end
+	return self.stream:write(escaped)
+end
+
+function TelnetStream:send_option(opt, set)
+	self.stream:write(libtelnet.code_str.IAC)
+	if set then
+		self.stream:write(libtelnet.code_str.WILL)
+	else
+		self.stream:write(libtelnet.code_str.WONT)
+	end
+	self.stream:write(string.char(opt))
+end
+
+function TelnetStream:sub_begin(opt)
+	self.stream:write(
+		libtelnet.code_str.IAC ..
+		libtelnet.code_str.SB ..
+		string.char(opt)
+	)
+end
+
+function TelnetStream:sub_end(opt)
+	self.stream:write(
+		libtelnet.code_str.IAC ..
+		libtelnet.code_str.SE ..
+		string.char(opt)
+	)
+end
+
+function TelnetStream:seek(...)
+	return nil, "not seekable"
+end
+
+function TelnetStream:read(n)
+	local data = self.echo_buffer
+
+	while #data < n do
+		local ch = self.stream:read(1)
+
+		if ch:byte() == libtelnet.codes.IAC then
+			local cmd = self.stream:read(1):byte()
+			if cmd == libtelnet.codes.IAC then
+				data = data .. ch
+			else
+				self:process_command(cmd)
+			end
+		else
+			data = data .. ch
+		end
+	end
+
+	self.echo_buffer = data:sub(n + 1)
+	return data:sub(1, n)
+end
+
+local function send_opt_result(state, opt, set)
+	state.stream:write(libtelnet.code_str.IAC)
+	if res then
+		state.stream:write(libtlenet.code_str.WILL)
+	else
+		state.stream:write(libtlenet.code_str.WONT)
+	end
+	state.stream:write(string.char(opt))
+end
+
+local cmd_handlers = {
+	[libtelnet.codes.DONT] = function(state)
+		local opt = state.stream:read(1):byte()
+		local res = state:set_option(opt, false)
+		state.local_opts[opt] = res and true or nil
+		send_opt_result(state, opt, res)
+	end,
+	[libtelnet.codes.DO] = function(state)
+		local opt = state.stream:read(1):byte()
+		local res = state:set_option(opt, true)
+		state.local_opts[opt] = res and true or nil
+		send_opt_result(state, opt, res)
+	end,
+	[libtelnet.WONT] = function(state)
+		local opt = state.stream:read(1):byte()
+		state.remote_opts[opt] = nil
+	end,
+	[libtelnet.WILL] = function(state)
+		local opt = state.stream:read(1):byte()
+		state.remote_opts[opt] = true
+	end,
+}
+libtelnet.cmd_handlers = cmd_handlers
+
+function TelnetStream:process_command(cmd)
+	local handler = cmd_handlers[cmd]
+	if handler ~= nil then
+		handler(self)
+	end
+end
+
+TelnetStream.mt = {
+	__index = TelnetStream,
+}
+
+return libtelnet

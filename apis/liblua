@@ -128,4 +128,12 @@ function liblua.invert(t)
 	return liblua.map(t, invert_f)
 end
 
+local function invert_in_place_f(k, v, t, ret)
+	t[v] = k
+end
+
+function lublua.invert_in_place(t)
+	liblua.map(t, invert_in_place_f)
+end
+
 return liblua

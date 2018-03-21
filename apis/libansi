@@ -1,0 +1,16 @@
+local libansi = {}
+
+local ANSITerm = {}
+libansi.ANSITerm = ANSITerm
+
+function ANSITerm.new(term)
+	return setmetatable({
+		term = term,
+	}, ANSITerm.mt)
+end
+
+ANSITerm.mt = {
+	__index = ANSITerm,
+}
+
+return libansi

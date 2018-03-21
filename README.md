@@ -94,6 +94,14 @@ as to avoid expensive round trips.
 that provides, most usefully, a `broadcast_all` function, which sends a mesage
 to every networking component (locally) reachable.
 
+## `libchem`
+
+This is an implementation of a correct, but possibly slightly energy-wasteful
+algorithm for creating arbitrary elements using MineChem, which, given a state
+and a desired state subset, emits a series of "steps" (fusion and fission
+operations) which creates the desired state subset. It is untested in practice
+(because fusion is hard to automate), but it seems numerically correct.
+
 # Licensing
 
 As with the base OpenComputers addon, all programs in this repository are under
