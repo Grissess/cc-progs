@@ -1,0 +1,145 @@
+local CC = os.loadAPI ~= nil
+
+if not CC then
+	error('This library is a compatibility shim on CC for OC--load event for OC instead.')
+end
+
+if liblua == nil then os.loadAPI('/disk/apis/liblua') end
+
+local libccevent = {}
+
+callbacks = setmetatable({}, {__index = function(self, k)
+	if self[k] == nil then self[k] = {} end
+	return self[k]
+end})
+libccevent.callbacks = callbacks
+
+function listen(ev, cb)
+	if callbacks[ev][cb] then return false end
+	callbacks[ev][cb] = true
+	return true
+end
+libccevent.listen = listen
+
+function ignore(ev, cb)
+	if callbacks[ev][cb] then
+		callbacks[ev][cb] = nil
+		return true
+	end
+	return false
+end
+libccevent.ignore = ignore
+
+function libccevent.on_error(cb, e, ev, ...)
+	print(cb, e, ev, ...)
+end
+
+function dispatch_event(ev, ...)
+	local to_ignore = {}
+
+	for cb, _ in pairs(callbacks[ev]) do
+		local succ, ret = pcall(cb, ev, ...)
+		if not succ then
+			libccevent.on_error(cb, ret, ev, ...)
+		else
+			if ret == false then
+				to_ignore[cb] = true
+			end
+		end
+	end
+
+	for cb, _ in pairs(to_ingnore) do
+		libccevent.ignore(ev, cb)
+	end
+end
+libccevent.dispatch_event = dispatch_event
+
+timers_ccid = {}
+libccevent.timers_ccid = timers_ccid
+timers_ocid = {}
+libccevent.timers_ocid = timers_ocid
+libccevent.NEXT_OCID = 1
+
+function timer(intv, cb, times)
+	if times == nil then times = 1 end
+	local ocid = libccevent.NEXT_OCID
+	libccevent.NEXT_OCID = ocid + 1
+
+	local tmr = {
+		intv = intv,
+		ocid = ocid,
+		ccid = os.startTimer(intv),
+		cb = cb,
+		times = times,
+	}
+	timers_ccid[tmr.ccid] = tmr
+	timers_ocid[tmr.ocid] = tmr
+	return tmr.ocid
+end
+libccevent.timer = timer
+
+function dispatch_timer(ccid)
+	local tmr = timers_ccid[ccid]
+	if tmr == nil then return end
+	local succ, ret = pcall(tmr.cb)
+	if not succ then
+		libccevent.on_error(tmr.cb, ret, "__oc_timer", tmr)
+	end
+	tmr.times = tmr.times - 1
+	timers_ccid[ccid] = nil
+	if tmr.times <= 0 then
+		timers_ocid[tmr.ocid] = nil
+	else
+		tmr.ccid = os.startTimer(tmr.intv)
+		timers_ccid[tmr.ccid] = tmr
+	end
+end
+libccevent.dispatch_timer = dispatch_timer
+
+function pullFiltered(tmout, filt)
+	local tmout_ccid = nil
+	if tmout ~= nil then
+		tmout_ccid = os.startTimer(tmout)
+	end
+	while true do
+		local evdata = {os.pullEvent()}
+		local ev = evdata[1]
+		libccevent.dispatch_event(table.unpack(evdata))
+		if ev == "timer" then
+			local ccid = evdata[2]
+			if ccid == tmout_ccid then
+				return nil
+			end
+			libccevent.dispatch_timer(ccid)
+		end
+		if filt(table.unpack(evdata)) then
+			return table.unpack(evdata)
+		end
+	end
+end
+libccevent.pullFiltered = pullFiltered
+
+function pullMultiple(...)
+	local names_seq = {...}
+	local names_set = liblua.seq_to_set(names_seq)
+
+	return libccevent.pullFiltered(nil, function(ev) return names_set[ev] end)
+end
+libccevent.pullMultiple = pullMultiple
+
+function pull(tmout, ...)
+	local params = {...}
+
+	return libccevent.pullFiltered(tmout, function(...)
+		for idx, pv, ev in liblua.zip_max(params, {...}) do
+			if pv ~= nil and pv ~= ev then
+				return false
+			end
+		end
+		return true
+	end)
+end
+libccevent.pull = pull
+
+push = os.queueEvent
+libccevent.push = push

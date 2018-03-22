@@ -1,4 +1,4 @@
-!Manifest revision 7
+!Manifest revision 8
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
@@ -7,6 +7,7 @@ lib/libnic.lua apis/libnic
 lib/libhwproxy.lua apis/libhwproxy
 lib/libchem.lua apis/libchem
 lib/liblua.lua apis/liblua
+lib/libacid.lua apis/libacid
 bin/vim.lua programs/vim
 bin/dctl.lua programs/dctl
 bin/unload.lua programs/unload

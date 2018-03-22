@@ -1,0 +1,58 @@
+local libacid = {}
+
+local CC = os.loadAPI ~= nil
+local liblua, serialization, filesystem
+
+if CC then
+	os.loadAPI("liblua")
+	liblua = _G.liblua
+	serialization = textutils
+	filesystem = fs
+else
+	liblua = require("liblua")
+	serialization = require("serialization")
+	filesystem = require("filesystem")
+end
+
+DB = {}
+libacid.DB = {}
+DB.mt = {
+	__index = DB
+}
+
+function DB.open(fn)
+	return setmetatable({filename = fn}, DB.mt)
+end
+
+setmetatable(DB, {__call = function(self, ...) self.open(...) end})
+
+local function read_all(filename)
+	local ret
+	local fh = filesystem.open(filename, "rb")
+	if CC then
+		ret = fh.readAll()
+	else
+		ret = fh.read(math.huge)
+	end
+	fh.close()
+	return ret
+end
+
+function DB:get()
+	if not filesystem.exists(self.filename) then return {} end
+	return serialization.unserialize(read_all(self.filename))
+end
+
+function DB:set(value)
+	local fh = filesystem.open(filename, "wb")
+	fh.write(serialization.serialize(value))
+	fh.close()
+end
+
+function DB:operate(trans)
+	local state = self:get()
+	local new_state = trans(state)
+	self:set(new_state)
+end
+
+return libacid

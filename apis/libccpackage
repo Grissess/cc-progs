@@ -1,0 +1,85 @@
+local libccpackage = {}
+
+loaded = {
+	bit = bit,
+	colors = colors,
+	colours = colours,
+	commands = commands,
+	coroutine = coroutine,
+	disk = disk,
+	fs = fs,
+	gps = gps,
+	help = help,
+	http = http,
+	io = io,
+	keys = keys,
+	math = math,
+	multishell = multishell,
+	os = os,
+	paintutils = paintutils,
+	parallel = parallel,
+	peripheral = peripheral,
+	rednet = rednet,
+	redstone = redstone,
+	settings = settings,
+	shell = shell,
+	string = string,
+	table = table,
+	term = term,
+	textutils = textutils,
+	turtle = turtle,
+	vector = vector,
+	window = window,
+}
+libccpackage.loaded = loaded
+
+libccpackage.path = "/apis/?.lua;/apis/?;/rom/apis/?.lua;/rom/apis/?"
+
+function require(modname)
+	local mod = libccpackage.loaded[modname]
+	if mod ~= nil then return mod end
+
+	local errs = {}
+	for _, loader in ipairs(libccpackage.loaders) do
+		local res = loader(modname)
+		if type(res) == 'function' then
+			mod = res(modname)
+			if mod == nil then mod = true end
+			libccpackage.loaded[modname] = mod
+			return mod
+		elseif type(res) == 'string' then
+			table.insert(errs, res)
+		end
+	end
+
+	error('module ' .. modname .. ' not found:\n' .. table.concat(errs, '\n'))
+end
+
+preload = {}
+libccpackage.preload = preload
+
+loaders = {
+	function(modname)
+		local preloader = libccpackage.preload[modname]
+		if preloader ~= nil then return preloader end
+		return 'no preloader for ' .. modname
+	end,
+	function(modname)
+		local errs = {}
+		for path in libccpackage.path:gmatch("[^;]+") do
+			local fullpath = path:gsub("%?", modname)
+			if fs.exists(fullpath) then
+				if not fs.isDir(fullpath) then
+					return function(mn) return dofile(fullpath) end
+				else
+					table.insert(errs, fullpath .. ' is a directory')
+				end
+			else
+				table.insert(errs, fullpath .. ' was not found')
+			end
+		end
+		return table.concat(errs, '\n')
+	end
+}
+
+return libccpackage

@@ -1,5 +1,15 @@
 local liblua = {}
 
+function liblua.noop() end
+noop = liblua.noop
+function liblua.identity(...) return ... end
+identity = liblua.identity
+
+function liblua.is_empty(t)
+	return next(t) == nil
+end
+is_empty = liblua.is_empty
+
 function liblua.map(t, f, p, iter)
 	local ret = {}
 
@@ -14,6 +24,7 @@ function liblua.map(t, f, p, iter)
 
 	return ret
 end
+map = liblua.map
 
 function liblua.filter(t, f, p, iter)
 	return liblua.map(t, function(k, v, t, ret, thisf, p)
@@ -22,17 +33,91 @@ function liblua.filter(t, f, p, iter)
 		end
 	end, p, iter)
 end
+filter = liblua.filter
+
+function liblua.any(seq)
+	for i, v in ipairs(seq) do
+		if v then
+			return true
+		end
+	end
+	return false
+end
+any = liblua.any
+
+function liblua.all(seq)
+	for i, v in ipairs(seq) do
+		if not v then
+			return false
+		end
+	end
+	return true
+end
+all = liblua.all
+
+local EXHAUSTED = {}
+
+local function zip_select_f(k, v, t, ret, f, p)
+	local value = v[p]
+	if value == nil then return k, EXHAUSTED end
+	return k, value
+end
+
+local function zip_done_f(k, v)
+	return v == EXHAUSTED
+end
+
+local function zip_iterf(seqs, idx)
+	idx = idx + 1
+	local values = liblua.map(seqs, zip_select_f, idx)
+	if liblua.is_empty(liblua.filter(values, zip_done_f)) then
+		return idx, table.unpack(values)
+	else
+		return nil
+	end
+end
+
+function liblua.zip(...)
+	return zip_iterf, {...}, 0
+end
+zip = liblua.zip
+
+local function zip_not_done_f(...)
+	return not zip_done_f(...)
+end
+
+local function zip_remove_exhausted_f(k, v)
+	if v == EXHAUSTED then
+		return k, nil
+	end
+	return k, v
+end
+
+local function zip_max_iterf(seqs, idx)
+	idx = idx + 1
+	local values = liblua.map(seqs, zip_select_f, idx)
+	if liblua.is_empty(liblua.filter(values, zip_not_done_f)) then
+		return nil
+	else
+		return idx, table.unpack(liblua.map(values, zip_remove_exhuasted_f))
+	end
+end
+
+function liblua.zip_max(...)
+	return zip_max_iterf, {...}, 0
+end
 
 function liblua.constant_function(k)
 	return function()
 		return k
 	end
 end
+constant_function = liblua.constant_function
 
 liblua.always_true = liblua.constant_function(true)
+always_true = liblua.always_true
 liblua.always_false = liblua.constant_function(false)
-function liblua.noop() end
-function liblua.identity(...) return ... end
+always_false = liblua.always_false
 
 local function seq_to_set_f(k, v)
 	return v, true
@@ -41,6 +126,7 @@ end
 function liblua.seq_to_set(t)
 	return liblua.map(t, seq_to_set_f, nil, ipairs)
 end
+seq_to_set = liblua.seq_to_set
 
 local function set_to_seq_f(k, v, t, ret)
 	table.insert(ret, k)
@@ -49,6 +135,7 @@ end
 function liblua.set_to_seq(t)
 	return liblua.map(t, set_to_seq_f)
 end
+set_to_seq = liblua.set_to_seq
 
 local function keys_set_f(k, v)
 	return k, true
@@ -57,24 +144,25 @@ end
 function liblua.keys_set(t)
 	return liblua.map(t, keys_set_f)
 end
+keys_set = liblua.keys_set
 
 function liblua.keys_seq(t)
 	return liblua.set_to_seq(liblua.keys_set(t))
 end
+keys_seq = liblua.keys_seq
 
 liblua.values_set = liblua.seq_to_set
+values_set = liblua.values_set
 
 function liblua.values_seq(t)
 	return liblua.set_to_seq(liblua.values_set(t))
 end
-
-function liblua.is_empty(t)
-	return next(t) == nil
-end
+values_seq = liblua.values_seq
 
 function liblua.shallow_copy(t)
 	return liblua.map(t, liblua.identity)
 end
+shallow_copy = liblua.shallow_copy
 
 local function deep_value_copy_f(k, v, t, ret, f)
 	if type(v) == "table" then
@@ -86,6 +174,7 @@ end
 function liblua.deep_value_copy(t)
 	return liblua.map(t, deep_value_copy_f)
 end
+deep_value_copy = liblua.deep_value_copy
 
 local function deep_key_copy_f(k, v, t, ret, f)
 	if type(k) == "table" then
@@ -97,6 +186,7 @@ end
 function liblua.deep_key_copy(t)
 	return liblua.map(t, deep_key_copy_f)
 end
+deep_key_copy = liblua.deep_key_copy
 
 local function deep_copy_f(k, v, t, ret, f)
 	if type(k) == "table" then
@@ -111,6 +201,7 @@ end
 function liblua.deep_copy(t)
 	return liblua.map(t, deep_copy_f)
 end
+deep_copy = liblua.deep_copy
 
 local function reverse_f(k, v, t, ret)
 	return #t - k + 1, v
@@ -119,6 +210,7 @@ end
 function liblua.reverse(t)
 	return liblua.map(t, reverse_f, nil, ipairs)
 end
+reverse = liblua.reverse
 
 local function invert_f(k, v)
 	return v, k
@@ -127,6 +219,7 @@ end
 function liblua.invert(t)
 	return liblua.map(t, invert_f)
 end
+invert = liblua.invert
 
 local function invert_in_place_f(k, v, t, ret)
 	t[v] = k
@@ -135,5 +228,6 @@ end
 function lublua.invert_in_place(t)
 	liblua.map(t, invert_in_place_f)
 end
+invert_in_place = liblua.invert_in_place
 
 return liblua
