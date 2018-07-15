@@ -75,14 +75,14 @@ if _VERSION == "Lua 5.3" then
 		local sign = sign_bit(n)
 		
 		if disp >= 32 then
-			if sign_bit > 0 then
+			if sign > 0 then
 				return ONES32
 			else
 				return 0
 			end
 		end
 
-		if sign_bit > 0 then
+		if sign > 0 then
 			return op_bor(op_brsh(n, disp), op_blsh(op_blsh(1, disp) - 1, 32 - disp))
 		else
 			return op_brsh(n, disp)
