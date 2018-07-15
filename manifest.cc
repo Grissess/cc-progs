@@ -1,4 +1,4 @@
-!Manifest revision 4
+!Manifest revision 5
 programs/bootstrap programs/bootstrap
 programs/vim programs/vim
 programs/dctl programs/dctl

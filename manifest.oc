@@ -1,4 +1,4 @@
-!Manifest revision 8
+!Manifest revision 9
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
