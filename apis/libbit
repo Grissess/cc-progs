@@ -56,6 +56,7 @@ if _VERSION == "Lua 5.3" then
 			if b == nil then return a end
 			return f(a, reducer(b, ...))
 		end
+		return reducer
 	end
 
 	libbit.band = make_reducer(norm_band, ONES32)
