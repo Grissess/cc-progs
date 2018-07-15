@@ -44,7 +44,7 @@ function DB:get()
 end
 
 function DB:set(value)
-	local fh = filesystem.open(filename, "wb")
+	local fh = filesystem.open(self.filename, "wb")
 	fh.write(serialization.serialize(value))
 	fh.close()
 end
