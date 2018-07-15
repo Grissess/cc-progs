@@ -1,6 +1,6 @@
 local lib2daccel = {}
 
-REVISION = 3
+REVISION = 4
 lib2daccel.REVISION = REVISION
 
 local Fb = {}
@@ -144,21 +144,39 @@ function Accel:flush(purge)
 		the ways I could figure to truly optimize the covering appeared to be
 		in NP, and processor time isn't *that* cheap...
 	]]--
+	-- For each row...
 		for y = 1, self.h do
 			local cur_x, cur_fg, cur_bg, cur_buf, do_blit = nil, nil, nil, '', true
+
+			-- For each column...
 			local x = 1
 			while x <= self.w do
+				-- Get the target (cur) cell and the actual displayed cell
 				local cur_cell = Cell(self.rfb:get(x, y))
 				local disp_cell = Cell(self.dfb:get(x, y))
+
+				-- If target ~= displayed (we need to update)...
 				if (cur_cell.ch ~= disp_cell.ch) or
 					(cur_cell.bg ~= disp_cell.bg) or
 					(cur_cell.fg ~= disp_cell.fg) then
 					local fg, bg = cur_cell.fg, cur_cell.bg
+
+					-- Scan nx forward to find as many cells with the same
+					-- attributes (color) while also building a string (buf)
+					-- containing all those characters
 					local sx, nx = x, x + 1
 					local buf = cur_cell.ch
 					while nx <= self.w do
 						cur_cell = Cell(self.rfb:get(nx, y))
 						disp_cell = Cell(self.dfb:get(nx, y))
+						-- Break if:
+						-- 1. The cell pair we're considering possibly doesn't
+						--    need an update (note that we restart at nx, so
+						--    if, e.g., the character is the same but the
+						--    foregrounds differ, we will detect an update for
+						--    that block on the next iteration.)
+						-- 2. The attributes differ (we can't coalesce the
+						--    state for this update)
 						if cur_cell.ch == disp_cell.ch or
 							cur_cell.fg ~= disp_cell.fg or
 							cur_cell.bg ~= disp_cell.bg then
@@ -167,9 +185,13 @@ function Accel:flush(purge)
 						buf = buf .. cur_cell.ch
 						nx = nx + 1
 					end
+
+					-- Update our understanding of the device framebuffer
 					for ix = sx, nx - 1 do
 						self.dfb:set(ix, y, self.rfb:get(ix, y))
 					end
+
+					-- Actually do the blit
 					self.dev.setForeground(fg)
 					self.dev.setBackground(bg)
 					self.dev.set(sx, y, buf)

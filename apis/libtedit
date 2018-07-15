@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 43
+REVISION = 44
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -171,6 +171,10 @@ else
 		[colors.white] = 0xFFFFFF,
 	}
 	libtedit.real_colors = real_colors
+	-- syn is a syntax hiighlighter;
+	-- cs is a colorschema;
+	-- ts is tabsize;
+	-- mc is monochrome (a boolean).
 	function term_blit(gpu, text, syn, cs, line, ts, mc)
 		if #text <= 0 then return end
 		-- lib2daccel handles acceleration for this, so this is intentionally naive
@@ -363,13 +367,20 @@ buffer = {
 		local ly = 1
 		while ly <= th do
 			local offset = 0
+			-- Account for the '$' used to indicate a wrapped line
 			if bx ~= self.sx then offset = 1 end
+			-- If the requested y is less than the current line, try to put the
+			-- cursor on the end of the line (FIXME: This only works if that
+			-- line fits in one screen line without wrapping)
 			if y < by then
 				return #self.lines[by - 1], by - 1
 			end
+			-- If we're on the right line and the requested x is somewhere in
+			-- this screen line, output that position
 			if y == by and x >= bx and x < bx + tw - offset then
 				return x - bx + offset + 1, ly
 			end
+			-- If the current line must wrap, do so now
 			if #self.lines[by]:sub(bx) > tw then
 				bx = bx + tw - offset
 			else

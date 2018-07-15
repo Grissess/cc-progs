@@ -23,7 +23,7 @@ if _VERSION == "Lua 5.3" then
 	local op_blsh = assert(load([[return function(a, b) return a << b end]]))()
 	local op_brsh = assert(load([[return function(a, b) return a >> b end]]))()
 
-	local libbit = {}
+	libbit = {}
 
 	local ONES32 = 0xffffffff
 	local SIGN32 = 0x80000000
