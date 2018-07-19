@@ -1,0 +1,102 @@
+local libbit = nil
+
+if _VERSION == "Lua 5.3" then
+	--[[
+		 OC ships with a broken replacement bit32 that returns results
+		 outside of [0, 2^32 - 1] as mandated by the Lua 5.2 spec--in
+		 particular, bnot(0) *is* -1, and, despite being called bit32,
+		 returns some head-scratching results with respect to true 32-bit
+		 signed integer arithmetic (arshift(bnot(0), 1) is 0xff_ff_ff_ff
+		 ...?) . Chances are these discrepancies occur because the
+		 functions are routed to the new-standard Lua 5.3 bitwise
+		 operators, which operate on platform integers--by default,
+		 64-bit--unless you set a particular compile define.
+
+		 The following implementation seeks to be as accurate as possible
+		 to true 32-bit behavior, as it was in Lua 5.2.
+	]]--
+
+	local op_band = assert(load([[return function(a, b) return a & b end]]))()
+	local op_bor = assert(load([[return function(a, b) return a | b end]]))()
+	local op_bxor = assert(load([[return function(a, b) return a ~ b end]]))()
+	local op_bnot = assert(load([[return function(a) return ~a end]]))()
+	local op_blsh = assert(load([[return function(a, b) return a << b end]]))()
+	local op_brsh = assert(load([[return function(a, b) return a >> b end]]))()
+
+	libbit = {}
+
+	local ONES32 = 0xffffffff
+	local SIGN32 = 0x80000000
+
+	local function normalize(n)
+		return op_band(ONES32, n)
+	end
+
+	local function make_normalizer(f)
+		return function(a, b) return normalize(f(a, b)) end
+	end
+
+	local norm_band = make_normalizer(op_band)
+	local norm_bor = make_normalizer(op_bor)
+	local norm_bxor = make_normalizer(op_bxor)
+	local norm_blsh = make_normalizer(op_blsh)
+	local norm_brsh = make_normalizer(op_brsh)
+
+	local function norm_bnot(a)
+		return normalize(op_bnot(a))
+	end
+
+	libbit.lshift = norm_blsh
+	libbit.rshift = norm_brsh
+	libbit.bnot = norm_bnot
+
+	local function make_reducer(f, init)
+		local function reducer(a, b, ...)
+			if a == nil then return init end
+			if b == nil then return a end
+			return f(a, reducer(b, ...))
+		end
+		return reducer
+	end
+
+	libbit.band = make_reducer(norm_band, ONES32)
+	libbit.bor = make_reducer(norm_bor, 0)
+	libbit.bxor = make_reducer(norm_bxor, 0)
+	
+	local function sign_bit(n)
+		return op_band(SIGN32, n)
+	end
+
+	local function arshift(n, disp)
+		if disp < 0 then return norm_blsh(n, disp) end
+		if disp == 0 then return normalize(n) end
+
+		n = normalize(n)
+		local sign = sign_bit(n)
+		
+		if disp >= 32 then
+			if sign > 0 then
+				return ONES32
+			else
+				return 0
+			end
+		end
+
+		if sign > 0 then
+			return op_bor(op_brsh(n, disp), op_blsh(op_blsh(1, disp) - 1, 32 - disp))
+		else
+			return op_brsh(n, disp)
+		end
+	end
+
+	libbit.arshift = arshift
+else
+	if bit32 ~= nil then
+		-- Lua 5.2 has the correct implementation.
+		libbit = bit32
+	else
+		error("No working bit library found.")
+	end
+end
+
+return libbit
