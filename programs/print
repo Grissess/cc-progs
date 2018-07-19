@@ -32,15 +32,20 @@ local function pushPage()
 	end
 end
 
+local function newPage()
+	local ok, err = prn.newPage()
+	if not ok then error("Error while starting page: " .. tostring(err)) end
+end
+
 prn.endPage()  -- Just in case
 
-local page, line, inPage = 1, 1, false
+local page, line, inPage = 1, 1, true
+newPage()
 local w, h = prn.getPageSize()
 
 for wrapped in text.wrappedLines(all, w, w) do
 	if not inPage then
-		local ok, err = prn.newPage()
-		if not ok then error(err) end
+		newPage()
 		prn.setPageTitle(name .. " " .. tostring(page))
 		line = 1
 		page = page + 1
