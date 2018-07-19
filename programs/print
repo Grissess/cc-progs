@@ -1,0 +1,58 @@
+local component = require('component')
+local event = require('event')
+local text = require('text')
+
+local comp_name = 'tile_computercraft_printer_name'
+
+if not component.isAvailable(comp_name) then
+	error('no detected printer')
+end
+
+local name = ...
+name = name or ""
+local prn = component.getPrimary(comp_name)
+local all = io.read("*a")
+ 
+print('Printing...')
+
+local function pushPage()
+	local ok, err = prn.endPage()
+
+	if not ok then
+		repeat
+			if not err then
+				err = "Tray full?"
+			else
+				err = err .. "."
+			end
+			print(err .. " Press any key to continue.")
+			event.pull('key_up')
+			ok, err = prn.endPage()
+		until ok
+	end
+end
+
+prn.endPage()  -- Just in case
+
+local page, line, inPage = 1, 1, false
+local w, h = prn.getPageSize()
+
+for wrapped in text.wrappedLines(all, w, w) do
+	if not inPage then
+		local ok, err = prn.newPage()
+		if not ok then error(err) end
+		prn.setPageTitle(name .. " " .. tostring(page))
+		line = 1
+		page = page + 1
+		inPage = true
+	end
+	prn.setCursorPos(1, line)
+	prn.write(wrapped)
+	line = line + 1
+	if line > h then
+		pushPage()
+		inPage = false
+	end
+end
+
+if inPage then pushPage() end
