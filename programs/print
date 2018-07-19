@@ -39,9 +39,10 @@ end
 
 prn.endPage()  -- Just in case
 
-local page, line, inPage = 1, 1, true
+local page, line, inPage = 2, 1, true
 newPage()
 local w, h = prn.getPageSize()
+prn.setPageTitle(name)
 
 for wrapped in text.wrappedLines(all, w, w) do
 	if not inPage then
