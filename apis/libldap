@@ -255,7 +255,7 @@ function LDAP_local:search(base, filter, limit)
 	local results = {}
 	_deep_iter(base, function(k, v, path)
 		if filter(v) then
-			table.insert(results, {path=path, value=v})
+			table.insert(results, {path=Path.copy_from(path), value=v})
 			if limit ~= nil and #results >= limit then
 				return true
 			end
