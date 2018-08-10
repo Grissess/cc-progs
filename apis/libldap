@@ -136,7 +136,7 @@ function Path.to_string(path)
 	if type(path_) == "string" then return path end
 	local res = ""
 	local last_was_index = false
-	for _, cmp in ipairs(self.components) do
+	for _, cmp in ipairs(path.components) do
 		if cmp.type == "index" and last_was_index then
 			res = res .. "."
 		end
