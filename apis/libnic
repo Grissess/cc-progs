@@ -39,7 +39,7 @@ function libnic.broadcast_all(port, ...)
 end
 
 function libnic.send_all(addr, port, ...)
-	for add, kind in pairs(libnic.ALL_NICS) do
+	for addr, kind in pairs(libnic.ALL_NICS) do
 		if kind == "modem" then
 			component.invoke(addr, "send", addr, port, ...)
 		end
