@@ -193,6 +193,7 @@ LDAP.remote_mt = {
 }
 
 function LDAP.new_remote(db)
+	libnic.open_all(libldap.PORT)
 	return setmetatable({addr = db, rid = 1, timeout = libldap.TIMEOUT}, LDAP.remote_mt)
 end
 
@@ -283,7 +284,7 @@ function LDAP_remote:request(...)
 	local rid = self.rid
 	self.rid = self.rid + 1
 	libnic.send_all(self.addr, libldap.PORT, rid, ...)
-	event.timer(self.timeout, _push_timeout)
+	local tmid = event.timer(self.timeout, _push_timeout)
 	local ev = {event.pullFiltered(function(ev, ...)
 		if ev == "ldap_timeout" then return true end
 		if ev == "modem_message" and select(3, ...) == libldap.PORT and select(5, ...) == rid then
@@ -291,9 +292,10 @@ function LDAP_remote:request(...)
 		end
 		return false
 	end)}
+	event.cancel(tmid)
 	if ev[1] == "ldap_timeout" then return nil, "timed out" end
-	if ev[7] == "error" then return nil, select(8, ev) end
-	return select(ev, 7)
+	if ev[7] == "error" then return nil, table.unpack(ev, 8) end
+	return table.unpack(ev, 7)
 end
 
 function LDAP_remote:get(path)

@@ -1,0 +1,9 @@
+local liblldns = require('liblldns')
+
+local args = {...}
+if #args < 1 then
+	print('usage: dns <name>')
+	return
+end
+
+print(liblldns.resolve(args[1]))

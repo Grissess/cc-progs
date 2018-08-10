@@ -1,0 +1,26 @@
+local component = require('component')
+
+local libdaemon = require('libdaemon')
+local libnic = require('libnic')
+local liblldns = require('liblldns')
+
+local dmn = libdaemon.new('lldnsd')
+
+dmn.defaults = {
+	port = liblldns.PORT,
+	names = {},
+}
+
+dmn.init = function(self)
+	libnic.open_all(self.cfg.port)
+
+	if next(self.cfg.names) == nil then
+		self:log("error", "no names; set the names={name1=true, name2=true} config to correct")
+	end
+
+	self:listen("modem_message", function(ev, lnic, rnic, port, dist, nm, req)
+		if port == self.cfg.port and nm ~= nil and self.cfg.names[nm] and not req then
+			component.invoke(lnic, "send", rnic, port, nm, true)
+		end
+	end)
+end

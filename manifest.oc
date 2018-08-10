@@ -1,4 +1,4 @@
-!Manifest revision 11
+!Manifest revision 12
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
@@ -10,14 +10,17 @@ lib/liblua.lua apis/liblua
 lib/libacid.lua apis/libacid
 lib/libbit.lua apis/libbit
 lib/libldap.lua apis/libldap
+lib/liblldns.lua apis/liblldns
 bin/vim.lua programs/vim
 bin/dctl.lua programs/dctl
 bin/unload.lua programs/unload
 bin/daemon_load.lua programs/daemon_load
 bin/print.lua programs/print
+bin/dns.lua programs/dns
 opt/daemon/heartbeat.lua daemons/heartbeat
 opt/daemon/hwproxyd.lua daemons/hwproxyd
 opt/daemon/flowmeter.lua daemons/flowmeter
 opt/daemon/ldapd.lua daemons/ldapd
+opt/daemon/lldnsd.lua daemons/lldsnd
 .manifest manifest.oc
 COPYING COPYING

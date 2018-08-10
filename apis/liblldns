@@ -1,0 +1,27 @@
+local liblldns = {
+	PORT = 5353,
+	TIMEOUT = 2,
+	REVISION = 1,
+}
+
+local event = require('event')
+
+local libnic = require('libnic')
+
+local function _push_timeout() event.push("lldns_timeout") end
+function liblldns.resolve(nm, tmout)
+	if tmout == nil then tmout = liblldns.TIMEOUT end
+
+	libnic.open_all(liblldns.PORT)
+	libnic.broadcast_all(liblldns.PORT, nm)
+	local tmid = event.timer(tmout, _push_timeout)
+	local ev = {event.pullFiltered(function(ev, ...)
+		if ev == "lldns_timeout" then return true end
+		if ev == "modem_message" and select(3, ...) == liblldns.PORT then return true end
+		return false
+	end)}
+	event.cancel(tmid)
+	if ev[1] == "modem_message" and ev[7] then
+		return ev[3]
+	end
+end

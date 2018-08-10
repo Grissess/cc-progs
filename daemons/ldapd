@@ -9,7 +9,7 @@ local dmn = libdaemon.new('ldapd')
 
 dmn.defaults = {
 	db = '/home/ldap.db',
-	port = 389,
+	port = libldap.PORT,
 }
 
 local operations = {
@@ -32,7 +32,7 @@ dmn.init = function(self)
 
 	libnic.open_all(self.cfg.port)
 	self:listen("modem_message", function(ev, lnic, rnic, port, dist, rid, meth, ...)
-		if port ~= libldap.PORT then return end
+		if port ~= self.cfg.port then return end
 		if type(rid) ~= "number" then return end
 		if type(meth) ~= "string" then return end
 
