@@ -148,7 +148,7 @@ end
 
 function Path.copy_from(pseudo)
 	local components = {}
-	for idx, cmp in pseudo do
+	for idx, cmp in pairs(pseudo) do
 		components[idx] = cmp
 	end
 	return setmetatable({components = components}, Path.mt)
