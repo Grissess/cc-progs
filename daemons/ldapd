@@ -15,15 +15,15 @@ dmn.defaults = {
 local operations = {
 	get = function(self, lnic, rnic, rid, meth, path)
 		self:log("get", rnic, rid, path)
-		return self.db:get(path)
+		return self.ldap:get(path)
 	end,
 	search = function(self, lnic, rnic, rid, meth, base, filter)
 		self:log("search", rnic, rid, base, filter)
-		return self.db:get(base, filter)
+		return self.ldap:get(base, filter)
 	end,
 	put = function(self, lnic, rnic, rid, meth, path, version, value)
 		self:log("put", rnic, path, version, value)
-		return self.db:put(path, version, serialization.unserialize(value))
+		return self.ldap:put(path, version, serialization.unserialize(value))
 	end,
 }
 
