@@ -24,3 +24,5 @@ dmn.init = function(self)
 		end
 	end)
 end
+
+return dmn
