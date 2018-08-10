@@ -3,6 +3,7 @@ local serialization = require('serialization')
 
 local libdaemon = require('libdaemon')
 local libldap = require('libldap')
+local libnic = require('libnic')
 
 local dmn = libdaemon.new('ldapd')
 
