@@ -30,11 +30,11 @@ local function read_all(filename)
 	local ret
 	local fh = filesystem.open(filename, "rb")
 	if CC then
-		ret = fh.readAll()
+		ret = fh:readAll()
 	else
-		ret = fh.read(math.huge)
+		ret = fh:read(math.huge)
 	end
-	fh.close()
+	fh:close()
 	return ret
 end
 
