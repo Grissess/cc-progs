@@ -45,8 +45,8 @@ end
 
 function DB:set(value)
 	local fh = filesystem.open(self.filename, "wb")
-	fh.write(serialization.serialize(value))
-	fh.close()
+	fh:write(serialization.serialize(value))
+	fh:close()
 end
 
 function DB:operate(trans)
