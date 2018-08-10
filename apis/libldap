@@ -207,10 +207,6 @@ function LDAP_local:get(path)
 	return path:index(self.db:get()), self.version
 end
 
-local function _deep_iter(base, f)
-	return _inner_deep_iter(base, {}, f, {})
-end
-
 local function _inner_deep_iter(base, path, f, seen)
 	if type(base) ~= "table" then return end
 	if seen[base] then return end
@@ -239,6 +235,10 @@ local function _inner_deep_iter(base, path, f, seen)
 		table.remove(path)
 	end
 	seen[base] = true
+end
+
+local function _deep_iter(base, f)
+	return _inner_deep_iter(base, {}, f, {})
 end
 
 function LDAP_local:search(base, filter, limit)

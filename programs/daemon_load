@@ -31,7 +31,10 @@ if type(data.start) ~= "table" then
 end
 
 for name, _ in pairs(data.start) do
-	pcall(load_daemon, name)
+	local ok, err = xpcall(function() load_daemon(name) end, debug.traceback)
+	if not ok then
+		print('RC/daemon_load: Error occured while loading ' .. name .. ': ' .. err)
+	end
 end
 print('RC/daemon_load: Done.')
 log:close()
