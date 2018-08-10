@@ -60,7 +60,7 @@ local function parse_components(path)
 	while i <= #path do
 		local component = parse_component(path:sub(i))
 		table.insert(components, component)
-		i = i + #component.consume
+		i = i + component.consume
 	end
 
 	return components
