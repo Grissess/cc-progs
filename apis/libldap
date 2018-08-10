@@ -228,7 +228,7 @@ local function _inner_deep_iter(base, path, f, seen)
 		local ok, res = pcall(f, k, v, path)
 		if ok and res == true then return true end
 		if type(v) == "table" and not (ok and res == false) then
-			if _inner_deep_iter(v, f, seen) then
+			if _inner_deep_iter(v, path, f, seen) then
 				return true
 			end
 		end
