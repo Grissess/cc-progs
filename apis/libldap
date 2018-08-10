@@ -245,9 +245,9 @@ function LDAP_local:search(base, filter, limit)
 	local base, err = Path(base)
 	if err ~= nil then return nil, err end
 	local base, err = self:get(base)
-	if err ~= nil then return nil, err end
+	if base == nil then return nil, err end
 	if type(filter) == "string" then
-		local result, err = load("return function(self) " .. filter .. " end")
+		local result, err = load("return function(self) return " .. filter .. " end")
 		if err ~= nil then return nil, err end
 		filter = result()
 	end
