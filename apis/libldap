@@ -22,7 +22,7 @@ function Path.new(path)
 	end
 	return Path.parse(path)
 end
-Path.mt.__call = function(self, path) return Path.new(path) end
+setmetatable(Path, {__call = function(self, path) return Path.new(path) end})
 
 local function parse_components(path)
 	local components = {}
@@ -166,7 +166,7 @@ function LDAP.new(db)
 		return LDAP.new_remote(db)
 	end
 end
-LDAP.mt.__call = function(self, db) return LDAP.new(db) end
+setmetatable(LDAP, {__call = function(self, db) return LDAP.new(db) end})
 
 local LDAP_local = {}
 LDAP.local_mt = {

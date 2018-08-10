@@ -15,7 +15,7 @@ else
 end
 
 DB = {}
-libacid.DB = {}
+libacid.DB = DB
 DB.mt = {
 	__index = DB
 }
