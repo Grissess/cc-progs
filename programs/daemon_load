@@ -1,5 +1,11 @@
 local libdaemon = require('libdaemon')
 local serialization = require('serialization')
+local filesystem = require('filesystem')
+
+local log = filesystem.open('/tmp/daemon_load.log', 'w')
+local function print(...)
+	log:write(table.concat({...}, "\t") .. "\n")
+end
 
 local function load_daemon(name)
 	print('RC/daemon_load: Loading daemon ' .. name)
@@ -28,3 +34,4 @@ for name, _ in pairs(data.start) do
 	pcall(load_daemon, name)
 end
 print('RC/daemon_load: Done.')
+log:close()
