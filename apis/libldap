@@ -1,0 +1,316 @@
+local libldap = {
+	PORT = 389,
+	TIMEOUT = 5,
+	REVISION = 1,
+}
+
+local event = require("event")
+local serialization = require("serialization")
+
+local libacid = require("libacid")
+local libnic = require("libnic")
+
+local Path = {}
+libldap.Path = Path
+Path.mt = {
+	__index = Path,
+}
+
+function Path.new(path)
+	if getmetatable(path) == Path.mt then
+		return path
+	end
+	return Path.parse(path)
+end
+Path.mt.__call = function(self, path) return Path.new(path) end
+
+local function parse_components(path)
+	local components = {}
+
+	local i = 1
+	while i <= #path do
+		local component = parse_component(path:sub(i))
+		table.insert(components, component)
+		i = i + #component.consume
+	end
+
+	return components
+end
+
+local _ends_component = {["."] = true, ["["] = true}
+local function parse_component(suffix)
+	if #suffix <= 0 then return {text="", consume=1, type="index"} end
+
+	if suffix:sub(1, 1) == "[" then
+		return parse_expr(suffix:sub(2))
+	end
+
+	for i = 1, #suffix do
+		if _ends_component[suffix:sub(i, i)]then
+			return {text=suffix:sub(1, i - 1), consume=i, type="index"}
+		end
+	end
+
+	return {text=suffix, consume=#suffix, type="index"}
+end
+
+local function parse_expr(suffix)
+	if #suffix <= 0 then error("empty expression") end
+
+	for i = 1, #suffix do
+		if suffix:sub(i, i) == "]" then
+			return {text=suffix:sub(1, i - 1), consume = i + 1, type="expr"}
+		end
+	end
+
+	error("unbalanced expression")
+end
+
+function Path.parse(path)
+	local ok, components = pcall(parse_components, path)
+	if not ok then return nil, components end
+	return setmetatable({components = components}, Path.mt)
+end
+
+local _indexer = {
+	index = function(obj, cmp)
+		return obj[cmp.text]
+	end,
+	expr = function(obj, cmp)
+		return obj[load("return " .. cmp.text)()]
+	end,
+}
+function Path:index(node)
+	for _, component in ipairs(self.components) do
+		local ok, result = pcall(_indexer[component.type], node, component)
+		if not ok then return nil, "index failed: " .. result end
+		if result == nil then return nil, "component " .. component.text .. " does not exist" end
+		node = result
+	end
+	return node
+end
+
+function Path:up()
+	local components = {}
+	for idx, cmp in ipairs(self.components) do
+		if idx ~= #self.components then
+			components[idx] = cmp
+		end
+	end
+	return setmetatable({components = components}, Path.mt)
+end
+
+local _setter = {
+	index = function(obj, cmp, val)
+		obj[cmp.text] = val
+	end,
+	expr = function(obj, cmp, val)
+		obj[load("return " .. cmp.text)()] = val
+	end,
+}
+function Path:set(node, v)
+	for idx, component in ipairs(self.components) do
+		if idx == #self.components then
+			local ok, err = pcall(_setter[component.type], node, component, v)
+			if not ok then return nil, err end
+		else
+			local ok, result = pcall(_indexer[component.type], node, component)
+			if not ok then return nil, "index failed: " .. result end
+			if result == nil then return nil, "component " .. component.text .. " does not exist" end
+			node = result
+		end
+	end
+	return true
+end
+
+local _stringer = {
+	index = function(cmp)
+		return cmp.text
+	end,
+	expr = function(cmp)
+		return "[" .. cmp.text .. "]"
+	end,
+}
+function Path.to_string(path)
+	if type(path_) == "string" then return path end
+	local res = ""
+	local last_was_index = false
+	for _, cmp in ipairs(self.components) do
+		if cmp.type == "index" and last_was_index then
+			res = res .. "."
+		end
+		res = res .. _stringer[cmp.type](cmp)
+		last_was_index = (cmp.type == "index")
+	end
+	return res
+end
+
+function Path.copy_from(pseudo)
+	local components = {}
+	for idx, cmp in pseudo do
+		components[idx] = cmp
+	end
+	return setmetatable({components = components}, Path.mt)
+end
+
+local LDAP = {}
+libldap.LDAP = LDAP
+LDAP.mt = {
+	__index = LDAP,
+}
+
+function LDAP.new(db)
+	if db:sub(1, 1) == "/" then
+		return LDAP.new_local(db)
+	else
+		return LDAP.new_remote(db)
+	end
+end
+LDAP.mt.__call = function(self, db) return LDAP.new(db) end
+
+local LDAP_local = {}
+LDAP.local_mt = {
+	__index = function(idx)
+		local v = LDAP_local[idx]
+		if v ~= nil then return v end
+		return LDAP[idx]
+	end,
+}
+
+function LDAP.new_local(db)
+	return setmetatable({db = libacid.DB.open(db), version=1}, LDAP.local_mt)
+end
+
+local LDAP_remote = {}
+
+LDAP.remote_mt = {
+	__index = function(idx)
+		local v = LDAP_remote[idx]
+		if v ~= nil then return v end
+		return LDAP[idx]
+	end,
+}
+
+function LDAP.new_remote(db)
+	return setmetatable({addr = db, rid = 1, timeout = libldap.TIMEOUT}, LDAP.remote_mt)
+end
+
+function LDAP:is_remote()
+	return self.addr ~= nil
+end
+
+function LDAP_local:get(path)
+	local path, err = Path(path)
+	if err ~= nil then return nil, err end
+	return path:index(self.db:get()), self.version
+end
+
+local function _deep_iter(base, f)
+	return _inner_deep_iter(base, {}, f, {})
+end
+
+local function _inner_deep_iter(base, path, f, seen)
+	if type(base) ~= "table" then return end
+	if seen[base] then return end
+	for k, v in pairs(base) do
+		local cmp = {}
+		if type(k) == "string" then
+			if k:match("^[a-zA-Z_][a-zA-Z0-9_]+$") then
+				cmp.text = k
+				cmp.type = "index"
+			else
+				cmp.text = string.format("%q", k)
+				cmp.type = "expr"
+			end
+		else
+			cmp.text = tostring(k)
+			cmp.type = "expr"
+		end
+		table.insert(path, cmp)
+		local ok, res = pcall(f, k, v, path)
+		if ok and res == true then return true end
+		if type(v) == "table" and not (ok and res == false) then
+			if _inner_deep_iter(v, f, seen) then
+				return true
+			end
+		end
+		table.remove(path)
+	end
+	seen[base] = true
+end
+
+function LDAP_local:search(base, filter, limit)
+	local base, err = Path(base)
+	if err ~= nil then return nil, err end
+	local base, err = self:get(base)
+	if err ~= nil then return nil, err end
+	if type(filter) == "string" then
+		local result, err = load("return function(self) " .. filter .. " end")
+		if err ~= nil then return nil, err end
+		filter = result()
+	end
+
+	local results = {}
+	_deep_iter(base, function(k, v, path)
+		if filter(v) then
+			table.insert(results, {path=path, value=v})
+			if limit ~= nil and #results >= limit then
+				return true
+			end
+		end
+	end)
+
+	return results, self.version
+end
+
+function LDAP_local:put(path, version, value)
+	if version ~= self.version then return nil, "bad version" end
+	local path, err = Path(path)
+	if err ~= nil then return nil, err end
+	local db = self.db:get()
+	local ok, err = path:set(db, value)
+	if not ok then return nil, err end
+	self.db:set(db)
+	self.version = self.version + 1
+	return true
+end
+
+local function _push_timeout()
+	event.push("ldap_timeout")
+end
+function LDAP_remote:request(...)
+	local rid = self.rid
+	self.rid = self.rid + 1
+	libnic.send_all(self.addr, libldap.PORT, rid, ...)
+	event.timer(self.timeout, _push_timeout)
+	local ev = {event.pullFiltered(function(ev, ...)
+		if ev == "ldap_timeout" then return true end
+		if ev == "modem_message" and select(3, ...) == libldap.PORT and select(5, ...) == rid then
+			return true
+		end
+		return false
+	end)}
+	if ev[1] == "ldap_timeout" then return nil, "timed out" end
+	if ev[7] == "error" then return nil, select(ev, 8) end
+	return select(ev, 7)
+end
+
+function LDAP_remote:get(path)
+	local st, ver = self:request("get", Path.to_string(path))
+	if st == nil then return nil, ver end
+	return serialization.unserialize(st), ver
+end
+
+function LDAP_remote:search(base, filter)
+	local res, ver = self:request("search", Path.to_string(base), filter)
+	if res == nil then return nil, ver end
+	return serialization.unserialize(res), ver
+end
+
+function LDAP_remote:put(path, version, value)
+	local ok, err = self:request("put", Path.to_string(path), version, serialization.serialize(value))
+	if ok == nil then return nil, ver end
+	return ok
+end
+
+return libldap

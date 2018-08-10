@@ -1,0 +1,46 @@
+local component = require('component')
+local serialization = require('serialization')
+
+local libdaemon = require('libdaemon')
+local libldap = require('libldap')
+
+local dmn = libdaemon.new('ldapd')
+
+dmn.defaults = {
+	db = '/home/ldap.db',
+	port = 389,
+}
+
+local operations = {
+	get = function(self, lnic, rnic, rid, meth, path)
+		return self.db:get(path)
+	end,
+	search = function(self, lnic, rnic, rid, meth, base, filter)
+		return self.db:get(base, filter)
+	end,
+	put = function(self, lnic, rnic, rid, meth, path, version, value)
+		return self.db:put(path, version, serialization.unserialize(value))
+	end,
+}
+
+dmn.init = function(self)
+	self.ldap = libldap.LDAP(self.cfg.db)
+
+	libnic.open_all(self.cfg.port)
+	self:listen("modem_message", function(ev, lnic, rnic, port, dist, rid, meth, ...)
+		if port ~= libldap.PORT then return end
+		if type(rid) ~= "number" then return end
+		if type(meth) ~= "string" then return end
+
+		local f = operations[meth]
+		if f == nil then return end
+		local results = {pcall(f, self, lnic, rnic, rid, meth, ...)}
+		if results[1] then
+			component.invoke(lnic, "send", rnic, port, rid, table.unpack(results, 2))
+		else
+			component.invoke(lnic, "send", rnic, port, rid, "error", table.unpack(results, 2))
+		end
+	end)
+end
+
+return dmn

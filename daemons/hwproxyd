@@ -26,7 +26,7 @@ local handlers = {
 	end,
 	DOC = function(self, lnic, rnic, req_id, addr, meth)
 		if self.cfg.forbidden[addr] then
-			component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, false, serialization.serialize({"access defined"}))
+			component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, false, serialization.serialize({"access denied"}))
 			return
 		end
 
@@ -36,7 +36,7 @@ local handlers = {
 	end,
 	MTH = function(self, lnic, rnic, req_id, addr)
 		if self.cfg.forbidden[addr] then
-			component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, false, serialization.serialize({"access defined"}))
+			component.invoke(lnic, "send", rnic, libhwproxy.PORT, libhwproxy.HEADER, "CPL", req_id, false, serialization.serialize({"access denied"}))
 			return
 		end
 
@@ -54,6 +54,8 @@ local handlers = {
 }
 
 dmn.init = function(self)
+	libnic.open_all(libhwproxy.PORT)
+
 	self:listen("modem_message", function(ev, lnic, rnic, port, dist, ...)
 		if port ~= libhwproxy.PORT then return end
 		local args = {...}
