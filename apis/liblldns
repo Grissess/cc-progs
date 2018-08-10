@@ -25,3 +25,5 @@ function liblldns.resolve(nm, tmout)
 		return ev[3]
 	end
 end
+
+return liblldns
