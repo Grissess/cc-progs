@@ -36,7 +36,6 @@ local function parse_expr(suffix)
 	error("unbalanced expression")
 end
 
-local _ends_component = {["."] = true, ["["] = true}
 local function parse_component(suffix)
 	if #suffix <= 0 then return {text="", consume=1, type="index"} end
 
@@ -45,8 +44,10 @@ local function parse_component(suffix)
 	end
 
 	for i = 1, #suffix do
-		if _ends_component[suffix:sub(i, i)]then
+		if suffix:sub(i, i) == "." then
 			return {text=suffix:sub(1, i - 1), consume=i, type="index"}
+		elseif suffix:sub(i, i) == "[" then
+			return {text=suffix:sub(1, i - 1), consume=i - 1, type="index"}
 		end
 	end
 
