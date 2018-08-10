@@ -133,7 +133,7 @@ local _stringer = {
 	end,
 }
 function Path.to_string(path)
-	if type(path_) == "string" then return path end
+	if type(path) == "string" then return path end
 	local res = ""
 	local last_was_index = false
 	for _, cmp in ipairs(path.components) do
