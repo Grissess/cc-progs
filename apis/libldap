@@ -292,7 +292,7 @@ function LDAP_remote:request(...)
 		return false
 	end)}
 	if ev[1] == "ldap_timeout" then return nil, "timed out" end
-	if ev[7] == "error" then return nil, select(ev, 8) end
+	if ev[7] == "error" then return nil, select(8, ev) end
 	return select(ev, 7)
 end
 
