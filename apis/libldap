@@ -24,17 +24,16 @@ function Path.new(path)
 end
 setmetatable(Path, {__call = function(self, path) return Path.new(path) end})
 
-local function parse_components(path)
-	local components = {}
+local function parse_expr(suffix)
+	if #suffix <= 0 then error("empty expression") end
 
-	local i = 1
-	while i <= #path do
-		local component = parse_component(path:sub(i))
-		table.insert(components, component)
-		i = i + #component.consume
+	for i = 1, #suffix do
+		if suffix:sub(i, i) == "]" then
+			return {text=suffix:sub(1, i - 1), consume = i + 1, type="expr"}
+		end
 	end
 
-	return components
+	error("unbalanced expression")
 end
 
 local _ends_component = {["."] = true, ["["] = true}
@@ -54,16 +53,17 @@ local function parse_component(suffix)
 	return {text=suffix, consume=#suffix, type="index"}
 end
 
-local function parse_expr(suffix)
-	if #suffix <= 0 then error("empty expression") end
+local function parse_components(path)
+	local components = {}
 
-	for i = 1, #suffix do
-		if suffix:sub(i, i) == "]" then
-			return {text=suffix:sub(1, i - 1), consume = i + 1, type="expr"}
-		end
+	local i = 1
+	while i <= #path do
+		local component = parse_component(path:sub(i))
+		table.insert(components, component)
+		i = i + #component.consume
 	end
 
-	error("unbalanced expression")
+	return components
 end
 
 function Path.parse(path)
