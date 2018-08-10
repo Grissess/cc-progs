@@ -170,7 +170,7 @@ setmetatable(LDAP, {__call = function(self, db) return LDAP.new(db) end})
 
 local LDAP_local = {}
 LDAP.local_mt = {
-	__index = function(idx)
+	__index = function(self, idx)
 		local v = LDAP_local[idx]
 		if v ~= nil then return v end
 		return LDAP[idx]
@@ -184,7 +184,7 @@ end
 local LDAP_remote = {}
 
 LDAP.remote_mt = {
-	__index = function(idx)
+	__index = function(self, idx)
 		local v = LDAP_remote[idx]
 		if v ~= nil then return v end
 		return LDAP[idx]
