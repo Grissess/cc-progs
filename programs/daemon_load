@@ -25,6 +25,6 @@ if type(data.start) ~= "table" then
 end
 
 for name, _ in pairs(data.start) do
-	load_daemon(name)
+	pcall(load_daemon, name)
 end
 print('RC/daemon_load: Done.')
