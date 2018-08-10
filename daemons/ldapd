@@ -16,7 +16,7 @@ local operations = {
 	get = function(self, lnic, rnic, rid, meth, path)
 		self:log("get", rnic, rid, path)
 		local st, ver = self.ldap:get(path)
-		return serialization.serialize(st, ver)
+		return serialization.serialize(st), ver
 	end,
 	search = function(self, lnic, rnic, rid, meth, base, filter)
 		self:log("search", rnic, rid, base, filter)
