@@ -30,6 +30,7 @@ if not addr then
 	return
 end
 
+local db = libldap.LDAP(addr)
 if version == nil then
 	local res, ver = db:get(args[1])
 	if not res then
@@ -41,7 +42,6 @@ else
 	version = tonumber(version)
 end
 
-local db = libldap.LDAP(addr)
 local result, err = db:put(args[1], version, serialization.unserialize(args[2]))
 
 if result then
