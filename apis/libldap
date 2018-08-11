@@ -1,6 +1,7 @@
 local libldap = {
 	PORT = 389,
 	TIMEOUT = 5,
+	CONFIG_FILE = '/etc/ldap.cfg',
 	REVISION = 1,
 }
 
@@ -314,6 +315,16 @@ function LDAP_remote:put(path, version, value)
 	local ok, err = self:request("put", Path.to_string(path), version, serialization.serialize(value))
 	if ok == nil then return nil, ver end
 	return ok
+end
+
+function libldap.get_config()
+	local f, err = io.open(libldap.CONFIG_FILE, 'r')
+	if not f then
+		return {}, err
+	end
+	data = f:read("*a")
+	f:close()
+	return serialization.unserialize(data)
 end
 
 return libldap

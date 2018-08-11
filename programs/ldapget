@@ -1,0 +1,38 @@
+local shell = require('shell')
+
+local libldap = require('libldap')
+local liblldns = require('liblldns')
+
+local args, options = shell.parse(...)
+
+if #args ~= 1 then
+	print('usage: ldapget [--host=HOST] <path>')
+	return
+end
+
+local host = options.host
+if not host then
+	local config = libldap.get_config()
+	host = config.host
+end
+
+if not host then
+	print('error: no host specified and no default host configured; pass --host=HOST to set a host')
+	return
+end
+
+local addr = liblldns.resolve(host)
+if not addr then
+	print('error: host not found: ' .. host)
+	return
+end
+
+local db = libldap.LDAP(addr)
+local value, version = db:get(args[1])
+
+if value ~= nil then
+	print(serialization.serialize(value))
+	print('Version: ' .. tostring(version))
+else
+	print('Not found: ' .. version)
+end
