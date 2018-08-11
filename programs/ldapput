@@ -1,4 +1,5 @@
 local shell = require('shell')
+local serialization = require('serialization')
 
 local libldap = require('libldap')
 local liblldns = require('liblldns')
