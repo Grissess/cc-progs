@@ -17,6 +17,9 @@ bin/unload.lua programs/unload
 bin/daemon_load.lua programs/daemon_load
 bin/print.lua programs/print
 bin/dns.lua programs/dns
+bin/ldapsearch.lua programs/ldapsearch
+bin/ldapget.lua programs/ldapget
+bin/ldapput.lua programs/ldapput
 opt/daemon/heartbeat.lua daemons/heartbeat
 opt/daemon/hwproxyd.lua daemons/hwproxyd
 opt/daemon/flowmeter.lua daemons/flowmeter
