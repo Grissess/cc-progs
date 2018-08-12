@@ -387,7 +387,7 @@ local modes = {
 			table.insert(buf.lines, buf.cy + 1, reg)
 			return "normal"
 		end
-		if char == "p" then
+		if char == "P" then
 			table.insert(buf.lines, buf.cy, reg)
 			buf:setcursor(1, buf.cy + 1)
 			return "normal"

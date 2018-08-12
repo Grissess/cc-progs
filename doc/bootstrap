@@ -1,0 +1,20 @@
+NAME
+  bootstrap - Bootstrap cc-progs
+
+SYNOPSIS
+  bootstrap
+  bootstrap ROOT
+
+DESCRIPTION
+  Downloads cc-progs to ROOT if given, otherwise chooses /disk or /usr depending on whether the system seems to be ComputerCraft or OpenComputers, respectively.
+
+  The default HTTP "root" is hard-coded as HTTP_ROOT; you can change it by editing the file. From this source, it downloads either `manifest.cc` or `manifest.oc` depending on detected system, and "executes" the manifest, line by line, as follows:
+
+  1. If the line starts with an exclamation (!), a message is printed.
+
+  2. Otherwise, the line contains two (non-whitespace) words, separated by a space, in the order "DESTINATION SOURCE", where ROOT/DESTINATION is downloaded from HTTP_ROOT/SOURCE.
+
+  In order to defeat aggressive caches, a random number is automatically generated and appended as the "?rand=RAND" query parameter. The default HTTP_ROOT on Github simply ignores this parameter.
+
+COLOPHON
+  cc-progs, Grissess 2018

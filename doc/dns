@@ -1,0 +1,18 @@
+NAME
+  dns - resolve LLDNS
+
+SYNOPSIS
+  dns NAME
+
+DESCRIPTION
+  Invokes liblldns(1) .resolve, and prints the result, which is usually an OC component address, or nil if it times out (e.g., the name is not registered, or that service is not reachable).
+
+EXAMPLES
+  dns ldap
+    Queries LLDNS for "ldap", printing an address if it was found, or "nil" if it wasn't.
+
+SEE ALSO
+  liblldns(1)
+
+COLOPHON
+  cc-progs, Grissess 2018

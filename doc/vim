@@ -1,0 +1,81 @@
+NAME
+  vim - Vi iMproved-like editor
+
+SYNOPSIS
+  vim [OPTIONS] [FILE]
+
+DESCRIPTION
+  Starts the Vim editor.
+
+  A description of how to use Vim is entirely beyond the scope of this man page; consult your local man pages, the Internet, or your local library for documentation and resources on getting started with Vim. (Emacs be damned, Vim is the superior input mode!) The remainder of this man page will describe only the bare minimum of differences between this implementation and the "real" one.
+
+  The currently recognized OPTIONS are as follows:
+
+    --color=full
+    --color=low
+    --color=none
+
+	  Forces libtedit to use the full, gray, or monochrome colorsets, in that order, rather than the default (infer from available hardware). Monochrome mode is particularly fast, and might be useful on otherwise resource-constrained machines.
+
+	--debug=true
+
+	  Creates debug output. Right now, this uses the local modem (which it assumes exists) to broadcast messages in no particular format on port 12345.
+
+	--autoindent=true
+
+	  Automatically indents a new line based on the leading whitespace in the previous line. This option is ignored from the command line, but can be set with :set. See BUGS.
+
+  All OPTIONS can be set at runtime using the :set ex command.
+
+  Vim currently supports the hjkl and arrow key motions. ^$ are also supported, but ^ does not skip leading whitespace, so it acts more like 0. G works as expected, but a single g implements the "top" motion, unlike two in the real Vim. w and W work, but only within a line. Page Down and Page Up scroll by constant increments of 20, which is presently not configurable.
+
+  Currently, ex commands write/w, quit/q, wq, noh, syntax, and set exist in very limited form. Vim does not keep track of buffer modification state, so there is no concept of "q!". :set expects either a name, or a name, whitespace, and a Lua expression to be evaluated, notably without "=" or any other punctuation which might query/toggle various parameters. :set actually operates on the options table--so it can set any option which would be normally set from the command line. Additionally, :eval/:! exist to evaluate arbitrary Lua code--not shell.
+
+  The operators i, I, o, O, a, and A work as expected. p and P work as expected, but do not accept a register argument--there is only one register, and it does not have a name.
+
+  Many operators in standard Vim are implemented as distinct modes in this implementation. For example, y enters "yank" mode, d enters "delete" mode, / enters "search" mode, f enters "fsearch" mode, t enters "tsearch" mode, and z enters "scroll" mode. Unfortunately, this implementation loses some expressivity as a result of not considering some of these "motions" proper--for example, d3t/ is unimplemented at the moment. Additionally, f/F are implemented as an extension of / (search), and so they are not restricted to one line.
+
+  Entering digits from normal mode enters "rep" mode. This does not arbitrarily repeat commands; like Vim, some commands (like motion g) are special, in that they interpret the count differently (g sets the current line to the entered one). Currently, as a special case, only the hjkl motions are supported for repetition.
+
+  Insert mode is as expected. There is no replace mode.
+
+  Vim is implemented as a frontend to libtedit(1), a Lua library providing a plethora of text file manipulation routines, and intentionally decoupled from the modal interface of Vim itself. See its documentation for use; you are welcome to make your own frontends to it. Vim also uses lib2daccel(1) to attempt to accelerate OC GPU draw time (especially when highlighting in color), which you are free to use as well.
+
+EXAMPLES
+  vim /usr/bin/vim.lua
+    Read Vim's source code in Vim, assuming it works and your install root was /usr.
+
+  vim --color=none /etc/daemon.log
+    Open /etc/daemon.log, but don't attempt to colorize anything. Vim will run markedly faster.
+
+  vim
+    Open a new anonymous buffer in Vim.
+
+BUGS
+  Plenty. Many of them are enumerated above, and are large deviations from the actual Vim implementation.
+
+  Option "autoindent" is forced on in the code, and ignored on the command line. You can still modify it using :set.
+
+  lib2daccel is buggy with its update detection at the moment, and fecklessly mishighlights things. Syntax highlighting should be considered experimental.
+
+  The use of a modem's broadcast without checking for one when option "debug" is set is pretty careless as well.
+
+  Many of the composite motions and operators are implemented as modes, which is strictly incorrect.
+
+  Input handling is a bit overgenerous with "Unknown command".
+
+  Virtual cursor positioning when line wrapping is enabled is buggy. Your cursor may not actually appear at your true insertion point, and the only way to find out where it actually is is trial and error. This is a libtedit bug.
+
+  It's still not well-known whether lib2daccel actually does what it says on the tin.
+
+  There is no multibuffer support yet.
+
+  There is no modified buffer detection yet.
+
+  Although every effort is made to make sure what you see on the screen is what you get in the file, that has occasionally not been the case. Use at your own risk.
+
+SEE ALSO
+  libtedit(1), lib2daccel(1)
+
+COLOPHON
+  cc-progs, Grissess 2018

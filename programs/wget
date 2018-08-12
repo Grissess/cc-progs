@@ -10,6 +10,8 @@ else
 	local filesystem = require('filesystem')
 end
 
+if fs == nil then fs = filesystem end
+
 local args = {...}
 
 if #args < 1 then

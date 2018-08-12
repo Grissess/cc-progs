@@ -1,0 +1,20 @@
+NAME
+  daemon_load - Load the default set of daemons
+
+SYNOPSIS
+  daemon_load
+
+DESCRIPTION
+  Intended to be run automatically (as with an RC script), this program loads libdaemon(1) and reads `/etc/daemon.cfg`, which is expected to contain a Lua table expression. The following keys have meaning:
+
+  start={...}
+
+    Start the named daemons automatically. The key is the name of a daemon, and the value is ignored (true is a popular value). For example, start={foo=true, bar=true} will start the `foo` and `bar` daemons when this script is run.
+
+  daemon_load logs to `/tmp/daemon_load.log`, since it may not be running with proper IO redirects. Reviewing the file may be useful to debug service startup issues.
+
+SEE ALSO
+  libdaemon(1), dctl(1)
+
+COLOPHON
+  cc-progs, Grissess 2018

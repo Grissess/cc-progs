@@ -1,0 +1,18 @@
+NAME
+  unload - Unloads a shared library
+
+SYNOPSIS
+  unload LIBRARY
+
+DESCRIPTION
+  Unloads a shared library named LIBRARY, as would normally be imported via require("LIBRARY"). This forces it to be reloaded from disk the next time it is imported, which is useful if the disk version has been changed (e.g., due to an update).
+
+EXAMPLES
+  unload liblldns
+    Unloads liblldns(1). The next call to require('liblldns') will reload it from disk.
+
+BUGS
+  Note that, while this will work for new imports, it is generally impossible to reload all the other users of this shared library. If you still notice dissonance between disk version and memory version of a library, you may simply need to reboot your machine.
+  
+COLOPHON
+  cc-progs, Grissess 2018

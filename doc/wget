@@ -1,0 +1,21 @@
+NAME
+  wget - Get a file from the web
+
+SYNOPSIS
+  wget URI
+  wget URI PATH
+
+DESCRIPTION
+  This is an OC/CC neutral implementation of wget, in case neither environment provides one; to my knowledge, both of them now do, but if you find yourself in a weird spot, you might be able to hack this into a system to port bootstrap(1) to it. Note that OC requires an Internet card for access, anyway.
+
+  By default, PATH is the filename part of URI. This uses the internal filesystem libraries where possible, instead of parsing the actual URI, so be wary of issues related to that.
+
+EXAMPLES
+  wget http://example.com/ index.html
+    Gets the contents of http://example.com/ (probably an HTML document) into the current working directory at `index.html`.
+
+BUGS
+  This probably doesn't handle URIs ending with trailing slashes, query parameters, fragments, etc. correctly.
+
+COLOPHON
+  cc-progs, Grissess 2018

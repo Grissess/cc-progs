@@ -1,0 +1,23 @@
+NAME
+  print - Prints a file
+
+SYNOPSIS
+  print [NAME] < FILE
+
+DESCRIPTION
+  Prints pages to a ComputerCraft printer connected to this OpenComputers device via an adapter. The first page is named "NAME", and subsequent pages are named "NAME NUM" for NUM = 2, 3, 4..., to allow easy ordering when binding them together as a book.
+
+  Note that print receives the actual text to print from stdin. Use shell redirection, as above or in the examples, to read from a file.
+
+EXAMPLES
+  print "My Cool Story" < /home/story.txt
+    Prints `/home/story.txt` to the CC printer, with the title page "My Cool Story" and subsequent pages "My Cool Story 2", "My Cool Story 3", "My Cool Story 4", ... . You can then bind these together with string and optionally leather to make a stack of papers and a printed book.
+
+  components | print
+    Prints a nameless set of paper consisting of the output of running `components`.
+
+  print "ad hoc"
+    Prints whatever you type into the terminal under the title "ad hoc". Press ^D (Control + D) on a new line to signal end of input.
+
+COLOPHON
+  cc-progs, Grissess 2018

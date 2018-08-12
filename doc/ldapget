@@ -1,0 +1,26 @@
+NAME
+  ldapget - Get an LDAP record
+
+SYNOPSIS
+  ldapget [--host=HOST] PATH
+
+DESCRIPTION
+  Retrieves data under PATH served by the HOST LDAP server, which is a name resolved via liblldns(1). If HOST is not given, and libldap.CONFIG_FILE (usually `/etc/ldap.cfg`) exists, it is assumed to contain a table expression whose "host" key is set to the default LDAP server's LLDNS name.
+
+  PATH may be any valid LDAP data path. You may need to take care to shell escape whitespace and quoted strings properly.
+
+EXAMPLES
+  ldapget --host=ldap ''
+    Gets the entire database (root object) from the LDAP host named "ldap" via LLDNS.
+
+  ldapget 'foo.bar.baz[3]'
+    Gets the path 'foo.bar.baz[3]' from the LDAP host named as "host" in the default LDAP configuration (usually `/etc/ldap.cfg`). The "." accessor is a shorthand for string access, as with Lua, so this path is the same as '["foo"]["bar"]["baz"][3]' on the root object. See libldap(1).
+
+BUGS
+  Currently, ldapget can only work with a remote database, even though libldap(1) supports local databases transparently.
+
+SEE ALSO
+  libldap(1), ldapput(1), ldapsearch(1), liblldns(1)
+
+COLOPHON
+  cc-progs, Grissess 2018

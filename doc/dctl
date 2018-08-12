@@ -1,0 +1,96 @@
+NAME
+  dctl -- control libdaemon daemons
+
+SYNOPSIS
+  dctl load NAME
+  dctl start NAME ARGS...
+  dctl stop INSTNAME
+  dctl restart INSTNAME ARGS...
+  dctl reload INSTNAME
+  dctl unload NAME
+  dctl list
+  dctl show
+  dctl available
+  dctl avail
+  dctl defaults NAME
+  dctl logcat
+
+DESCRIPTION
+  dctl is the meta-command for libdaemon(1) management. The following commands are defined:
+
+  load NAME
+
+    Invokes libdaemon.try_load. Generally, this attempts to run a program named "NAME" or "NAME.lua" in libdaemon.DAEMON_PATH, which usually loads a template of the same name into libdaemon's registry.
+
+  start NAME ARGS...
+
+    Invokes start on a template with the given NAME. ARGS are passed to the template's :init(...) function, as strings from the command line. This also loads both the default configuration from the template, and any site-local configuration from `/etc/daemon/NAME`, which should be a table expression containing overrides for the default values. See `defaults` below.
+
+  stop INSTNAME
+
+    Stops an instance by name. (List instances with `show` or `list`.)
+
+  restart INSTNAME ARGS...
+
+    Stops an instance by name, then starts a new instance with the given ARGS, as with `start` above.
+
+  reload INSTNAME
+
+    Stops and instance by name, then starts a new instance with the same ARGS it was started with before. See `start` above.
+
+  unload NAME
+
+    Invokes libdaemon.remove, which removes a template from the registry. This is generally useful if the named daemon must be updated (e.g., when the source changes). Any running instances are unaffected.
+
+  list
+  show
+
+    Shows the list of all loaded templates and their names, as well as all running instances and their names.
+
+  available
+  avail
+
+	Invokes libdaemon.available, which guesses the names of templates that are available by listing executable files matching the libdaemon.DAEMON_PATH path. Note that this assumes that daemons are named exactly the same as the file in the filesystem.
+
+  defaults NAME
+
+    Prints out the default configuration for template NAME, if any. Note that this does not include any site-local configuration via `/etc/daemon/NAME`. See `start` above.
+
+  logcat
+
+	Prints events registered via libdaemon.log, which includes instance:log. These messages are also routed to `/tmp/daemon.log` by default, but you can view them in realtime by running this command. Press any key to exit.
+
+EXAMPLES
+
+  dctl load heartbeat
+  dctl start heartbeat
+
+    Loads and starts the `heartbeat` daemon (which emits a constant message on a configurable port in a configurable interval).
+
+  dctl show
+  dctl list
+
+    Either will show the list of loaded daemons and running instances, if any.
+
+  dctl reload heartbeat.1
+
+    Stops instance `heartbeat.1` and starts a new instance with the same template and arguments (with a different instance name).
+
+  dctl stop heartbeat.2
+
+    Stops the `heartbeat.2` instance, if it is running.
+
+  dctl avail
+  dctl available
+
+    Lists seemingly-executable daemon files in libdaemon.DAEMON_PATH.
+
+  dctl logcat
+
+    Follows the output of all daemon logs until a key is pressed.
+
+SEE ALSO
+  libdaemon(1), daemon_load(1)
+
+COLOPHON
+  cc-progs, Grissess 2018

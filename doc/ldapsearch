@@ -1,0 +1,33 @@
+NAME
+  ldapsearch - Searches for matching LDAP records
+
+SYNOPSIS
+  ldapsearch [--host=HOST] [--base=BASE] FILTER
+
+DESCRIPTION
+  Finds entries in the LDAP database run on the HOST LDAP server (which is resolved via liblldns(1)) for which FILTER (a Lua expression) evaluates to true. Within FILTER, `self` is the current record.
+
+  libldap(1)'s LDAP:search method does a deep preorder traversal, enumerating every pair within all reachable tables from the root object. `self` assumes the value from each pair. If the FILTER expression evaluates successfully and results in a true value, a result table of {path=PATH, value=self} is recorded, where PATH is a libldap.Path object representing the location of the associated value.
+
+  If BASE is passed, it may be any valid LDAP data path; the search is restricted only to tables reachable from there. BASE is '' by default (the root object).
+
+  If HOST is not given, and libldap.CONFIG_FILE (usually `/etc/ldap.cfg`) exists, it is assumed to contain a table expression whose "host" key is set to the default LDAP server's LLDNS name.
+
+EXAMPLES
+  ldapsearch --host=ldap 'true'
+    Enumerates all values stored in the LDAP database served by the host named "ldap" via LLDNS. This can take a very long time!
+
+  ldapsearch --host=ldap --base='foo.bar' 'self.service'
+    Enumerates all values stored in the LDAP database served by the host named "ldap" via LLDNS that (1) have a service attribute (2) whose value can be interpreted as true by Lua (e.g., a table value, or the literal `true`) (3) under the table rooted at 'foo.bar'. This example shows that it is easy to tag records as participating in any type schema by simply adding a truthy attribute to it.
+
+  ldapsearch 'self.kind == "user" and self.uid ~= 0'
+    Searches the entire LDAP database served by the LDAP server named as "host" in the default LDAP configuration (usually `/etc/ldap.cfg`) for entries that (1) have an attribute "kind" equal to the string "user" and (2) have an attribute "uid" not equal to the number 0.
+
+BUGS
+  Currently, ldapset can only work with a remote database, even though libldap(1) supports local databases transparently.
+
+SEE ALSO
+  libldap(1), ldapget(1), ldapput(1), liblldns(10
+
+COLOPHON
+  cc-progs, Grissess 2018

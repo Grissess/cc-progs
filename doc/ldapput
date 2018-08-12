@@ -1,0 +1,33 @@
+NAME
+  ldapput - Sets an LDAP record
+
+SYNOPSIS
+  ldapput [--host=HOST] [--version=VERSION] PATH VALUE
+
+DESCRIPTION
+  Sets the value VALUE to exist under the path PATH in the HOST LDAP server, which is a name resolved via liblldns(1). The immediate parent of PATH must exist, and be a table, and the VERSION, if given, must match the current data revision as retrieved with the last get request.
+
+  If HOST is not given, and libldap.CONFIG_FILE (usually `/etc/ldap.cfg`) exists, it is assumed to contain a table expression whose "host" key is set to the default LDAP server's LLDNS name.
+
+  PATH may be any valid LDAP data path. You may need to take care to shell escape whitespace and quoted strings properly.
+
+  VALUE may be any Lua expression evaluated in an empty environment (as per serialization(1) .unserialize). You may need to shell escape this, as above.
+
+EXAMPLES
+  ldapset --host=ldap 'foo.bar' '{a=1, b=2}'
+    Sets 'foo.bar' on the LDAP host named "ldap" to {a=1, b=2}--equivalently (as long as 'foo.bar' exists and is a table), sets 'foo.bar.a' to 1 and 'foo.bar.b' to 2, erasing any other keys and values associated with 'foo.bar'.
+
+  ldapset --host=ldap --version=4 'foo.bar' '{a=1, b=2}'
+    As above, but with explicit data version 4. The server may fail the request if the current revision is not 4, as it means that another modification raced with yours.
+
+  ldapset 'foo.list[1]' 1234
+    Sets 'foo.list[1]' to the number 1234, using the LDAP server named as "host" in the default LDAP configuration (usually `/etc/ldap.cfg`).
+
+BUGS
+  Currently, ldapset can only work with a remote database, even though libldap(1) supports local databases transparently.
+
+SEE ALSO
+  libldap(1), ldapget(1), ldapsearch(1), liblldns(1)
+
+COLOPHON
+  cc-progs, Grissess 2018
