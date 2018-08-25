@@ -21,11 +21,17 @@ for addr, kind in component.list() do
 end
 
 event.listen("component_added", function(ev, addr, kind)
-	if libnic.is_nic_kind(kind) then libnic.ALL_NICS[addr] = kind end
+	if libnic.is_nic_kind(kind) then
+		libnic.ALL_NICS[addr] = kind
+		event.push("nic_added", addr, kind)
+	end
 end)
 
 event.listen("component_removed", function(ev, addr, kind)
-	if libnic.ALL_NICS[addr] ~= nil then libnic.ALL_NICS[addr] = nil end
+	if libnic.ALL_NICS[addr] ~= nil then
+		event.push("nic_removed", addr, kind)
+	end
+	libnic.ALL_NICS[addr] = nil
 end)
 
 function libnic.broadcast_all(port, ...)

@@ -45,9 +45,11 @@ unserializes (executes, essentially), and determines if the object has a
 as daemon names to start. There is presently no way to pass parameters into the
 daemon (use the `/etc/daemon/dmn` configuration file for a daemon called `dmn`
 in the same serialized format), nor is there any way to start more than one
-daemon. Note that the environment for deserialization is empty, so while
-functions can be created (unlike serialization.serialize would allow), no
-upcalls can be made.
+daemon from the same template. Note that the environment for deserialization is
+empty, so while functions can be created (unlike serialization.serialize would
+allow), no upcalls can be made. `daemon_load` can be started anyway at about
+anytime, but it's common to either make it the `$PATH/rc.lua` file, or invoke
+it from there.
 
 ## `vim`, `libtedit`, and `lib2daccel`
 
