@@ -27,11 +27,13 @@ end
 map = liblua.map
 
 function liblua.filter(t, f, p, iter)
+	local idx = 1
 	return liblua.map(t, function(k, v, t, ret, thisf, p)
 		if f(k, v, t, ret, f, p) then
-			return k, v
+			idx = idx + 1
+			return idx - 1, v
 		end
-	end, p, iter)
+	end, p, iter), idx
 end
 filter = liblua.filter
 

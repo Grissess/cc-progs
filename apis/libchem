@@ -54,6 +54,7 @@ end
 
 function ElementSet:add(n, q)
 	self[n] = (self[n] or 0) + q
+	if self[n] == 0 then self[n] = nil end
 	return self
 end
 
@@ -235,18 +236,26 @@ local function greater_than_f(k, v, t, ret, f, p)
 end
 
 function Path.binary_solve(es, pot, q)
+	--print('-- binary_solve:', es, pot, q)
 	local path = Path.from(es)
 
 	local less = liblua.reverse(liblua.filter(POT_SEQ, less_than_f, pot))
 	local greater = liblua.filter(POT_SEQ, greater_than_f, pot)
+	--print('less', #less, 'greater', #greater)
+
+	local iter = 1
 
 	while path.tail:get(pot) < q do
+		--print('-- at iter:', iter, 'path is', path)
+		iter = iter + 1
 		local success = false
 
 		for _, anum in ipairs(less) do
+			--print("trying lesser", anum, "<", pot)
 			local aq = path.tail:get(anum)
 			if aq > 1 then
-				path:add(libchem.Step.fusion, anum, anum, math.floor(aq / 2))
+				local dq = math.min((pot / anum)*q, math.floor(aq / 2))
+				path:add(libchem.Step.fusion, anum, anum, dq)
 				success = true
 				break
 			end
@@ -254,16 +263,18 @@ function Path.binary_solve(es, pot, q)
 
 		if not success then
 			for _, anum in ipairs(greater) do
+				--print("trying greater", anum, ">", pot)
 				local aq = path.tail:get(anum)
 				if aq > 0 then
-					path:add(libchem.Step.fission, anum, aq)
+					local dq = math.min(math.ceil((pot / anum) * q), aq)
+					path:add(libchem.Step.fission, anum, dq)
 					success = true
 					break
 				end
 			end
 
 			if not success then
-				return false, "failed to fulfill request", path
+				return false, "failed to fulfill request for " .. tostring(pot) .. "x" .. tostring(q) .. " from head config " .. tostring(es) .. " with cur config " .. tostring(path.tail), path
 			end
 		end
 	end
@@ -280,7 +291,7 @@ function Path.general_solve(es, anum, q)
 	for _, pot in ipairs(bits) do
 		local success, res = Path.binary_solve(path.tail, pot, q)
 		if not success then
-			return false, "failed to binary solve:" .. res
+			return false, "failed to binary solve: " .. res
 		end
 		path:extend(res):add(libchem.Step.add, pot, -q)
 	end
@@ -303,14 +314,23 @@ function Path.solve(es, anum, q)
 	local path = Path.binarize(es)
 	local success, res = Path.general_solve(path.tail, anum, q)
 	if not success then
-		return false, "failed to general solve:" .. res
+		return false, "failed to general solve: " .. res
 	end
 	path:extend(res)
 	return true, path
 end
 
+function Path:to_string()
+	local strings = {}
+	for n, v in ipairs(self.steps) do
+		table.insert(strings, tostring(n) .. ":" .. tostring(v))
+	end
+	return "{Path: " .. tostring(self.head) .. " # " .. table.concat(strings, " -> ") .. " # " .. tostring(self.tail) .. "}"
+end
+
 Path.mt = {
 	__index = Path,
+	__tostring = Path.to_string,
 }
 
 setmetatable(Path, {__call = function(_, ...) return Path.from(...) end})
