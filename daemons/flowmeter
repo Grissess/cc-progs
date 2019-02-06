@@ -44,6 +44,12 @@ end
 function dmn:init()
 	local rs = nil
 
+	for nm in ipairs({"inflow_side", "outflow_side", "tank_side"}) do
+		if type(self.cfg[nm]) == "string" then
+			self.cfg[nm] = sides[self.cfg[nm]]
+		end
+	end
+
 	if self.cfg.redstone ~= nil then
 		local addr, err = component.get(self.cfg.redstone)
 		if addr == nil then
