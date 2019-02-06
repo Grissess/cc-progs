@@ -44,7 +44,7 @@ end
 function dmn:init()
 	local rs = nil
 
-	for nm in ipairs({"inflow_side", "outflow_side", "tank_side"}) do
+	for _, nm in ipairs({"inflow_side", "outflow_side", "tank_side"}) do
 		if type(self.cfg[nm]) == "string" then
 			self.cfg[nm] = sides[self.cfg[nm]]
 		end
