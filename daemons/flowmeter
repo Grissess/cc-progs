@@ -28,11 +28,11 @@ local handlers = {
 	},
 	tank_controller = {
 		get_ratio = function(proxy, dmn)
-			local info = proxy.getFluidInTank(dmn.cfg.tank_side)
+			local info = proxy.getFluidInTank(sides[dmn.cfg.tank_side])
 			return info.amount / info.capacity
 		end,
 		get_abs = function(proxy, dmn)
-			return proxy.getFluidInTank(dmn.cfg.tank_side).amount
+			return proxy.getFluidInTank(sides[dmn.cfg.tank_side]).amount
 		end,
 	},
 }
