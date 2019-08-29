@@ -91,6 +91,8 @@ function dmn:init()
 	local last_abs = nil
 	local last_uptime = nil
 	local last_update = computer.uptime()
+	local abs_on_stchg = hnd.get_abs(meter, self)
+	local time_of_stchg = computer.uptime()
 	function set_flow_dir(inbound)
 		local upt = computer.uptime()
 		local abs = hnd.get_abs(meter, self)
@@ -106,6 +108,8 @@ function dmn:init()
 				end
 				last_abs = abs
 				last_uptime = upt
+				abs_on_stchg = abs
+				time_of_stchg = upt
 			end
 			state = "inbound"
 		else
@@ -120,6 +124,8 @@ function dmn:init()
 				end
 				last_abs = abs
 				last_uptime = upt
+				abs_on_stchg = abs
+				time_of_stchg = upt
 			end
 			state = "outbound"
 		end
@@ -136,6 +142,9 @@ function dmn:init()
 			local delta_t = upt - last_uptime
 			local delta_u = math.abs(abs - last_abs)
 			self:log("Currently " .. state .. " for " .. delta_t .. "s with delta " .. delta_u .. " units " .. time_avg_string(delta_u / delta_t))
+			delta_t = upt - time_of_stchg
+			delta_u = math.abs(abs - abs_on_stchg)
+			self:log(tostring(delta_u) .. "u/" .. tostring(delta_t) .. "s since last state change " .. time_avg_string(delta_u / delta_t))
 			last_update = upt
 			last_uptime = upt
 			last_abs = abs
