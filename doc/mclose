@@ -1,0 +1,15 @@
+NAME
+  mclose - close a modem port
+
+SYNOPSIS
+  mclose PORT
+
+DESCRIPTION
+  Closes the primary modem's port of the given number.
+
+EXAMPLES
+  mclose 12345
+    Closes the primary modem on port 12345. If elog(1) or dctl(1) were listening to this port for remote libdaemon logs, those will be interrupted until it is opened again.
+
+SEE ALSO
+  mopen(1), elog(1), mbroadcast(1)

@@ -1,0 +1,9 @@
+local event = require('event')
+
+print("Press any key to exit...")
+
+while true do
+	local ev = {event.pull()}
+	print(table.unpack(ev))
+	if ev[1] == "key_down" then break end
+end

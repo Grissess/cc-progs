@@ -1,4 +1,4 @@
-!Manifest revision 14
+!Manifest revision 15
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
@@ -20,6 +20,10 @@ bin/dns.lua programs/dns
 bin/ldapsearch.lua programs/ldapsearch
 bin/ldapget.lua programs/ldapget
 bin/ldapput.lua programs/ldapput
+bin/elog.lua programs/elog
+bin/mopen.lua programs/mopen
+bin/mclose.lua programs/mclose
+bin/mbroadcast.lua programs/mbroadcast
 man/vim doc/vim
 man/dctl doc/dctl
 man/unload doc/unload
@@ -29,6 +33,10 @@ man/dns doc/dns
 man/ldapsearch doc/ldapsearch
 man/ldapget doc/ldapget
 man/ldapput doc/ldapput
+man/elog doc/elog
+man/mopen doc/mopen
+man/mclose doc/mclose
+man/mbroadcast doc/mbroadcast
 opt/daemon/heartbeat.lua daemons/heartbeat
 opt/daemon/hwproxyd.lua daemons/hwproxyd
 opt/daemon/flowmeter.lua daemons/flowmeter

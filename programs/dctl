@@ -1,6 +1,7 @@
 local libdaemon = require('libdaemon')
 local component = require('component')
 local event = require('event')
+local term = require('term')
 
 local args = {...}
 
@@ -19,6 +20,7 @@ if #args < 1 then
 	print('  avail - idem')
 	print('  defaults <name> - shows default configuration values for a daemon')
 	print('  logcat - prints out (fresh) debug log entries while running, press any key to stop')
+	print('  rlogcat [<linesper>] - prints out remote debug log entries while running, press any key to stop')
 	return 1
 end
 
@@ -107,6 +109,43 @@ local cmds = {
 		end
 		if not found then
 			print('WARNING: did not remove logging function, you may still get spam')
+		end
+	end,
+	rlogcat = function()
+		local linesper = 5
+		if args[2] ~= nil then
+			linesper = tonumber(args[2])
+		end
+		local recvtbl = {}, recvord = {}
+		local just_opened = component.modem.open(12345)
+		while true do
+			local ev = {event.pull()}
+			if ev[1] == "key_down" then break end
+			if ev[1] == "modem_message" then
+				local src = ev[3]
+				if recvtbl[src] == nil then
+					local msgt = {}
+					for line = 1, linesper do
+						table.insert(msgt, "")
+					end
+					recvtbl[src] = msgt
+					table.insert(recvord, src)
+				end
+				local msgt = recvtbl[src]
+				table.remove(msgt, 1)
+				table.insert(msgt, table.concat(ev, " ", 6))
+				term.clear()
+				for ri, rcv in ipairs(recvord) do
+					print(rcv)
+					for mi, msg in ipairs(recvtbl[rcv]) do
+						print(msg)
+					end
+					print('---')
+				end
+			end
+		end
+		if just_opened then
+			component.modem.close(12345)
 		end
 	end,
 }

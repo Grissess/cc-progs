@@ -1,0 +1,12 @@
+local component = require('component')
+
+local args = {...}
+
+if #args < 1 then
+	print('usage: mbroadcast <port> <string> [<string>...]')
+	return
+end
+
+if not component.modem.broadcast(tonumber(args[1]), table.unpack(args, 2)) then
+	print('failed to broadcast')
+end

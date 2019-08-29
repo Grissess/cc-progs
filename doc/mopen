@@ -1,0 +1,18 @@
+NAME
+  mopen - open a modem port
+
+SYNOPSIS
+  mopen PORT
+
+DESCRIPTION
+  Opens the primary modem's port of the given number.
+
+EXAMPLES
+  mopen 12345
+    Opens the primary modem on port 12345 (the default libdaemon log port). elog(1) can then be used to sniff remote log packets.
+
+SEE ALSO
+  mclose(1), elog(1), mbroadcast(1)
+
+COLOPHON
+  cc-progs, Grissess 2019

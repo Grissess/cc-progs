@@ -1,0 +1,14 @@
+NAME
+  elog - log events
+
+SYNOPSIS
+  elog
+
+DESCRIPTION
+  Prints out events, one line at a time, until a key is locally pressed. Useful to see network traffic, though modem ports must be opened to receive it.
+
+SEE ALSO
+  mopen(1)
+
+COLOPHON
+  cc-progs, Grissess 2019

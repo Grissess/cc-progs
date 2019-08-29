@@ -1,0 +1,14 @@
+local component = require('component')
+
+local args = {...}
+
+if #args < 1 then
+	print('usage: mclose <port>')
+	return
+end
+
+if component.modem.close(tonumber(args[1])) then
+	print('closed ' .. args[1])
+else
+	print('failed to close ' .. args[1])
+end

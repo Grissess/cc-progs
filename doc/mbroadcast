@@ -1,0 +1,15 @@
+NAME
+  mbroadcast - broadcast a string message on a modem port
+
+SYNOPSIS
+  mbroadcast PORT STRING ...
+
+DESCRIPTION
+  Broadcasts one or more strings on the modem on the given port. The port need not be open to do so, but only modems with the port open will receive the message.
+
+EXAMPLES
+  mbroadcast 12345 foo "test logged message"
+    Broadcasts to listening modems on port 12345 (the default libdaemon log port) two strings, loosely interpreted as "facility" foo, and message "test logged message". Note the quotes used to capture spaces.
+
+SEE ALSO
+  mopen(1), mclose(1), elog(1)

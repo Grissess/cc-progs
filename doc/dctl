@@ -60,6 +60,10 @@ DESCRIPTION
 
 	Prints events registered via libdaemon.log, which includes instance:log. These messages are also routed to `/tmp/daemon.log` by default, but you can view them in realtime by running this command. Press any key to exit.
 
+  rlogcat [LINESPER]
+
+    Prints events registered via libdaemon.log, which includes instance:log, from any computers on the local broadcast segment of the network. These messages are picked up on the default modem on port 12345, which is opened if it isn't already. Generally, this will not include any local logs. Messages are listed by modem address of the sender, and up to LINESPER lines are shown per host (default 5). Press any key to exit.
+
 EXAMPLES
 
   dctl load heartbeat

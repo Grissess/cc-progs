@@ -1,0 +1,14 @@
+local component = require('component')
+
+local args = {...}
+
+if #args < 1 then
+	print('usage: mopen <port>')
+	return
+end
+
+if component.modem.open(tonumber(args[1])) then
+	print('opened ' .. args[1])
+else
+	print('failed to open/already open ' .. args[1])
+end
