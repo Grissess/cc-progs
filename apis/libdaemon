@@ -95,22 +95,33 @@ function Daemon:listen(ev, callback)
 end
 
 function Daemon:config(data)
-	local fname = self.template.name
+	local fname = self.name
+	if self.template ~= nil then fname = self.template.name end
+	local path = filesystem.concat(libdaemon.CONFIG_DIR, fname)
 	if data == nil then
-		local f, err = io.open(filesystem.concat(libdaemon.CONFIG_DIR, fname), 'r')
+		local f, err = io.open(path, 'r')
 		if not f then
+			self:log("error/config/read", path, err)
 			return nil, err
 		end
 		data = f:read("*a")
 		f:close()
-		return serialization.unserialize(data)
+		local res, err = serialization.unserialize(data)
+		if res == nil then
+			self:log("error/config/load", path, err)
+		else
+			self:log("dbg/config/loaded", path)
+		end
+		return res
 	else
-		local f, err = io.open(filesystem.concat(libdaemon.CONFIG_DIR, fname), 'w')
+		local f, err = io.open(path, 'w')
 		if not f then
+			self:log("error/config/write", path, err)
 			return false, err
 		end
 		f:write(serialization.serialize(data))
 		f:close()
+		self:log("dbg/config/written", path)
 		return true
 	end
 end
@@ -146,6 +157,7 @@ function Daemon:start(...)
 	if self.defaults then
 		inst.cfg = setmetatable(inst.cfg, {__index = self.defaults})
 	end
+	inst:log("dbg/preinit/config", serialization.serialize(inst.cfg), serialization.serialize(self.defaults))
 	inst:init(...)
 	for idx, tmrspec in ipairs(inst.timers) do
 		inst.tmids[idx] = event.timer(tmrspec.tmout, tmrspec.callback, tmrspec.times)
