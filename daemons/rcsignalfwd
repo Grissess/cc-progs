@@ -23,6 +23,7 @@ function dmn:init()
 	libnic.open_all(self.cfg.port)
 
 	self:listen("aspect_changed", function(ev, rcv, nm, asp)
+		self:log("event/aspect", "prechg", ev, rcv, nm, asp)
 		if rcv ~= receiver.addr or nm == nil then return end
 		self:log("event/aspect/change", nm, asp)
 		libnic.broadcast_all(self.cfg.port, "AC", nm, asp)
