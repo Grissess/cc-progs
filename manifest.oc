@@ -1,4 +1,4 @@
-!Manifest revision 18
+!Manifest revision 19
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
@@ -43,5 +43,6 @@ opt/daemon/flowmeter.lua daemons/flowmeter
 opt/daemon/ldapd.lua daemons/ldapd
 opt/daemon/lldnsd.lua daemons/lldnsd
 opt/daemon/rcsignalfwd.lua daemons/rcsignalfwd
+../etc/rc.d/daemon.lua misc/daemon
 .manifest manifest.oc
 COPYING COPYING
