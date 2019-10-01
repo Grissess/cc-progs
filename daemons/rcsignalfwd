@@ -1,0 +1,48 @@
+local component = require('component')
+local serialization = require('serialization')
+
+local libdaemon = require('libdaemon')
+local libnic = require('libnic')
+
+local dmn = libdaemon.new('rcsignalfwd')
+
+dmn.defaults = {
+	port = 13676,
+	timeout = 5,
+}
+
+function dmn:init()
+	local receiver
+
+	if self.cfg.receiver ~= nil then
+		receiver = component.get(self.cfg.receiver)
+	else
+		receiver = component.digital_receiver_box
+	end
+
+	libnic.open_all(self.cfg.port)
+
+	self:listen("aspect_changed", function(ev, rcv, nm, asp)
+		if rcv ~= receiver.addr or nm == nil then return end
+		self:log("event/aspect/change", nm, asp)
+		libnic.broadcast_all(self.cfg.port, "AC", nm, asp)
+	end)
+
+	self:listen("modem_message", function(ev, lnic, rnic, port, dist, rq, ...)
+		if port ~= self.cfg.port then return end
+		if rq == "Q" then
+			local names = receiver.getSignalNames()
+			local resp = {}
+			for _, nm in ipairs(names) do
+				resp[nm] = receiver.getAspect(nm)
+			end
+			component.invoke(lnic, "send", rnic, port, "QR", serialization.serialize(resp))
+		end
+	end)
+
+	self:timer(self.cfg.timeout, function()
+		libnic.broadcast_all(self.cfg.port, "HB")
+	end)
+end
+
+return dmn
