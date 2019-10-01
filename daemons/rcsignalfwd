@@ -20,6 +20,8 @@ function dmn:init()
 		receiver = component.digital_receiver_box
 	end
 
+	self:log("init/receiver", receiver.addr)
+
 	libnic.open_all(self.cfg.port)
 
 	self:listen("aspect_changed", function(ev, rcv, nm, asp)
