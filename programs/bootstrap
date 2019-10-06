@@ -1,4 +1,4 @@
-REVISION = 7
+REVISION = 8
 
 print('cc-progs bootstrapper rev ' .. REVISION .. ' - Grissess')
 
@@ -23,7 +23,16 @@ if args[1] ~= nil then
 	DISK_ROOT = args[1]
 end
 
+local raw = false
+if args[2] ~= nil then
+	raw = true
+end
+
 print('Install root:', DISK_ROOT)
+print('Raw image:', raw)
+if raw then
+	print('!!! (CHECK THE ABOVE SETTING VERY CAREFULLY!)')
+end
 
 if CC then
 	if http == nil then
@@ -81,6 +90,9 @@ for line in man_str:gmatch("[^\r\n]+") do
 		print('msg:', line)
 	else
 		local dest, src = line:match("([^%s]+) ([^%s]+)")
+		if raw then
+			dest = src
+		end
 		print('Downloading', src, 'to', dest)
 		local data = http_get(HTTP_ROOT .. src .. "?rand=" .. rand)
 		local lpath

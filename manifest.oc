@@ -1,4 +1,4 @@
-!Manifest revision 23
+!Manifest revision 24
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
@@ -48,5 +48,5 @@ opt/daemon/lldnsd.lua daemons/lldnsd
 opt/daemon/rcsignalfwd.lua daemons/rcsignalfwd
 opt/daemon/tftpd.lua daemons/tftpd
 ../etc/rc.d/daemon.lua misc/daemon
-manifest.oc manifest.oc
+.manifest manifest.oc
 COPYING COPYING
