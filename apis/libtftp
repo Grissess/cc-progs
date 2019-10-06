@@ -1,5 +1,5 @@
 local libtftp = {}
-libtftp.REVISION = 3
+libtftp.REVISION = 4
 
 local component = require('component')
 local event = require('event')
@@ -56,7 +56,7 @@ function libtftp.transfer(lnic, rnic, fn, dcb, tmout)
 					resp = "NAK"
 				end
 				bytes = bytes + #buf
-				component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, resp, fn)
+				component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, resp, fn, bytes)
 				if resp == "NAK" then return false, "cancelled by callback" end
 				tmid = event.timer(tmout, _push_tmout)
 			elseif cm == "FIN" then
