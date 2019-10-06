@@ -1,0 +1,96 @@
+local libtftp
+libtftp.REVISION = 1
+
+local component = require('component')
+local event = require('event')
+
+local libnic = require('libnic')
+
+libtftp.PORT = 12019
+libtftp.HEADER = "FTP"
+libtftp.TIMEOUT = 2
+libtftp.OVERHEAD = 16
+libtftp.opened = false
+
+function libtftp.maybe_open()
+	if not libtftp.opened then
+		libnic.open_all(libtftp.PORT)
+		libtftp.opened = true
+	end
+end
+
+local function _push_tmout() event.push("tftp_timeout") end
+
+function libtftp.find(fn, tmout)
+	if tmout == nil then tmout = libtftp.TIMEOUT end
+
+	libtftp.maybe_open()
+	libnic.broadcast_all(libtftp.PORT, libtftp.HEADER, "HV?", fn)
+
+	local tmid = event.timer(tmout, _push_tmout)
+	while true do
+		local ev, lnic, rnic, port, dist, hdr, cm, rfn = event.pull()
+		if ev == "tftp_timeout" then return false, "timed out" end
+		if ev == "modem_message" and port == libtftp.PORT and hdr == libtftp.HEADER and cm == "HAV" and rfn == fn then
+			event.cancel(tmid)
+			return true, lnic, rnic
+		end
+	end
+end
+
+function libtftp.transfer(lnic, rnic, fn, dcb, tmout)
+	if tmout == nil then tmout = libtftp.TIMEOUT end
+
+	libtftp.maybe_open()
+	component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "GET", fn)
+	local tmid = event.timer(tmout, _push_tmout)
+	local bytes = 0
+	while true do
+		local ev, lnic, rnic, port, dist, hdr, cm, rfn, buf = event.pull()
+		if ev == "tftp_timeout" then return false, "timed out" end
+		if ev == "modem_message" and port == libtftp.PORT and hdr == libtftp.HEADER and rfn == fn then
+			if cm == "DAT" then
+				event.cancel(tmid)
+				local resp = "ACK"
+				if not dcb(bytes, buf) then
+					resp = "NAK"
+				end
+				bytes = bytes + #buf
+				component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, resp, fn)
+				if resp == "NAK" then return false, "cancelled by callback" end
+				tmid = event.timer(tmout, _push_tmout)
+			elseif cm == "FIN" then
+				return true
+			elseif cm == "ERR" then
+				return false, buf
+			end
+		end
+	end
+end
+
+function libtftp.download(fn, fo, lnic, rnic, tmout)
+	if lnic == nil or rnic == nil then
+		local succ
+		succ, lnic, rnic = libtftp.find(fn, tmout)
+		if not succ then return false, lnic end
+	end
+	local dcb
+	if fo == nil then
+		fo = ''
+		dcb = function(idx, buf)
+			fo = fo .. buf
+			return true
+		end
+	else
+		dcb = function(idx, buf)
+			fo:write(buf)
+			return true
+		end
+	end
+	local err
+	succ, err = libtftp.transfer(lnic, rnic, fn, dcb, tmout)
+	if succ then
+		return true, fo
+	end
+	return false, err
+end

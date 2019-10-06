@@ -1,0 +1,64 @@
+local text = require('text')
+
+local libtftp = require('libtftp')
+
+local cmds = {
+	find = function(nm)
+		local succ, lnic, rnic = libtftp.find(nm)
+		print(succ, lnic, rnic)
+	end,
+	get = function(nm, lfn, lnic, rnic)
+		local succ
+		if lnic == nil or rnic == nil then
+			succ, lnic, rnic = libtftp.find(nm)
+			if not succ then
+				print(succ, lnic)
+				return
+			end
+		end
+		if lfn ~= nil then
+			lfn = io.open(lfn, "wb")
+		end
+		local err
+		succ, err = libtftp.download(nm, lfn, lnic, rnic)
+		if not succ then
+			print('error:', err)
+		end
+		if lfn ~= nil then
+			lfn:close()
+		else
+			if succ then print(err) end
+		end
+	end,
+	quit = function()
+		return true
+	end,
+}
+
+local function cmd_do(cmd, ...)
+	local c = cmds[cmd]
+	if c == nil then
+		print("error: unknown command")
+		return
+	end
+	return c(...)
+end
+
+local args = {...}
+if #args == 0 then
+	while true do
+		io.stdout:write("> ")
+		io.stdout:flush()
+		local line = io.read()
+		if line == nil then break end
+		local parts, err = text.tokenize(line)
+		if parts == nil then
+			print('error:', err)
+		else
+			local done = cmd_do(table.unpack(parts))
+			if done then break end
+		end
+	end
+else
+	cmd_do(table.unpack(args))
+end

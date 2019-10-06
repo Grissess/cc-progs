@@ -1,0 +1,154 @@
+local component = require('component')
+local computer = require('computer')
+local filesystem = require('filesystem')
+
+local libtftp = require('libtftp')
+local libdaemon = require('libdaemon')
+
+local dmn = libdaemon.new('tftpd')
+
+dmn.defaults = {
+	root = '/srv/',
+	timeout = libtftp.TIMEOUT,
+}
+
+local xfers = {}  -- lnic -> rnic -> fn -> state
+
+local function make_xfer_state(lnic, rnic, fn, st)
+	if xfers[lnic] == nil then xfers[lnic] = {} end
+	if xfers[lnic][rnic] == nil then xfers[lnic][rnic] = {} end
+	xfers[lnic][rnic][fn] = st
+end
+
+local function get_xfer_state(lnic, rnic, fn)
+	if xfers[lnic] == nil then return nil end
+	if xfers[lnic][rnic] == nil then return nil end
+	return xfers[lnic][rnic][fn]
+end
+
+local function destroy_xfer_state(lnic, rnic, fn)
+	if xfers[lnic] ~= nil then
+		if xfers[lnic][rnic] ~= nil then
+			xfers[lnic][rnic][fn] = nil
+		end
+		if next(xfers[lnic][rnic]) == nil then
+			xfers[lnic][rnic] = nil
+		end
+	end
+	if next(xfers[lnic]) == nil then
+		xfers[lnic] = nil
+	end
+end
+
+local handlers = {
+	["HV?"] = function(self, lnic, rnic, fn)
+		local pth = filesystem.concat(self.cfg.root, fn)
+		local ex = filesystem.exists(pth)
+		self:log("tftp/HV?", lnic, rnic, fn, pth, ex)
+		if ex then
+			if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "HAV", fn) then
+				self:log("tftp/error/send", "HAV", fn)
+			end
+		else
+		end
+	end,
+	GET = function(self, lnic, rnic, fn)
+		local pth = filesystem.concat(self.cfg.root, fn)
+		self:log("tftp/GET", lnic, rnic, fn, pth)
+		if not filesystem.exists(pth) then
+			self:log("tftp/ERR", "not found")
+			if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "ERR", fn, "not found") then
+				self:log("tftp/error/send", "ERR", fn, "not found")
+			end
+			return
+		end
+		local st = {
+			fo = io.open(pth, "rb"),
+			mtu = component.invoke(lnic, "maxPacketSize") - #fn - libtftp.OVERHEAD,
+			last = computer.uptime(),
+			sent = 0,
+		}
+		if st.mtu < 1 then
+			self:log("tftp/ERR", st.mtu, "mtu too low")
+			if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "ERR", fn, "mtu too low") then
+				self:log("tftp/error/send", "ERR", fn, "mtu too low")
+			end
+			return
+		end
+		make_xfer_state(lnic, rnic, fn, st)
+		local buf = st.fo:read(st.mtu)
+		if buf == nil then
+			destroy_xfer_state(lnic, rnic, fn)
+			if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "FIN", fn) then
+				self:log("tftp/error/send", "FIN", fn)
+			end
+			return
+		end
+		if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "DAT", fn, buf) then
+			self:log("tftp/error/send", "DAT", fn, st.sent, #buf)
+			destroy_xfer_state(lnic, rnic, fn)
+			return
+		end
+		st.sent = st.sent + #buf
+	end,
+	ACK = function(self, lnic, rnic, fn, bts)
+		local st = get_xfer_state(lnic, rnic, fn)
+		if st == nil then
+			if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "ERR", fn, "no transfer") then
+				self:log("tftp/error/send", "ERR", fn, "no transfer")
+			end
+			return
+		end
+		st.last = computer.uptime()
+		if bts ~= st.sent then
+			self:log("tftp/warn/seek", lnic, rnic, fn, bts, st.sent)
+			st.fo:seek("set", bts)
+			st.sent = bts
+		end
+		local buf = st.fo:read(st.mtu)
+		if buf == nil then
+			destroy_xfer_state(lnic, rnic, fn)
+			if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "FIN", fn) then
+				self:log("tftp/error/send", "FIN", fn)
+			end
+			return
+		end
+		if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "DAT", fn, buf) then
+			self:log("tftp/error/send", "DAT", fn, st.sent, #buf)
+			destroy_xfer_state(lnic, rnic, fn)
+			return
+		end
+		st.sent = st.sent + #buf
+	end,
+}
+
+function dmn:init()
+	libtftp.maybe_open()
+
+	self:listen("modem_message", function(ev, lniv, rnic, port, dist, hdr, cm, fn, arg)
+		if port ~= libtftp.PORT or hdr ~= libtftp.HEADER then return end
+		local handler = handlers[cm]
+		if handler == nil then return end
+		handler(self, lnic, rnic, fn, arg)
+	end)
+
+	self:timer(self.cfg.timeout, function()
+		local destroy = {}
+		local now = computer.uptime()
+		for lnic, rnics in pairs(xfers) do
+			for rnic, fns in pairs(rnics) do
+				for fn, st in pairs(fns) do
+					if now - st.last > self.cfg.timeout then
+						self:log("tftp/timeout", lnic, rnic, fn)
+						table.insert(destroy, {lnic, rnic, fn})
+					end
+				end
+			end
+		end
+		for _, args in ipairs(destroy) do
+			destroy_xfer_state(table.unpack(args))
+		end
+	end)
+end
+
+return dmn

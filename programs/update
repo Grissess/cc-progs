@@ -1,0 +1,59 @@
+REVISION = 1
+
+print('cc-progs updater rev ' .. REVISION .. ' - Grissess')
+
+local internet = require('internet')
+local filesystem = require('filesystem')
+
+local libtftp = require('libtftp')
+
+local root = "/usr"
+local manifest_fn = 'manifest.oc'
+
+local args = {...}
+if args[1] ~= nil then
+	root = args[1]
+end
+if args[2] ~= nil then
+	manifest_fn = args[2]
+end
+
+print('Checking for online manifest server...')
+
+local succ, lnic, rnic = libtftp.find(manifest_fn)
+if not succ then
+	error(lnic)
+end
+
+print('Install root:', root)
+print('Repository server:', rnic)
+print('Local interface:', lnic)
+
+local resp
+repeat
+	print('Are these settings OK? [Y/n]')
+	resp = io.read():lower()
+until resp == '' or resp == 'y' or resp == 'n'
+
+if resp == 'n' then error('Aborted.') end
+
+print('Getting manifest...')
+local succ, manifest = libtftp.download(manifest_fn, nil, lnic, rnic)
+if not succ then error(manifest) end
+
+for line in manifest:gmatch("[^\r\n]+") do
+	if line:sub(1, 1) == "!" then
+		print("msg:", line)
+	else
+		local dst, src = line:match("([^%s]+) ([^%s]+)")
+		local pth = filesystem.concat(root, dst)
+		local err
+		succ, err = filesystem.makeDirectory(filesystem.path(pth))
+		if not succ then error(err) end
+		print(src, "->", pth)
+		local fo = io.open(pth, "wb")
+		succ, err = libtftp.download(src, fo, lnic, rnic)
+		if not succ then error(err) end
+		fo:close()
+	end
+end
