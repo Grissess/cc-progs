@@ -125,7 +125,7 @@ local handlers = {
 function dmn:init()
 	libtftp.maybe_open()
 
-	self:listen("modem_message", function(ev, lniv, rnic, port, dist, hdr, cm, fn, arg)
+	self:listen("modem_message", function(ev, lnic, rnic, port, dist, hdr, cm, fn, arg)
 		if port ~= libtftp.PORT or hdr ~= libtftp.HEADER then return end
 		local handler = handlers[cm]
 		if handler == nil then return end
