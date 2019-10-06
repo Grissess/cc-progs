@@ -48,8 +48,8 @@ for line in manifest:gmatch("[^\r\n]+") do
 		local dst, src = line:match("([^%s]+) ([^%s]+)")
 		local pth = filesystem.concat(root, dst)
 		local err
-		succ, err = filesystem.makeDirectory(filesystem.path(pth))
-		if not succ then error(err) end
+		-- Assume any errors are due to existence--not much to do about that
+		filesystem.makeDirectory(filesystem.path(pth))
 		print(src, "->", pth)
 		local fo = io.open(pth, "wb")
 		succ, err = libtftp.download(src, fo, lnic, rnic)
