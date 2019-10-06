@@ -29,6 +29,10 @@ end
 local function destroy_xfer_state(lnic, rnic, fn)
 	if xfers[lnic] ~= nil then
 		if xfers[lnic][rnic] ~= nil then
+			local st = xfers[lnic][rnic][fn]
+			if st ~= nil then
+				pcall(function() st.fo:close() end)
+			end
 			xfers[lnic][rnic][fn] = nil
 		end
 		if next(xfers[lnic][rnic]) == nil then
