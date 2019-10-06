@@ -51,6 +51,20 @@ allow), no upcalls can be made. `daemon_load` can be started anyway at about
 anytime, but it's common to either make it the `$PATH/rc.lua` file, or invoke
 it from there.
 
+As of manifest version 22 or so, `/etc/rc.d/daemon.lua` is also installed,
+making it compatible with OpenOS's RC system. Simply run:
+
+	rc daemon enable
+
+...and populate `/etc/daemon.cfg` as above:
+
+	{start={daemon1=true,daemon2=true}}
+
+The computer will load and start `daemon1` and `daemon2` on reboot. This method
+still doesn't allow for starting multiple instances, nor passing configuration
+(but you can still write a serialized config file to `/etc/daemon/daemon1` for
+a daemon called `daemon1` if need be).
+
 ## `vim`, `libtedit`, and `lib2daccel`
 
 This is a Lua reimplementation of the class UNIX text editor. It is hardly
@@ -103,6 +117,70 @@ algorithm for creating arbitrary elements using MineChem, which, given a state
 and a desired state subset, emits a series of "steps" (fusion and fission
 operations) which creates the desired state subset. It is untested in practice
 (because fusion is hard to automate), but it seems numerically correct.
+
+
+## `libtftp`, `tftpd`, and `update`
+
+`libtftp` is a user-side library for interfacing `tftpd`, which implements a
+"trivial file transfer protocol" over layer 2. No authentication or
+checksumming is done (yet), but can be easily implemented out-of-band.
+Transfer, like real TFTP, is lockstep (not particularly fast). Transfers are
+uniquely identified by both a modem address and a filename; the cautious can
+verify authenticity (in the absence of spoofing cards) by checking the "remote
+NIC" address. The broadcast method of discovery also generally chooses the
+closest and most-responsive server for a given file, which allows for mirroring
+and load-balancing automatically (simply run multiple servers). There is no
+namespace separation yet, but do note that `tftpd` does not respond in the
+negative for files it does not have, so the "effectively served set" on a
+network is the union of all served files. It's dangerous and unwise to have
+different versions on different servers on the same broadcast domain.
+
+`update` is a proof-of-concept using `libtftp` to implement much the same
+program as `bootstrap`. To make an update server, first ensure you have
+`bootstrap` revision _at least 8_, then:
+
+	mkdir /srv
+	bootstrap /srv raw
+
+...this version of the bootstrap program should ask you to confirm "VERY
+CAREFULLY" that you intended to do a raw bootstrap (id est, not an install, but
+a mirror of the repo). Select yes (`y`), and allow it to download into `/srv`.
+
+Then, as with `libdaemon` above, enable a `tftpd` daemon:
+
+	rc enable daemon
+	echo "{start={tftpd=true}}" > /etc/daemon.cfg
+
+Then `reboot` (or at least `dctl load tftpd` and `dctl start tftpd` if you
+don't want to reboot).
+
+You can then `bootstrap /srv raw` on this machine each time you want to
+download updates from this Git repository. The download will be done over the
+Internet only once; on clients with the `update` program installed, simply run:
+
+	update
+
+...this script will check for an "update server" serving the `manifest.oc` file
+(as this repository does). If it finds it, it will transfer all the content
+`bootstrap` would have, but strictly over OpenOS' networks (id est, not
+requiring an internet card).
+
+**As a replacement for bootstrap:** If you want to bootstrap using `update`
+alone, note that it requires `libtftp` and `libnic` (transitively). Assuming a
+TFTP server as specified is running on your broadcast segment, `wget` the
+following files from this repository:
+
+	programs/update
+	apis/libtftp
+	apis/libnic
+
+In your working directory, ensure the files are named `libtftp.lua` and
+`libnic.lua`. Afterward, simply run `update`.
+
+When you are done, **remove libtftp.lua and libnic.lua** so they don't
+accidentally override the system-installed versions.
+
+(A script for this process may be forthcoming.)
 
 # Licensing
 
