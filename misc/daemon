@@ -1,3 +1,5 @@
+local serialization = require('serialization')
+
 local libdaemon = require('libdaemon')
 
 local function load_daemon(name)
