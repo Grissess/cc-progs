@@ -1,4 +1,4 @@
-!Manifest revision 19
+!Manifest revision 20
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
@@ -11,6 +11,7 @@ lib/libacid.lua apis/libacid
 lib/libbit.lua apis/libbit
 lib/libldap.lua apis/libldap
 lib/liblldns.lua apis/liblldns
+lib/libtftp.lua apis/libtftp
 bin/vim.lua programs/vim
 bin/dctl.lua programs/dctl
 bin/unload.lua programs/unload
@@ -24,6 +25,8 @@ bin/elog.lua programs/elog
 bin/mopen.lua programs/mopen
 bin/mclose.lua programs/mclose
 bin/mbroadcast.lua programs/mbroadcast
+bin/tftp.lua programs/tftp
+bin/update.lua programs/update
 man/vim doc/vim
 man/dctl doc/dctl
 man/unload doc/unload
@@ -43,6 +46,7 @@ opt/daemon/flowmeter.lua daemons/flowmeter
 opt/daemon/ldapd.lua daemons/ldapd
 opt/daemon/lldnsd.lua daemons/lldnsd
 opt/daemon/rcsignalfwd.lua daemons/rcsignalfwd
+opt/daemon/tftpd.lua daemons/tftpd
 ../etc/rc.d/daemon.lua misc/daemon
 .manifest manifest.oc
 COPYING COPYING
