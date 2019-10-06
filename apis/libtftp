@@ -1,5 +1,5 @@
 local libtftp = {}
-libtftp.REVISION = 2
+libtftp.REVISION = 3
 
 local component = require('component')
 local event = require('event')
@@ -94,3 +94,5 @@ function libtftp.download(fn, fo, lnic, rnic, tmout)
 	end
 	return false, err
 end
+
+return libtftp
