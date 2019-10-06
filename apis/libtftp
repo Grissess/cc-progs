@@ -1,4 +1,4 @@
-local libtftp
+local libtftp = {}
 libtftp.REVISION = 1
 
 local component = require('component')
