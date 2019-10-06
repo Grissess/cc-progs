@@ -60,8 +60,10 @@ function libtftp.transfer(lnic, rnic, fn, dcb, tmout)
 				if resp == "NAK" then return false, "cancelled by callback" end
 				tmid = event.timer(tmout, _push_tmout)
 			elseif cm == "FIN" then
+				event.cancel(tmid)
 				return true
 			elseif cm == "ERR" then
+				event.cancel(tmid)
 				return false, buf
 			end
 		end
