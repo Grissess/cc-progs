@@ -8,20 +8,20 @@ if gl then
 	cls()
 	local function sc() ci(g,"copy",1,2,w,h-1,0,-1) y=y-1 end
 	function nl() x,y=1,y+1 if y>h then sc() end end
-	local function ln(s) if y>h then sc() end ci(g,"set",1,y,s) x,y=1,y+1 end
-	function p(...) for _,l in ipairs({...}) do l=tostring(l) while #l>0 do ln(l:sub(1,w)) l=l:sub(w+1) end end end
-	function pc(c) ci(g,"set",x,y,c) x=x+1 if x>w then x,y=1,y+1 if y>h then sc() end end end
+	local function ln(s) if y>h then sc() end ci(g,"set",x,y,s) x,y=1,y+1 end
+	function p(...) for _,l in ipairs({...}) do l=tostring(l) while #l>0 do ln(l:sub(1,w-x+1)) l=l:sub(w-x+2) end end end
+	function pc(c) if y>h then sc() end ci(g,"set",x,y,c) x=x+1 if x>w then x,y=1,y+1 if y>h then sc() end end end
 	function ec() x=x-1 if x<=0 then x=w y=y-1 if y<=1 then y=1 end end ci(g,"set",x,y," ") end
 else function p()end pc,ec,nl=p,p,p end
 acer.print=p
 p("acer",acer.version)
 function acer.rescue()
 	local nv=setmetatable({acer=acer},{__index=_G})
-	local b,en,bs,x='',0x1c,0x0e,function(s)p(s)local f,e=load(s,"=r","t",nv)if not f then p(e) else local _,v=pcall(f) p(v) end pc('>') end
+	local b,en,bs,x='',0x1c,0x0e,function(s)local f,e=load(s,"=r","t",nv)if not f then p(e) else local _,v=pcall(f) p(v) end pc('>') end
 	pc('>')
 	while true do local ev,ad,ch,cd=cps() if ev=="key_down" then
 		if cd==bs then b=b:sub(1,#b-1) ec()
-		elseif cd==en then x(b) b='' nl()
+		elseif cd==en then x(b) b=''
 		elseif ch>31 then ch=unicode.char(ch) b=b..ch pc(ch) end
 	end end
 end
