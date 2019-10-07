@@ -9,7 +9,7 @@ if gl then
 	local function sc() ci(g,"copy",1,2,w,h-1,0,-1) y=y-1 end
 	function nl() y=y+1 if y>h then sc() end end
 	local function ln(s) if y>h then sc() end ci(g,"set",1,y,s) y=y+1 end
-	function p(...) for _,l in ipairs({...}) do while #l>0 do ln(l:sub(1,w)) l=l:sub(w+1) end end end
+	function p(...) for _,l in ipairs({...}) do l=tostring(l) while #l>0 do ln(l:sub(1,w)) l=l:sub(w+1) end end end
 	function pc(c) ci(g,"set",x,y,c) x=x+1 if x>w then x,y=1,y+1 if y>h then sc() end end end
 	function ec() x=x-1 if x<=0 then x=w y=y-1 if y<=1 then y=1 end end ci(g,"set",x,y," ") end
 else function p()end pc,ec,nl=p,p,p end
