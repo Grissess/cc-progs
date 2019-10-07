@@ -48,8 +48,8 @@ local function dlb_sync(path, new)
 	local data = acer.get(acer.booted, root .. path)
 	if data then
 		invoke(tmp, "makeDirectory", pathpart(DLB_DIR .. new))
-		local fh = invoke(tmp, "open", DLB_DIR .. new, "w")
-		invoke(tmp, "write", fh, data)
+		local fh = assert(invoke(tmp, "open", DLB_DIR .. new, "w"))
+		assert(invoke(tmp, "write", fh, data),"failed to write:" .. DLB_DIR .. new)
 		invoke(tmp, "close", fh)
 		return true
 	end
