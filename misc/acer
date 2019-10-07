@@ -46,7 +46,7 @@ local su,er=pcall(function()
 	function acer.boot(a) acer.booted=a local b,e=acer.bootloader(a) if not b then return nil,e end return b() end
 	function co.getBootAddress() return acer.booted end
 	function co.setBootAddress(a) acer.booted=a ci(e,"setData",a) end
-	local bo={} acer.bootable=bo local function cb(a) if a then local t=ct(a) p(a.." "..t.."...") if h[t] and q[t](a) then ti(bo,a) end end end
+	local bo={} acer.bootable=bo local function cb(a) if a then local t=ct(a) if t then p(a.." "..t.."...") if h[t] and q[t](a) then ti(bo,a) end end end end
 	local ed=ci(e,"getData") cb(ed)
 	for a in cl() do cb(a) end
 	if #bo==0 then p("no bootable devices") acer.rescue() end
