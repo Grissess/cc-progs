@@ -56,18 +56,27 @@ local function dlb_sync(path, new)
 	return false
 end
 
+local function relpath(pth)
+	while pth:sub(1,1) == "/" do
+		pth = pth:sub(2)
+	end
+	return pth
+end
+
 local dlb = {
 	spaceUsed = function() return invoke(tmp, "spaceUsed") end,
 	open = function(name, mode)
+		name = relpath(name)
 		if mode == nil then mode = 'r' end
-		if mode[1] == 'r' and not invoke(tmp, "exists", DLB_DIR .. name) then
+		if mode:sub(1,1) == 'r' and not invoke(tmp, "exists", DLB_DIR .. name) then
 			dlb_sync(name)
 		end
 		return invoke(tmp, "open", name, mode)
 	end,
 	seek = function(fd, whence, offset) return invoke(tmp, "seek", fd, whence, offset) end,
-	makeDirectory = function(path) return invoke(tmp, "makeDirectory", DLB_DIR .. path) end,
+	makeDirectory = function(path) return invoke(tmp, "makeDirectory", DLB_DIR .. relpath(path)) end,
 	exists = function(path)
+		path = relpath(path)
 		if invoke(tmp, "exists", DLB_DIR .. path) then return true end
 		if acer.get(acer.booted, root .. path) then return true end
 		return false
@@ -75,17 +84,19 @@ local dlb = {
 	isReadOnly = function() return invoke(tmp, "isReadOnly") end,
 	write = function(fd, buffer) return invoke(tmp, "write", fd, buffer) end,
 	spaceTotal = function() return invoke(tmp, "spaceTotal") end,
-	isDirectory = function(path) return invoke(tmp, "isDirectory", DLB_DIR .. path) end,
+	isDirectory = function(path) return invoke(tmp, "isDirectory", DLB_DIR .. relpath(path)) end,
 	rename = function(from, to)
+		from, to = relpath(from), relpath(to)
 		if invoke(tmp, "exists", DLB_DIR .. from) then return invoke(tmp, "rename", DLB_DIR .. from, DLB_DIR .. to) end
 		return dlb_sync(from, to)
 	end,
-	list = function(path) return invoke(tmp, "list", DLB_DIR .. path) end,
-	lastModified = function(path) return invoke(tmp, "lastModified", DLB_DIR .. path) end,
+	list = function(path) return invoke(tmp, "list", DLB_DIR .. relpath(path)) end,
+	lastModified = function(path) return invoke(tmp, "lastModified", DLB_DIR .. relpath(path)) end,
 	getLabel = function() return label end,
-	remove = function(path) return invoke(tmp, "remove", DLB_DIR .. path) end,
+	remove = function(path) return invoke(tmp, "remove", DLB_DIR .. relpath(path)) end,
 	close = function(fd) return invoke(tmp, "close", fd) end,
 	size = function(path)
+		path = relpath(path)
 		if not invoke(tmp, "exists", DLB_DIR .. path) then
 			dlb_sync(path)
 		end
