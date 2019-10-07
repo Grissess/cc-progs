@@ -5,6 +5,7 @@ local gl=g and s
 local p,pc,ec,nl,cls,w,h,x,y
 if gl then
 	function cls() ci(g,"bind",s,true) w,h=ci(g,"getResolution") ci(g,"fill",1,1,w,h," ") x,y=1,1 end
+	cls()
 	local function sc() ci(g,"copy",1,2,w,h-1,0,-1) y=y-1 end
 	function nl() y=y+1 if y>h then sc() end end
 	local function ln(s) if y>h then sc() end ci(g,"set",1,y,s) y=y+1 end
