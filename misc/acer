@@ -43,7 +43,9 @@ local su,er=pcall(function()
 	}
 	function acer.get(a,f) local hd=h[ct(a)] if hd==nil then return nil,"no handler" end local s={pcall(hd,a,f)} if not s[1] then return nil,tu(s,2) end return tu(s,2) end
 	function acer.bootloader(a) local d,e=acer.get(a,ifn) if not d then return nil,e end return load(d,"=init","t",nv) end
-	function acer.boot(a) local b,e=acer.bootloader(a) if not b then return nil,e end return b() end
+	function acer.boot(a) acer.booted=a local b,e=acer.bootloader(a) if not b then return nil,e end return b() end
+	function co.getBootAddress() return acer.booted end
+	function co.setBootAddress(a) acer.booted=a ci(e,"setData",a) end
 	local bo={} acer.bootable=bo local function cb(a) if a then local t=ct(a) if h[t] and q[t](a) then ti(bo,a) end end end
 	local ed=ci(e,"getData") cb(ed)
 	for a in cl() do cb(a) end
