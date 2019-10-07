@@ -40,6 +40,7 @@ man/elog doc/elog
 man/mopen doc/mopen
 man/mclose doc/mclose
 man/mbroadcast doc/mbroadcast
+man/acer doc/acer
 opt/daemon/heartbeat.lua daemons/heartbeat
 opt/daemon/hwproxyd.lua daemons/hwproxyd
 opt/daemon/flowmeter.lua daemons/flowmeter

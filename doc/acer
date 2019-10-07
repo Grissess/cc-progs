@@ -1,0 +1,68 @@
+NAME
+  acer - Acer bootloader
+
+DESCRIPTION
+
+  Acer is an advanced bootloader meant to be imaged onto a compatible EEPROM. It is feature-compatible with the normal Lua BIOS, and has the additional features:
+
+  - It supports network booting using the TFTP protocol;
+
+  - For all boot devices, "init.lua" can be replaced with the computer's address (+".lua") to make computer-specific initializers;
+
+  - It has a built-in "rescue shell" that can be used as a basic Lua prompt without installing an operating system;
+
+  - It provides an environment variable "acer" with a well-defined API that can be used to assist OS developers in fetching resources from arbitrary backing stores.
+
+  To use it, insert a writable EEPROM into the EEPROM slot of a computer and
+
+    cp /usr/share/acer.lua /dev/eeprom
+
+  (...and accept the overwrite prompt.)
+
+USER INTERFACE
+
+  When booting a computer, Acer scans all components for anything that it recognizes as a bootable device; currently, this involves filesystems and modems. If the EEPROM has a "data" section which contains the address of an apparently-bootable device, Acer will prefer to boot from this component first (providing the compatibility shim for computer.getBootAddress/computer.setBootAddress), to remain compatible with the Lua BIOS.
+
+  Users can pick any other bootable medium (or the rescue shell) by pressing any key after the menu is presented, then entering the menu option and pressing enter. If the user does not intervene, the top entry will be selected--which is component in the EEPROM data section, or an arbitrary bootable device if the EEPROM has no data section (or that component isn't bootable).
+
+  If an error occurs during the boot process, or the user chooses it from the boot menu, Acer will enter the "rescue shell", announced with an 880Hz beep (lower than the default power-on beep). The rescue shell is a simple command-line Lua REPL that runs in the same environment that an OS init would have been run in; in particular, it has access to the "acer" variable, and a user can chainboot by calling "acer.boot" if desired. For space reasons, the REPL is rather unsophisticated, with no line editing capabilities, and does not, e.g., rewrite "=" to "return " at the beginning of a line.
+
+ADMINISTRATOR INTERFACE
+
+  Acer can be used as a drop-in replacement for the Lua BIOS. Note that it is slower to boot than the Lua BIOS because it prompts the user for a choice of OS to load. Additional delays may be incurred by checking available modems for available netboot files. If time is a concern and Acer's features aren't strictly required, the Lua BIOS is indeed faster.
+
+  To set up network booting, run a TFTP daemon on the booting network segment. Acer will search for either a file called "init.lua" or the local computer's address concatenated with ".lua" (for machine-specific boot files), preferring the latter if it exists. The network-booted script is run exactly as an OS' init.lua would be run from disk--in particular, it has access to the "acer" environment. See the Programming Interface section for details. Note that OpenOS' (and presumably others) init.lua cannot be run this way "out of the box", as they expect their boot device to be a filesystem. (A diskless OpenOS boot is left as an exercise to the reader.)
+
+PROGRAMMING INTERFACE
+
+  All OS init scripts are run in a new environment which refers to the global environment _G by way of a metatable __index key. Initially, this new environment has exactly one key in it: "acer", which is a table containing acer's programming interface. If acer is not nil in an initscript, it is safe to assume that Acer booted this machine. The table contains the following values:
+
+  - acer.version: The version of the Acer bootloader loading this script. Presently defined as 2.
+
+  - acer.print(...): Prints its arguments. Note that this is not entirely compatible with Lua's normal "print" function; empty arguments aren't printed at all, and the arguments are separated by newlines, not tabs.
+
+  - acer.get(addr, filename): Attempt to retrieve the contents of the named file, in entirety, from the component specified by the address. If it is a filesystem, this loads the contents from disk. If it is a modem, it transfers the contents using TFTP. Returns either a string with the full contents of that file, or nil and an error message.
+
+  - acer.bootloader(addr): Returns the Lua chunk/function that would be called to boot from the specificed device (either a filesystem or modem), or nil and an error message.
+
+  - acer.boot(addr): Sets the value of acer.booted and calls the bootloader, which is expected not to return. This can explicitly be used to chainboot into another OS init script.
+
+  - acer.booted: The address passed most recently to acer.boot. Can be used to determine the backing store from which the current OS init script has been loaded--e.g., to load more OS dependencies from the same storage.
+
+  - acer.bootable: A sequence of bootable devices. The device in the EEPROM data section, if available and usable, is likely first, followed by any other bootable devices (including possible duplicates) in arbitrary order. This sequence is exactly the same one displayed to the user.
+
+  - acer.getline(): Prompts for and returns a line of text entered by the user.
+
+  - acer.rescue(): Drops into the rescue shell. This function does not return.
+
+  For compatibility, the following is also provided in the global environment:
+
+  - computer.getBootAddress(): Returns acer.booted.
+
+  - computer.setBootAddress(addr): Sets both acer.booted and the EEPROM data section.
+
+SEE ALSO
+  tftp(1)
+
+COLOPHON
+  cc-progs, Grissess 2019
