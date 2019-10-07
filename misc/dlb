@@ -109,5 +109,7 @@ component.list = function(filt, exact)
 	return results
 end
 
+function computer.getBootAddress() return DLB_ADDR end
+
 acer.print("running init...")
 return initf()
