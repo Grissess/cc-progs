@@ -9,12 +9,12 @@ local DLB_DIR = "dlb/"
 local root = LOCAL_ROOT
 local init,err = acer.get(acer.booted, root .. INIT_FN)
 if not init then
-	acer.print("init from " .. root .. INIT_FN .. " not found: " .. err)
+	acer.print("init from " .. root .. INIT_FN .. " not found: " .. tostring(err))
 	root = DEFAULT_ROOT
 	init, err = acer.get(acer.booted, root .. INIT_FN)
 end
 if not init then
-	acer.print("init from " .. root .. INIT_FN .. " not found: " .. err)
+	acer.print("init from " .. root .. INIT_FN .. " not found: " .. tostring(err))
 	error("DLB: no usable initscript")
 end
 
