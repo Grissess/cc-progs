@@ -32,7 +32,7 @@ function acer.rescue()
 end
 local su,er=pcall(function()
 	local mm,fh,fp,nto="modem_message","FTP",12019,1
-	local function tf(l,r,f) ci(l,"send",r,fp,fh,"GET",f) local b,n,t='',0,cut() while cut()-t<nto do local ev,ln,rn,p,d,h,c,r,bf=cps(nto-cut()+n) if ev==mm and ln==l and p==fp and h==fh then if c=="DAT" then b,n,t=b..bf,n+#bf,cut() ci(l,"send",r,fp,fh,"ACK",f,n) elseif c=="ERR" then return nil,bf elseif c=="FIN" then return b end end end return nil,"timeout" end
+	local function tf(l,r,f) ci(l,"send",r,fp,fh,"GET",f) local b,n,t='',0,cut() while cut()-t<nto do local ev,ln,rn,p,d,h,c,rf,bf=cps(nto-cut()+n) if ev==mm and ln==l and rn==r and p==fp and h==fh and rf==f then if c=="DAT" then b,n,t=b..bf,n+#bf,cut() ci(l,"send",r,fp,fh,"ACK",f,n) elseif c=="ERR" then return nil,bf elseif c=="FIN" then return b end end end return nil,"timeout" end
 	local h={
 		filesystem=function(a,f) local hd,b,d=ci(a,"open",f),'','' while true do d=ci(a,"read",hd,math.huge) if d==nil then return b end b=b..d end end,
 		modem=function(a,f) ci(a,"open",fp) ci(a,"broadcast",fp,fh,"HV?",f) local n=cut() while cut()-n<nto do local ev,ln,rn,p,d,h,c,r=cps(nto-cut()+n) if ev==mm and ln==a and p==fp and h==fh and c=="HAV" and r==f then return tf(ln,rn,f) end end end,
