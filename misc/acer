@@ -27,7 +27,7 @@ function acer.getline()
 end
 function acer.rescue()
 	local x=function(s)local f,e=load(s,"=r","t",nv)if not f then p(e) else local _,v=pcall(f) p(v) end end
-	while true do x(acer.getline())
+	while true do x(acer.getline()) end
 end
 local su,er=pcall(function()
 	local mm,fh,fp="modem_message","FTP",12019
