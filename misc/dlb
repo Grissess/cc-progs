@@ -19,7 +19,7 @@ if not init then
 end
 
 acer.print("compiling initscript...")
-local initf, err = load(init, "=init", "t", _ENV)
+local initf, err = load(init, "=remote_init", "t", _ENV)
 if not initf then
 	error("DLB: init load failed: " .. err)
 end
