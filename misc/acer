@@ -6,7 +6,7 @@ local p,pc,ec,nl,cls,w,h,x,y
 if gl then
 	function cls() ci(g,"bind",s,true) w,h=ci(g,"getResolution") ci(g,"fill",1,1,w,h," ") x,y=1,1 end
 	cls()
-	local function sc() ci(g,"copy",1,2,w,h-1,0,-1) y=y-1 end
+	local function sc() ci(g,"copy",1,2,w,h-1,0,-1) ci(g,"fill",1,h,w,1," ") y=y-1 end
 	function nl() x,y=1,y+1 if y>h then sc() end end
 	local function ln(s) if y>h then sc() end ci(g,"set",x,y,s) x,y=1,y+1 end
 	function p(...) for _,l in ipairs({...}) do l=tostring(l) while #l>0 do ln(l:sub(1,w-x+1)) l=l:sub(w-x+2) end end end
@@ -21,7 +21,7 @@ function acer.rescue()
 	pc('>')
 	while true do local ev,ad,ch,cd=cps() if ev=="key_down" then
 		if cd==bs then b=b:sub(1,#b-1) ec()
-		elseif cd==en then x(b) b=''
+		elseif cd==en then nl() x(b) b=''
 		elseif ch>31 then ch=unicode.char(ch) b=b..ch pc(ch) end
 	end end
 end
