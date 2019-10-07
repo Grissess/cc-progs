@@ -26,6 +26,7 @@ function acer.getline()
 	end end
 end
 function acer.rescue()
+	co.beep(880,0.2)
 	local x=function(s)local f,e=load(s,"=r","t",nv)if not f then p(e) else local _,v=pcall(f) p(v) end end
 	while true do x(acer.getline()) end
 end
@@ -50,10 +51,12 @@ local su,er=pcall(function()
 	local ed=ci(e,"getData") cb(ed)
 	for a in cl() do cb(a) end
 	if #bo==0 then p("no bootable devices") acer.rescue() end
+	p('') p(' 0:rescue')
 	for i,a in ipairs(bo) do if i==1 then pc('*') else pc(' ') end p(i..":"..a.." "..ct(a)) end p("press any key to select boot device")
 	local cd,it,id=3,false,1
 	while cd>0 do p("boot in "..cd.."s...") cd=cd-1 local ev=cps(1) if ev=="key_down" then it=true break end end
 	if it then p("select boot device") id=tonumber(acer.getline()) end
+	if id==0 then acer.rescue() end
 	assert(acer.boot(bo[id]))
 end)
-if not su then p(er) co.beep(880,0.2) acer.rescue() end
+if not su then p(er) acer.rescue() end
