@@ -19,11 +19,7 @@ local nv=setmetatable({acer=acer},{__index=_G})
 function acer.getline()
 	local b,en,bs='',0x1c,0x0e
 	pc('>')
-	while true do local ev,ad,ch,cd=cps() if ev=="key_down" then
-		if cd==bs then b=b:sub(1,#b-1) ec()
-		elseif cd==en then nl() return b
-		elseif ch>31 then ch=unicode.char(ch) b=b..ch pc(ch) end
-	end end
+	while true do local ev,ad,ch,cd=cps() if ev=="key_down" then if cd==bs then b=b:sub(1,#b-1) ec() elseif cd==en then nl() return b elseif ch>31 then ch=unicode.char(ch) b=b..ch pc(ch) end end end
 end
 function acer.rescue()
 	co.beep(880,0.2)
@@ -31,16 +27,16 @@ function acer.rescue()
 	while true do x(acer.getline()) end
 end
 local su,er=pcall(function()
-	local mm,fh,fp,nto="modem_message","FTP",12019,1
+	local mm,fh,fp,bc,nto="modem_message","FTP",12019,"broadcast",1
 	local function tf(l,r,f) ci(l,"send",r,fp,fh,"GET",f) local b,n,t='',0,cut() while cut()-t<nto do local ev,ln,rn,p,d,h,c,rf,bf=cps(nto-cut()+n) if ev==mm and ln==l and rn==r and p==fp and h==fh and rf==f then if c=="DAT" then b,n,t=b..bf,n+#bf,cut() ci(l,"send",r,fp,fh,"ACK",f,n) elseif c=="ERR" then return nil,bf elseif c=="FIN" then return b end end end return nil,"timeout" end
 	local h={
-		filesystem=function(a,f) local hd,b,d=ci(a,"open",f),'','' while true do d=ci(a,"read",hd,math.huge) if d==nil then return b end b=b..d end end,
-		modem=function(a,f) ci(a,"open",fp) ci(a,"broadcast",fp,fh,"HV?",f) local n=cut() while cut()-n<nto do local ev,ln,rn,p,d,h,c,r=cps(nto-cut()+n) if ev==mm and ln==a and p==fp and h==fh and c=="HAV" and r==f then return tf(ln,rn,f) end end end,
+		filesystem=function(a,f) local hd,b,d=ci(a,"open",f),'','' if hd==nil then return nil end while true do d=ci(a,"read",hd,math.huge) if d==nil then ci(a,"close",f) return b end b=b..d end end,
+		modem=function(a,f) ci(a,"open",fp) ci(a,bc,fp,fh,"HV?",f) local n=cut() while cut()-n<nto do local ev,ln,rn,p,d,h,c,r=cps(nto-cut()+n) if ev==mm and ln==a and p==fp and h==fh and c=="HAV" and r==f then return tf(ln,rn,f) end end end,
 	}
 	local ifn,lfn="init.lua",ca..".lua"
 	local q={
 		filesystem=function(a) return ci(a,"exists",ifn) or ci(a,"exists",lfn) end,
-		modem=function(a) ci(a,"open",fp) ci(a,"broadcast",fp,fh,"HV?",ifn) ci(a,"broadcast",fp,fh,"HV?",lfn) local n=cut() while cut()-n<nto do local ev,ln,rn,p,d,h,c,r=cps(nto-cut()+n) if ev==mm and ln==a and p==fp and h==fh and c=="HAV" and r==ifn then return true end end end,
+		modem=function(a) ci(a,"open",fp) ci(a,bc,fp,fh,"HV?",ifn) ci(a,bc,fp,fh,"HV?",lfn) local n=cut() while cut()-n<nto do local ev,ln,rn,p,d,h,c,r=cps(nto-cut()+n) if ev==mm and ln==a and p==fp and h==fh and c=="HAV" and r==ifn then return true end end end,
 	}
 	function acer.get(a,f) local hd=h[ct(a)] if hd==nil then return nil,"no handler" end local s={pcall(hd,a,f)} if not s[1] then return nil,tu(s,2) end return tu(s,2) end
 	function acer.bootloader(a) local d,e=acer.get(a,lfn) if not d then d,e=acer.get(a,ifn) end if not d then return nil,e end return load(d,"=init","t",nv) end
@@ -51,7 +47,7 @@ local su,er=pcall(function()
 	local ed=ci(e,"getData") cb(ed)
 	for a in cl() do cb(a) end
 	if #bo==0 then p("no bootable devices") acer.rescue() end
-	p('') p(' 0:rescue')
+	p(' 0:rescue')
 	for i,a in ipairs(bo) do if i==1 then pc('*') else pc(' ') end p(i..":"..a.." "..ct(a)) end p("press any key to select boot device")
 	local cd,it,id=3,false,1
 	while cd>0 do p("boot in "..cd.."s...") y,cd=y-1,cd-1 local ev=cps(1) if ev=="key_down" then it=true break end end
