@@ -14,7 +14,7 @@ if gl then
 	function ec() x=x-1 if x<=0 then x=w y=y-1 if y<=1 then y=1 end end ci(g,"set",x,y," ") end
 else function p()end pc,ec,nl=p,p,p end
 acer.print=p
-p("acer",acer.version)
+p("acer "..acer.version)
 local nv=setmetatable({acer=acer},{__index=_G})
 function acer.getline()
 	local b,en,bs='',0x1c,0x0e
@@ -31,7 +31,7 @@ function acer.rescue()
 	while true do x(acer.getline()) end
 end
 local su,er=pcall(function()
-	local mm,fh,fp,nto="modem_message","FTP",12019,2
+	local mm,fh,fp,nto="modem_message","FTP",12019,1
 	local function tf(l,r,f) ci(l,"send",r,fp,fh,"GET",f) local b,n,t='',0,cut() while cut()-t<nto do local ev,ln,rn,p,d,h,c,r,bf=cps(nto-cut()+n) if ev==mm and ln==l and p==fp and h==fh then if c=="DAT" then b,n,t=b..bf,n+#bf,cut() ci(l,"send",r,fp,fh,"ACK",f,n) elseif c=="ERR" then return nil,bf elseif c=="FIN" then return b end end end return nil,"timeout" end
 	local h={
 		filesystem=function(a,f) local hd,b,d=ci(a,"open",f),'','' while true do d=ci(a,"read",hd,math.huge) if d==nil then return b end b=b..d end end,
@@ -54,7 +54,7 @@ local su,er=pcall(function()
 	p('') p(' 0:rescue')
 	for i,a in ipairs(bo) do if i==1 then pc('*') else pc(' ') end p(i..":"..a.." "..ct(a)) end p("press any key to select boot device")
 	local cd,it,id=3,false,1
-	while cd>0 do p("boot in "..cd.."s...") cd=cd-1 local ev=cps(1) if ev=="key_down" then it=true break end end
+	while cd>0 do p("boot in "..cd.."s...") y,cd=y-1,cd-1 local ev=cps(1) if ev=="key_down" then it=true break end end
 	if it then p("select boot device") id=tonumber(acer.getline()) end
 	if id==0 then acer.rescue() end
 	assert(acer.boot(bo[id]))
