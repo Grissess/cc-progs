@@ -47,7 +47,7 @@ end
 local dlb = {
 	spaceUsed = function() return invoke(tmp, "spaceUsed") end,
 	open = function(name, mode)
-		if mode == nil then mode == 'r' end
+		if mode == nil then mode = 'r' end
 		if mode[1] == 'r' and not invoke(tmp, "exists", DLB_DIR .. name) then
 			dlb_sync(name)
 		end
