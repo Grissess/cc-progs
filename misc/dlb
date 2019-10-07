@@ -32,10 +32,22 @@ local invoke = component.invoke
 local tmp = computer.tmpAddress()
 local label = 'dlb'
 
+local function pathpart(node)
+	local lastslash=nil,i=1
+	while true do
+		local slash = node:find("/",i,true)
+		if slash==nil then break end
+		lastslash, i = slash, slash + 1
+	end
+	if lastslash == nil then return '/' end
+	return node:sub(1,lastslash)
+end
+
 local function dlb_sync(path, new)
 	if new == nil then new = path end
 	local data = acer.get(acer.booted, root .. path)
 	if data then
+		invoke(tmp, "makeDirectory", pathpart(DLB_DIR .. new))
 		local fh = invoke(tmp, "open", DLB_DIR .. new, "w")
 		invoke(tmp, "write", fh, data)
 		invoke(tmp, "close", fh)
