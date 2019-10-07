@@ -1,0 +1,113 @@
+local REVISION = 1
+acer.print("DiskLess Boot version " .. REVISION)
+
+local DEFAULT_ROOT = 'os/'
+local LOCAL_ROOT = computer.address() .. '/'
+local INIT_FN = "init.lua"
+local DLB_DIR = "dlb/"
+
+local root = LOCAL_ROOT
+local init,err = acer.get(acer.booted, root .. INIT_FN)
+if not init then
+	acer.print("init from " .. root .. INIT_FN .. " not found: " .. err)
+	root = DEFAULT_ROOT
+	init, err = acer.get(acer.booted, root .. INIT_FN)
+end
+if not init then
+	acer.print("init from " .. root .. INIT_FN .. " not found: " .. err)
+	error("DLB: no usable initscript")
+end
+
+acer.print("compiling initscript...")
+local initf, err = load(init, "=init", "t", _ENV)
+if not initf then
+	error("DLB: init load failed: " .. err)
+end
+
+local DLB_ADDR = 'disklessboot'
+
+acer.print('installing component hooks...')
+
+local invoke = component.invoke
+local tmp = computer.tmpAddress()
+local label = 'dlb'
+
+local function dlb_sync(path, new)
+	if new == nil then new = path end
+	local data = acer.get(acer.booted, root .. path)
+	if data then
+		local fh = invoke(tmp, "open", DLB_DIR .. new, "w")
+		invoke(tmp, "write", fh, data)
+		invoke(tmp, "close", fh)
+		return true
+	end
+	return false
+end
+
+local dlb = {
+	spaceUsed = function() return invoke(tmp, "spaceUsed") end,
+	open = function(name, mode)
+		if mode[1] == 'r' and not invoke(tmp, "exists", DLB_DIR .. name) then
+			dlb_sync(name)
+		end
+		return invoke(tmp, "open", name, mode)
+	end,
+	seek = function(fd, whence, offset) return invoke(tmp, "seek", fd, whence, offset) end,
+	makeDirectory = function(path) return invoke(tmp, "makeDirectory", DLB_DIR .. path) end,
+	exists = function(path)
+		if invoke(tmp, "exists", DLB_DIR .. path) then return true end
+		if acer.get(acer.booted, root .. path) then return true end
+		return false
+	end,
+	isReadOnly = function() return invoke(tmp, "isReadOnly") end,
+	write = function(fd, buffer) return invoke(tmp, "write", fd, buffer) end,
+	spaceTotal = function() return invoke(tmp, "spaceTotal") end,
+	isDirectory = function(path) return invoke(tmp, "isDirectory", DLB_DIR .. path) end,
+	rename = function(from, to)
+		if invoke(tmp, "exists", DLB_DIR .. from) then return invoke(tmp, "rename", DLB_DIR .. from, DLB_DIR .. to) end
+		return dlb_sync(from, to)
+	end,
+	list = function(path) return invoke(tmp, "list", DLB_DIR .. path) end,
+	lastModified = function(path) return invoke(tmp, "lastModified", DLB_DIR .. path) end,
+	getLabel = function() return label end,
+	remove = function(path) return invoke(tmp, "remove", DLB_DIR .. path) end,
+	close = function(fd) return invoke(tmp, "close", fd) end,
+	size = function(path)
+		if not invoke(tmp, "exists", DLB_DIR .. path) then
+			dlb_sync(path)
+		end
+		return invoke(tmp, "size", DLB_DIR .. path)
+	end,
+	read = function(fd, amt) return invoke(tmp, "read", fd, amt) end,
+	setLabel = function(lb) label = lb end,
+	address = DLB_ADDR,
+	type = 'filesystem',
+}
+
+local proxy, ctype, get, list = component.proxy, component.type, component.get, component.list
+component.proxy = function(addr)
+	if addr == DLB_ADDR then return dlb end
+	return proxy(addr)
+end
+component.invoke = function(addr, meth, ...)
+	if addr == DLB_ADDR then return dlb[meth](...) end
+	return invoke(addr, meth, ...)
+end
+component.type = function(addr)
+	if addr == DLB_ADDR then return 'filesystem' end
+	return ctype(addr)
+end
+component.get = function(abbr)
+	if DLB_ADDR:sub(1,#abbr) == abbr then return DLB_ADDR end
+	return get(abbr)
+end
+component.list = function(filt, exact)
+	local results = list(filt, exact)
+	if (exact and filt == 'filesystem') or ((not exact) and DLB_ADDR:find(filt, 1, true) ~= nil) then
+		results[DLB_ADDR] = 'filesystem'
+	end
+	return results
+end
+
+acer.print("running init...")
+return initf()

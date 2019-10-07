@@ -1,4 +1,4 @@
-!Manifest revision 29
+!Manifest revision 30
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
@@ -50,5 +50,6 @@ opt/daemon/rcsignalfwd.lua daemons/rcsignalfwd
 opt/daemon/tftpd.lua daemons/tftpd
 ../etc/rc.d/daemon.lua misc/daemon
 share/acer.lua misc/acer
+share/dlb.lua misc/dlb
 .manifest manifest.oc
 COPYING COPYING
