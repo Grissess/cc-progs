@@ -1,5 +1,5 @@
 local c,co,acer=component,computer,{version=2}
-local ci,ct,cl,cps,cut,tu,ti=c.invoke,c.type,c.list,co.pullSignal,co.uptime,table.unpack,table.insert
+local ci,ct,cl,cps,cut,ca,tu,ti=c.invoke,c.type,c.list,co.pullSignal,co.uptime,co.address(),table.unpack,table.insert
 local e,g,s=cl("eeprom")(),cl("gpu")(),cl("screen")()
 local gl=g and s
 local p,pc,ec,nl,cls,w,h,x,y
@@ -37,13 +37,13 @@ local su,er=pcall(function()
 		filesystem=function(a,f) local hd,b,d=ci(a,"open",f),'','' while true do d=ci(a,"read",hd,math.huge) if d==nil then return b end b=b..d end end,
 		modem=function(a,f) ci(a,"open",fp) ci(a,"broadcast",fp,fh,"HV?",f) local n=cut() while cut()-n<nto do local ev,ln,rn,p,d,h,c,r=cps(nto-cut()+n) if ev==mm and ln==a and p==fp and h==fh and c=="HAV" and r==f then return tf(ln,rn,f) end end end,
 	}
-	local ifn="init.lua"
+	local ifn,lfn="init.lua",ca..".lua"
 	local q={
-		filesystem=function(a) return ci(a,"exists",ifn) end,
-		modem=function(a) ci(a,"open",fp) ci(a,"broadcast",fp,fh,"HV?",ifn) local n=cut() while cut()-n<nto do local ev,ln,rn,p,d,h,c,r=cps(nto-cut()+n) if ev==mm and ln==a and p==fp and h==fh and c=="HAV" and r==ifn then return true end end end,
+		filesystem=function(a) return ci(a,"exists",ifn) or ci(a,"exists",lfn) end,
+		modem=function(a) ci(a,"open",fp) ci(a,"broadcast",fp,fh,"HV?",ifn) ci(a,"broadcast",fp,fh,"HV?",lfn) local n=cut() while cut()-n<nto do local ev,ln,rn,p,d,h,c,r=cps(nto-cut()+n) if ev==mm and ln==a and p==fp and h==fh and c=="HAV" and r==ifn then return true end end end,
 	}
 	function acer.get(a,f) local hd=h[ct(a)] if hd==nil then return nil,"no handler" end local s={pcall(hd,a,f)} if not s[1] then return nil,tu(s,2) end return tu(s,2) end
-	function acer.bootloader(a) local d,e=acer.get(a,ifn) if not d then return nil,e end return load(d,"=init","t",nv) end
+	function acer.bootloader(a) local d,e=acer.get(a,lfn) if not d then d,e=acer.get(a,ifn) end if not d then return nil,e end return load(d,"=init","t",nv) end
 	function acer.boot(a) acer.booted=a local b,e=acer.bootloader(a) if not b then return nil,e end return b() end
 	function co.getBootAddress() return acer.booted end
 	function co.setBootAddress(a) acer.booted=a ci(e,"setData",a) end
