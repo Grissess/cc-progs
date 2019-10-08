@@ -30,6 +30,24 @@ local cmds = {
 			if succ then print(err) end
 		end
 	end,
+	list = function(nm, lnic, rnic)
+		local succ
+		if lnic == nil or rnic == nil then
+			succ, lnic, rnic = libtftp.find(nm)
+			if not succ then
+				print(succ, lnic)
+				return
+			end
+		end
+		local lst, err = libtftp.list(lnic, rnic nm)
+		if lst == nil then
+			print("list error:", err)
+			return
+		end
+		for _,ent in ipairs(lst) do
+			print(ent)
+		end
+	end,
 	quit = function()
 		return true
 	end,

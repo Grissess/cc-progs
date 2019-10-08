@@ -38,6 +38,21 @@ function libtftp.find(fn, tmout)
 	end
 end
 
+function libtftp.list(lnic, rnic, nm, tmout)
+	if tmout == nil then tmout = libtftp.TIMEOUT end
+
+	libtftp.maybe_open()
+	component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "LST", nm)
+	local tmid = event.timer(tmout, _push_tmout)
+	while true do
+		local ev, lnic, rnic, port, dist, hdr, cm, rnm, lst = event.pull()
+		if ev == "tftp_timeout" then return nil, "timed out" end
+		if ev == "modem_message" and port == libtftp.PORT and hdr == libtftp.HEADER and cm == "LSR" and rnm == nm then
+			return serialization.unserialize(lst)
+		end
+	end
+end
+
 function libtftp.transfer(lnic, rnic, fn, dcb, tmout)
 	if tmout == nil then tmout = libtftp.TIMEOUT end
 

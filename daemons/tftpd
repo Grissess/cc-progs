@@ -1,6 +1,7 @@
 local component = require('component')
 local computer = require('computer')
 local filesystem = require('filesystem')
+local serialization = require('serialization')
 
 local libtftp = require('libtftp')
 local libdaemon = require('libdaemon')
@@ -53,7 +54,20 @@ local handlers = {
 			if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "HAV", fn) then
 				self:log("tftp/error/send", "HAV", fn)
 			end
-		else
+		end
+	end,
+	LST = function(self, lnic, rnic, nm)
+		local pth = filesystem.concat(self.cfg.root, nm)
+		local di = filesystem.isDirectory(pth)
+		self:log("tftp/LST", lnic, rnic, nm, pth, di)
+		if di then
+			local lst = {}
+			for ent in filesystem.list(pth) do
+				table.insert(lst, ent)
+			end
+			if not component.invoke(lnic, "send", rnic, libtftp.PORT, libtftp.HEADER, "LSR", nm, serialization.serialize(lst)) then
+				self:log("tftp/error/send", "LST", nm)
+			end
 		end
 	end,
 	GET = function(self, lnic, rnic, fn)
