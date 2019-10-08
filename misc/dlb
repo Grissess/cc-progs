@@ -25,6 +25,7 @@ if not initf then
 end
 
 local DLB_ADDR = 'disklessboot'
+local DLB_TYPE = 'filesystem'
 
 acer.print('installing component hooks...')
 
@@ -105,7 +106,7 @@ local dlb = {
 	read = function(fd, amt) return invoke(tmp, "read", fd, amt) end,
 	setLabel = function(lb) label = lb end,
 	address = DLB_ADDR,
-	type = 'filesystem',
+	type = DLB_TYPE,
 }
 
 local proxy, ctype, get, list = component.proxy, component.type, component.get, component.list
@@ -118,7 +119,7 @@ component.invoke = function(addr, meth, ...)
 	return invoke(addr, meth, ...)
 end
 component.type = function(addr)
-	if addr == DLB_ADDR then return 'filesystem' end
+	if addr == DLB_ADDR then return DLB_TYPE end
 	return ctype(addr)
 end
 component.get = function(abbr)
@@ -127,8 +128,8 @@ component.get = function(abbr)
 end
 component.list = function(filt, exact)
 	local results = list(filt, exact)
-	if (exact and filt == 'filesystem') or ((not exact) and DLB_ADDR:find(filt, 1, true) ~= nil) then
-		results[DLB_ADDR] = 'filesystem'
+	if (exact and filt == DLB_TYPE) or ((not exact) and DLB_TYPE:find(filt, 1, true) ~= nil) then
+		results[DLB_ADDR] = DLB_TYPE
 	end
 	return results
 end
