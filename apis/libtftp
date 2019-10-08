@@ -1,5 +1,5 @@
 local libtftp = {}
-libtftp.REVISION = 5
+libtftp.REVISION = 6
 
 local component = require('component')
 local event = require('event')
