@@ -1,4 +1,4 @@
-local REVISION = 1
+local REVISION = 2
 acer.print("DiskLess Boot version " .. REVISION)
 
 local DEFAULT_ROOT = 'os/'
@@ -67,7 +67,7 @@ end
 local pull, uptime = computer.pullSignal, computer.uptime
 local prt, hdr, tmout = 12019, "FTP", 1
 local function tftp_list(nm)
-	invoke(acer.booted, "broadcast", port, hdr, "HV?", nm)
+	invoke(acer.booted, "broadcast", prt, hdr, "HV?", nm)
 	local start, rnic = uptime(), nil
 	while uptime() - start < tmout do
 		local ev, ln, rn, port, dist, rh, cm, rnm = pull(tmout - uptime() + start)
@@ -77,11 +77,11 @@ local function tftp_list(nm)
 		end
 	end
 	if not rnic then return nil, "not found" end
-	invoke(acer.booted, "send", rnic, port, hdr, "LST", nm)
+	invoke(acer.booted, "send", rnic, prt, hdr, "LST", nm)
 	start = uptime()
 	while uptime() - start < tmout do
 		local ev, ln, rn, port, dist, rh, cm, rnm, res = pull(tmout - uptime() + start)
-		if ev == "modem_message" and ln == acer.booted and rn == rnic and port == port and rh == hdr and cm == "LSR" and rnm == nm then
+		if ev == "modem_message" and ln == acer.booted and rn == rnic and port == prt and rh == hdr and cm == "LSR" and rnm == nm then
 			return assert(load("return " .. res, "=data", "t", {math={huge=math.huge}}))()
 		end
 	end
