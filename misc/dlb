@@ -187,7 +187,7 @@ component.get = function(abbr)
 end
 component.list = function(filt, exact)
 	local results = list(filt, exact)
-	if (exact and filt == DLB_TYPE) or ((not exact) and DLB_TYPE:find(filt, 1, true) ~= nil) then
+	if (exact and filt == DLB_TYPE) or ((not exact) and (filt==nil or DLB_TYPE:find(filt, 1, true) ~= nil)) then
 		results[DLB_ADDR] = DLB_TYPE
 	end
 	return results
