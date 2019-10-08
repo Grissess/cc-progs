@@ -33,8 +33,18 @@ acer.print('installing component hooks...')
 local invoke = component.invoke
 local tmp
 if type(USE_BACKING_DISK) == "string" then
-	tmp = USE_BACKING_DISK
-	acer.print('using specified backing disk '..tmp)
+	for addr in component.list("filesystem") do
+		if addr:sub(1,#USE_BACKING_DISK) == USE_BACKING_DISK then
+			tmp = addr
+			break
+		end
+	end
+	if tmp then
+		acer.print('using specified backing disk '..tmp)
+	else
+		acer.print('warning: specified backing disk '..USE_BACKING_DISK..' not found, unsetting')
+		USE_BACKING_DISK = false
+	end
 end
 if USE_BACKING_DISK == true then
 	tmp = component.list("filesystem")()
