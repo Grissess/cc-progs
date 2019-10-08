@@ -39,7 +39,7 @@ local cmds = {
 				return
 			end
 		end
-		local lst, err = libtftp.list(lnic, rnic nm)
+		local lst, err = libtftp.list(lnic, rnic, nm)
 		if lst == nil then
 			print("list error:", err)
 			return
