@@ -71,7 +71,7 @@ local dlb = {
 		if mode:sub(1,1) == 'r' and not invoke(tmp, "exists", DLB_DIR .. name) then
 			dlb_sync(name)
 		end
-		return invoke(tmp, "open", name, mode)
+		return invoke(tmp, "open", DLB_DIR .. name, mode)
 	end,
 	seek = function(fd, whence, offset) return invoke(tmp, "seek", fd, whence, offset) end,
 	makeDirectory = function(path) return invoke(tmp, "makeDirectory", DLB_DIR .. relpath(path)) end,
