@@ -3,6 +3,7 @@ libtftp.REVISION = 6
 
 local component = require('component')
 local event = require('event')
+local serialization = require('serialization')
 
 local libnic = require('libnic')
 
