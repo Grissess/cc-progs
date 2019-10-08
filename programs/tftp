@@ -1,4 +1,5 @@
 local text = require('text')
+local serialization = require('serialization')
 
 local libtftp = require('libtftp')
 
