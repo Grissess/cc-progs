@@ -5,6 +5,7 @@ local DEFAULT_ROOT = 'os/'
 local LOCAL_ROOT = computer.address() .. '/'
 local INIT_FN = "init.lua"
 local DLB_DIR = "dlb/"
+local USE_BACKING_DISK = false  -- or a specific address
 
 local root = LOCAL_ROOT
 local init,err = acer.get(acer.booted, root .. INIT_FN)
@@ -30,7 +31,21 @@ local DLB_TYPE = 'filesystem'
 acer.print('installing component hooks...')
 
 local invoke = component.invoke
-local tmp = computer.tmpAddress()
+local tmp
+if type(USE_BACKING_DISK) == "string" then
+	tmp = USE_BACKING_DISK
+	acer.print('using specified backing disk '..tmp)
+end
+if USE_BACKING_DISK == true then
+	tmp = component.list("filesystem")()
+	if tmp then
+		acer.print('using filesystem at '..tmp..' for backing store')
+	end
+end
+if not tmp then
+	tmp = computer.tmpAddress()
+	acer.print('using temporary filesystem '..tmp..' for backing store')
+end
 local label = 'dlb'
 
 local function pathpart(node)
