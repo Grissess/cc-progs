@@ -180,7 +180,17 @@ In your working directory, ensure the files are named `libtftp.lua` and
 When you are done, **remove libtftp.lua and libnic.lua** so they don't
 accidentally override the system-installed versions.
 
-(A script for this process may be forthcoming.)
+You can also do this using a floppy disk. Simply copy these files from a
+working installation:
+
+	/usr/bin/update.lua
+	/usr/lib/libtftp.lua
+	/usr/lib/libnic.lua
+
+(Assuming the install prefix was `/usr`; if not, adjust the initial path
+component appropriately.) Then, install the floppy disk into a drive, allow
+OpenOS to mount it, `cd` to its mountpoint, and run `update`. Remove the floppy
+when finished; a reboot is recommended as well.
 
 # Licensing
 
