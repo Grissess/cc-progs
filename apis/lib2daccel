@@ -1,3 +1,10 @@
+--[[*
+2D GPU Accelerator for OpenComputers
+
+This library provides drop-in support for accelerating graphics-intensive OpenComputers programs, by tracking the state of the screen and optimizing for an approximately minimal number of update calls to the underlying GPU. It is not a perfect optimization, but it attempts to make notable improvements, and is especially suitable for removing the complication from graphics caching in other layers--with the 2D accelerator, all blits/fills/copies/etc. can essentially be considered free.
+
+@support OpenComputers only.
+]]--
 local lib2daccel = {}
 
 REVISION = 4

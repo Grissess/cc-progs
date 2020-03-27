@@ -2,7 +2,7 @@ local libldap = {
 	PORT = 389,
 	TIMEOUT = 5,
 	CONFIG_FILE = '/etc/ldap.cfg',
-	REVISION = 1,
+	REVISION = 2,
 }
 
 local event = require("event")
@@ -313,7 +313,7 @@ end
 
 function LDAP_remote:put(path, version, value)
 	local ok, err = self:request("put", Path.to_string(path), version, serialization.serialize(value))
-	if ok == nil then return nil, ver end
+	if ok == nil then return nil, err end
 	return ok
 end
 
