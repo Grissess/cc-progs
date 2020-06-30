@@ -60,4 +60,14 @@ function libnic.open_all(port)
 	end
 end
 
+function libnic.get_mtu(dev)
+	-- There appear to be cases where the maxPacketSize of a modem is
+	-- unavailable but enforced anyway. In those cases, just take a good guess
+	-- as to what it is (the default works nicely).
+	if libnic.ALL_NICS[dev] == nil then return 0 end
+	local success, result = pcall(component.invoke, dev, "maxPacketSize")
+	if success then return result end
+	return 8192  -- Best guess
+end
+
 return libnic
