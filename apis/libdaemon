@@ -51,7 +51,7 @@ Daemon.mt = {
 
 function Daemon:protect(cb)
 	return function(...)
-		local res = {pcall(cb, ...)}
+		local res = {xpcall(cb, debug.traceback, ...)}
 		if res[1] then
 			return table.unpack(res, 2)
 		else
