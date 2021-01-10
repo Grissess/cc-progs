@@ -1,4 +1,4 @@
-!Manifest revision 32
+!Manifest revision 33
 bin/bootstrap.lua programs/bootstrap
 lib/libtedit.lua apis/libtedit
 lib/libdaemon.lua apis/libdaemon
@@ -27,6 +27,7 @@ bin/mclose.lua programs/mclose
 bin/mbroadcast.lua programs/mbroadcast
 bin/tftp.lua programs/tftp
 bin/update.lua programs/update
+bin/runpath.lua programs/runpath
 man/vim doc/vim
 man/dctl doc/dctl
 man/unload doc/unload
@@ -40,6 +41,7 @@ man/elog doc/elog
 man/mopen doc/mopen
 man/mclose doc/mclose
 man/mbroadcast doc/mbroadcast
+man/runpath doc/runpath
 man/acer doc/acer
 opt/daemon/heartbeat.lua daemons/heartbeat
 opt/daemon/hwproxyd.lua daemons/hwproxyd

@@ -160,6 +160,10 @@ function Step:to_string()
 	return Step.to_string_funcs[self.type](self)
 end
 
+function Step:to_desc(mul)
+	return Step.to_desc_funcs[self.type](self, mul)
+end
+
 Step.to_string_funcs = {}
 
 function Step.to_string_funcs:fission()
@@ -173,6 +177,34 @@ end
 function Step.to_string_funcs:add()
 	return '<Add ' .. tostring(self.q) .. ' of ' ..tostring(self.anum) .. '>'
 end
+
+Step.to_desc_funcs = {}
+
+function Step.to_desc_funcs:fission(mul)
+	if mul == nil then mul = 1 end
+	return {'fission', self.anum, self.q * mul}
+end
+
+function Step.to_desc_funcs:fusion(mul)
+	if mul == nil then mul = 1 end
+	return {'fusion', self.an1, self.an2, self.q * mul}
+end
+
+function Step.to_desc_funcs:add() end
+
+Step.desc_multiply = {}
+
+function Step.desc_multiply:fission(mul)
+	return {'fission', self[2], self[3] * mul}
+end
+
+function Step.desc_multiply:fusion(mul)
+	return {'fusion', self[2], self[3], self[4] * mul}
+end
+
+setmetatable(Step.desc_multiply, {
+	__call = function(self, desc, mul) return self[desc[1]](desc, mul) end,
+})
 
 Step.mt = {
 	__index = Step,
@@ -334,5 +366,69 @@ Path.mt = {
 }
 
 setmetatable(Path, {__call = function(_, ...) return Path.from(...) end})
+
+--
+
+local PathDesc = {}
+libchem.PathDesc = PathDesc
+
+function PathDesc.fromPath(pt, mul)
+	local steps = {}
+	for _, step in ipairs(pt.steps) do
+		local sd = step:to_desc(mul)
+		if sd ~= nil then
+			table.insert(steps, sd)
+		end
+	end
+
+	return setmetatable({steps = steps}, PathDesc.mt)
+end
+
+function PathDesc.fromDesc(steps)
+	return setmetatable({steps = steps}, PathDesc.mt)
+end
+
+function PathDesc.from(a, b)
+	if a.steps ~= nil then return PathDesc.fromPath(a, b) end
+	return PathDesc.fromDesc(a)
+end
+
+function PathDesc:multiplied(mul)
+	local steps = {}
+
+	for i, step in ipairs(self.steps) do
+		steps[i] = Step.desc_multiply(step, mul)
+	end
+
+	return setmetatable({steps = steps}, PathDesc.mt)
+end
+
+function PathDesc:path(start)
+	local pt = Path.from(start)
+
+	for _, sd in ipairs(self.steps) do
+		pt:add(Step[sd[1]], table.unpack(sd, 2))
+	end
+
+	return pt
+end
+
+function PathDesc:to_string()
+	local strings = {}
+	for i, sd in ipairs(self.steps) do
+		local parts = {}
+		for j, p in ipairs(sd) do parts[j] = tostring(p) end
+		strings[i] = "{" .. table.concat(parts, ", ") .. "}"
+	end
+
+	return "{PathDesc: {" .. table.concat(strings, ", ") .. "}}"
+end
+
+PathDesc.mt = {
+	__index = PathDesc,
+	__tostring = PathDesc.to_string,
+}
+
+setmetatable(PathDesc, {__call = function(_, ...) return PathDesc.from(...) end})
 
 return libchem

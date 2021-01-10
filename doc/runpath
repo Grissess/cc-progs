@@ -1,0 +1,83 @@
+NAME
+  runpath - run a libchem PathDesc
+
+SYNOPSIS
+  runpath PATHDESC CONFIG [MUL]
+
+DESCRIPTION
+  Run a libchem PathDesc--in other words, sequence inventory movements such that the desired chemical element is created given the input elements.
+
+  PathDesc's can be made by hand, or created automatically by makepath (see). The general format, as accepted by libchem at the time of this writing, is a Lua table expression evaluating to an array-like table where each element is a "step description", an array-like table of the form:
+
+  - {"fission", A, Q}: fission Q elements of atomic number A;
+  - {"fusion", A1, A2, Q}: fusion Q elements each of atomic numbers A1 and A2.
+
+  runpath does absolutely no consistency checking on the path to see if it is even remotely appropriate; this is left to the tool generating the path, or the human writing the path.
+
+  All step descriptions are run to completion before the next one is started. This ensures that, with high-latency item delivery systems, the program does not accidentally load a conflicting recipe into one of the active devices.
+
+  If MUL is given, all amounts (Q in the step descriptions) are so multiplied.
+
+CONFIG
+  The configuration format also consists of a large table; an example template is given below, with the key elements explained:
+
+    {
+        fission = {
+            side = {
+                [TADDR1] = SIDE,
+                [TADDR2] = SIDE,
+                ...
+            },
+            source = { ... },  -- See below
+        },
+        fusion = {
+            sides = {
+                [TADDR1] = {
+                    left = SIDE,
+                    right = SIDE,
+                },
+                [TADDR2] = {
+                    left = SIDE,
+                    right = SIDE,
+                },
+                ...
+            },
+            source = { ... },  -- See below
+        },
+        source = {
+            [AN1] = {TADDR2, SIDE},
+            [AN2] = {TADDR3, SIDE},
+            ...
+        },
+        input = {TADDR1, SIDE},
+    }
+
+  The following keys are represented at the top level:
+
+  - fission: Mandatory for any path with fission. Configuration for the fission steps:
+
+    - side: Mandatory. For each transposer address, as selected by source or input (see), maps to the side of that transposer associated with the fission chamber input.
+
+    - source: Optional. Like the global source (see). Mappings here take priority over mappings in the global source.
+
+  - fusion: Mandatory for any path with fusion. Configuration for the fusion steps:
+
+    - sides: Mandatory. For each transposer address, as selected by source or input (see), maps to a table indicating the sides of the left and right inputs to the fusion chamber (via keys "left" and "right").
+    
+    - source: Optional. Like the global source (see). Mappings here take priority over mappings in the global source.
+
+  - source: Optional. Mapping of atomic number to an array-like table of transposer address and side, in that order. When possible, atoms of this atomic number will be preferentially taken from this transposer and this side (and the same transposer used for the rest of the step).
+
+  - input: Mandatory. Array-like table of transposer address and side, in that order. If a specific mapping for the atomic number cannot be found in the step-specific or global source keys, this pair is used instead.
+
+PARSING
+  All config files, such as the PathDesc and config, should consist of valid Lua expressions that do not depend on any globals or upvalues. Though they were designed to be produced by the serialization library, the deserializer simply prepends "return " to the expression and executes the chunk.
+
+BUGS
+  A known deficiency is the lack of the "sides" enumeration in the scope of the config expression.
+
+SEE ALSO
+  makepath(1)
+
+COLOPHON
+  cc-progs, Grissess 2020

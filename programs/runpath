@@ -1,0 +1,138 @@
+local component = require('component')
+local serialization = require('serialization')
+local event = require('event')
+
+local libchem = require('libchem')
+
+local args = {...}
+
+if #args < 2 then
+	error("Usage: runpath <pathfile> <config> [<mul>]\nSee the man page (man runpath) for more details")
+end
+
+local pfh = assert(io.open(args[1], "r"))
+local ps = pfh:read("*a")
+pfh:close()
+
+local cfh = assert(io.open(args[2], "r"))
+local cs = cfh:read("*a")
+cfh:close()
+
+local pd = libchem.PathDesc.fromDesc(serialization.unserialize(ps))
+local cfg = serialization.unserialize(cs)
+
+if #args >= 3 then pd = pd:multiplied(tonumber(args[3])) end
+
+local function wait(desc) 
+	print(desc)
+	event.pull(0.25)
+end
+
+local function isElement(stack, an)
+	if an == nil then return stack.name == "minechem:minechemElement" end
+	return stack.name == "minechem:minechemElement" and stack.damage == an
+end
+
+local run_step_funcs = {}
+
+local function run_step(sd)
+	local kind = sd[1]
+	local cf = cfg[kind]
+
+	if cf == nil then error("Tried to run step of kind " .. kind .. " but no config is available") end
+
+	run_step_funcs[kind](cf, table.unpack(sd, 2))
+end
+
+local function find_an(cf, an)
+	local src = cf.source
+	local trans, side
+
+	if src ~= nil then
+		local desc = src[an]
+		if desc ~= nil then
+			trans, side = table.unpack(desc)
+		end
+	end
+
+	if trans == nil then
+		src = cfg.source
+		if src ~= nil then
+			local desc = src[an]
+			if desc ~= nil then
+				trans, side = table.unpack(desc)
+			end
+		end
+	end
+
+	if trans == nil then
+		trans, side = table.unpack(cf.input)
+	end
+
+	local t = component.proxy(trans)
+	local slot = 1
+	for stack in t.getAllStacks(side) do
+		if isElement(stack, an) then
+			return trans, side, slot, stack.size
+		end
+		slot = slot + 1
+	end
+end
+
+function run_step_funcs.fission(cf, an, q)
+	while q > 0 do
+		local trans, side, slot, avail
+
+		repeat
+			trans, side, slot, avail = find_an(cf, an)
+			if trans == nil then wait("For input of element " .. tostring(an)) end
+		until trans ~= nil
+
+		local fside = cf.side[trans]
+		local t = component.proxy(trans)
+		local amount = math.min(avail, q)
+
+		repeat
+			local moved = t.transferItem(side, fside, amount, slot, 1)
+			amount = amount - moved
+			q = q - moved
+			if amount > 0 then wait("For next transfer of " .. tostring(amount)) end
+		until amount <= 0
+	end
+end
+
+function run_step_funcs.fusion(cf, an1, an2, q)
+	while q > 0 do
+		local t1, t2 = {}, {}
+
+		repeat
+			if t1[1] == nil then t1 = {find_an(cf, an1)} end
+			if t2[1] == nil then t2 = {find_an(cf, an2)} end
+			local waiting = {}
+			if t1[1] == nil then table.insert(waiting, an1) end
+			if t2[1] == nil then table.insert(waiting, an2) end
+			if #waiting > 0 then wait("For input of elements: " .. table.concat(waiting, ",")) end
+		until t1[1] ~= nil and t2[1] ~= nil
+
+		local s = cf.sides[trans]
+		local si, ai = {s.left, s.right}, {an1, an2}
+		local amount = math.min(t1[4], t2[4], q)
+		for i, transfer in ipairs({t1, t2}) do
+			local rem = amount
+			local trans, side, slot, avail = table.unpack(transfer)
+			local t = component.proxy(trans)
+			repeat
+				local moved = t.transferItem(side, si[i], rem, slot, 1)
+				rem = rem - moved
+				if rem > 0 then wait("For next transfer of " .. tostring(ai[i]) .. " of size " .. tostring(rem)) end
+			until rem <= 0
+		end
+		q = q - amount
+	end
+end
+
+for _, step in ipairs(pd.steps) do
+	run_step(step)
+end
+
+print('Completed.')

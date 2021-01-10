@@ -1,5 +1,5 @@
 local libnic = {}
-libnic.REVISION = 4
+libnic.REVISION = 5
 
 local event = require('event')
 local component = require('component')
@@ -64,7 +64,7 @@ function libnic.get_mtu(dev)
 	-- There appear to be cases where the maxPacketSize of a modem is
 	-- unavailable but enforced anyway. In those cases, just take a good guess
 	-- as to what it is (the default works nicely).
-	if libnic.ALL_NICS[dev] == nil then return 0 end
+	if libnic.ALL_NICS[dev] == nil then return nil end
 	local success, result = pcall(component.invoke, dev, "maxPacketSize")
 	if success then return result end
 	return 8192  -- Best guess
