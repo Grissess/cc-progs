@@ -28,6 +28,7 @@ CONFIG
                 [TADDR2] = SIDE,
                 ...
             },
+            input = { ... },  -- See below
             source = { ... },  -- See below
         },
         fusion = {
@@ -42,6 +43,7 @@ CONFIG
                 },
                 ...
             },
+            input = { ... },  -- See below
             source = { ... },  -- See below
         },
         source = {
@@ -58,11 +60,15 @@ CONFIG
 
     - side: Mandatory. For each transposer address, as selected by source or input (see), maps to the side of that transposer associated with the fission chamber input.
 
+    - input: Optional. Overrides the global input directive for this step.
+
     - source: Optional. Like the global source (see). Mappings here take priority over mappings in the global source.
 
   - fusion: Mandatory for any path with fusion. Configuration for the fusion steps:
 
     - sides: Mandatory. For each transposer address, as selected by source or input (see), maps to a table indicating the sides of the left and right inputs to the fusion chamber (via keys "left" and "right").
+
+    - input: Optional. Overrides the global input directive for this step.
     
     - source: Optional. Like the global source (see). Mappings here take priority over mappings in the global source.
 

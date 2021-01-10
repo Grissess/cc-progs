@@ -66,7 +66,11 @@ local function find_an(cf, an)
 	end
 
 	if trans == nil then
-		trans, side = table.unpack(cf.input)
+		if cf.input == nil then
+			trans, side = table.unpack(cfg.input)
+		else
+			trans, side = table.unpack(cf.input)
+		end
 	end
 
 	local t = component.proxy(trans)
