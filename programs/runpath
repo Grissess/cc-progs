@@ -118,7 +118,7 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 			if #waiting > 0 then wait("For input of elements: " .. table.concat(waiting, ",")) end
 		until t1[1] ~= nil and t2[1] ~= nil
 
-		local s = cf.sides[t1[2]]
+		local s = cf.sides[t1[1]]
 		local si, ai = {s.left, s.right}, {an1, an2}
 		local amount = math.min(t1[4], t2[4], q)
 		for i, transfer in ipairs({t1, t2}) do
