@@ -44,6 +44,19 @@ local function run_step(sd)
 	run_step_funcs[kind](cf, table.unpack(sd, 2))
 end
 
+local function find_an_within(trans, side, an, ign)
+	local t = component.proxy(trans)
+	local slot = 1
+	for stack in t.getAllStacks(side) do
+		if slot ~= ign then
+			if isElement(stack, an) then
+				return trans, side, slot, stack.size
+			end
+		end
+		slot = slot + 1
+	end
+end
+
 local function find_an(cf, an)
 	local src = cf.source
 	local trans, side
@@ -73,14 +86,7 @@ local function find_an(cf, an)
 		end
 	end
 
-	local t = component.proxy(trans)
-	local slot = 1
-	for stack in t.getAllStacks(side) do
-		if isElement(stack, an) then
-			return trans, side, slot, stack.size
-		end
-		slot = slot + 1
-	end
+	return find_an_within(trans, side, an)
 end
 
 function run_step_funcs.fission(cf, an, q)
@@ -110,13 +116,15 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 		local t1, t2 = {}, {}
 
 		repeat
-			if t1[1] == nil then t1 = {find_an(cf, an1)} end
-			if t2[1] == nil then t2 = {find_an(cf, an2)} end
-			local waiting = {}
-			if t1[1] == nil then table.insert(waiting, an1) end
-			if t2[1] == nil then table.insert(waiting, an2) end
-			if #waiting > 0 then wait("For input of elements: " .. table.concat(waiting, ",")) end
-		until t1[1] ~= nil and t2[1] ~= nil
+			t1 = {find_an(cf, an1)}
+			if t1[1] == nil then wait("For input of element " .. tostring(an1)) end
+		until t1[1] ~= nil
+
+		local trans, side, slot = table.unpack(t1)
+		repeat
+			t2 = {find_an_within(trans, side, an2, slot)}
+			if t2[1] == nil then wait("For input of element " .. tostring(an2) .. " within transposer " .. tostring(trans) .. " side " .. tostring(side) .. " not in slot " .. tostring(slot)) end
+		until t2[1] ~= nil
 
 		local s = cf.sides[t1[1]]
 		local si, ai = {s.left, s.right}, {an1, an2}
