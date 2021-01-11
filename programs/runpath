@@ -146,7 +146,8 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 			local trans, side, slot, avail = table.unpack(transfer)
 			local t = component.proxy(trans)
 			repeat
-				if t.getStackInSlot(side, slot).size < rem then
+				local stk = t.getStackInSlot(side, slot)
+				if stk == nil or stk.size < rem then
 					print("WARN: source t ", trans, " side ", side, " slot ", slot, " VACATED while transfering, results may not be accurate")
 				end
 				local moved = t.transferItem(side, si[i], rem, slot, 1)
