@@ -128,7 +128,7 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 					t2 = {find_an_within(t1[1], t1[2], an2, t1[3])}
 					if t2[1] == nil then  -- Couldn't find another stack
 						if an1 == an2 and t1[4] > 1 then  -- Can we split this one?
-							t1[4] = math.floor(t1[4] / 1)
+							t1[4] = math.floor(t1[4] / 2)
 							t2 = t1
 						else
 							wait(string.format("For input of Element %d in transposer %s side %s(%d) not in slot %d", an2, t1[1], sides[t1[2]], t1[2], t1[3]))
@@ -148,7 +148,9 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 			repeat
 				local stk = t.getStackInSlot(side, slot)
 				if stk == nil or stk.size < rem then
-					print("WARN: source t ", trans, " side ", side, " slot ", slot, " VACATED while transfering, results may not be accurate")
+					local sz = nil
+					if stk ~= nil then sz = stk.size end
+					print("WARN: transfer", i, " source t ", trans, " side ", side, " slot ", slot, " VACATED (size", sz, ") while transfering, results may not be accurate")
 				end
 				local moved = t.transferItem(side, si[i], rem, slot, 1)
 				rem = rem - moved
