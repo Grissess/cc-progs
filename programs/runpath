@@ -124,7 +124,7 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 				if not (isElement(stk) and stk.size == t1[4]) then
 					t1 = {}  -- Cancel; the state changed.
 				else
-					t2 = {find_an_within(trans, side, an2, slot)}
+					t2 = {find_an_within(t1[1], t1[2], an2, t1[3])}
 					if t2[1] == nil then  -- Couldn't find another stack
 						if an1 == an2 and t1[4] > 1 then  -- Can we split this one?
 							t1[4] = math.floor(t1[4] / 1)
@@ -136,10 +136,6 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 				end
 			end
 		until t1[1] ~= nil and t2[1] ~= nil
-
-		local trans, side, slot = table.unpack(t1)
-		repeat
-		until t2[1] ~= nil
 
 		local s = cf.sides[t1[1]]
 		local si, ai = {s.left, s.right}, {an1, an2}
