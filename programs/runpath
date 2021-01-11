@@ -95,7 +95,7 @@ function run_step_funcs.fission(cf, an, q)
 
 		repeat
 			trans, side, slot, avail = find_an(cf, an)
-			if trans == nil then wait("For input of element " .. tostring(an)) end
+			if trans == nil then wait(string.format("For input of element %d", an)) end
 		until trans ~= nil
 
 		local fside = cf.side[trans]
@@ -106,7 +106,7 @@ function run_step_funcs.fission(cf, an, q)
 			local moved = t.transferItem(side, fside, amount, slot, 1)
 			amount = amount - moved
 			q = q - moved
-			if amount > 0 then wait("For next transfer of " .. tostring(amount)) end
+			if amount > 0 then wait(string.format("For next transfer of Element %d size %d transposer %s side %s(%d) slot %d", an, amount, trans, sides[side], side, slot)) end
 		until amount <= 0
 	end
 end
@@ -118,10 +118,11 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 		repeat
 			t1 = {find_an(cf, an1)}
 			if t1[1] == nil then
-				wait("For input of element " .. tostring(an1))
+				wait(string.format("For input of Element %d", an1))
 			else
 				local stk = component.invoke(t1[1], "getStackInSlot", t1[2], t1[3])
-				if not (isElement(stk) and stk.size == t1[4]) then
+				if not (isElement(stk, an1) and stk.size == t1[4]) then
+					print("CANCEL: state of input inventory changed")
 					t1 = {}  -- Cancel; the state changed.
 				else
 					t2 = {find_an_within(t1[1], t1[2], an2, t1[3])}
@@ -130,7 +131,7 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 							t1[4] = math.floor(t1[4] / 1)
 							t2 = t1
 						else
-							wait("For input of element " .. tostring(an2) .. " within transposer " .. tostring(trans) .. " side " .. tostring(side) .. " not in slot " .. tostring(slot))
+							wait(string.format("For input of Element %d in transposer %s side %s(%d) not in slot %d", an2, t1[1], sides[t1[2]], t1[2], t1[3]))
 						end
 					end
 				end
@@ -145,9 +146,14 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 			local trans, side, slot, avail = table.unpack(transfer)
 			local t = component.proxy(trans)
 			repeat
+				if t.getStackInSlot(side, slot).size < rem then
+					print("WARN: source t ", trans, " side ", side, " slot ", slot, " VACATED while transfering, results may not be accurate")
+				end
 				local moved = t.transferItem(side, si[i], rem, slot, 1)
 				rem = rem - moved
-				if rem > 0 then wait("For next transfer of " .. tostring(ai[i]) .. " of size " .. tostring(rem)) end
+				if rem > 0 then
+					wait(string.format("For next transfer of Element %d of size %d from transposer %s side %s(%d) slot %d", ai[i], rem, trans, sides[side], side, slot))
+				end
 			until rem <= 0
 		end
 		q = q - amount
