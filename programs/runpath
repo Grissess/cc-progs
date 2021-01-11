@@ -117,20 +117,28 @@ function run_step_funcs.fusion(cf, an1, an2, q)
 
 		repeat
 			t1 = {find_an(cf, an1)}
-			if t1[1] == nil then wait("For input of element " .. tostring(an1)) end
-		until t1[1] ~= nil
+			if t1[1] == nil then
+				wait("For input of element " .. tostring(an1))
+			else
+				local stk = component.invoke(t1[1], "getStackInSlot", t1[2], t1[3])
+				if not (isElement(stk) and stk.size == t1[4]) then
+					t1 = {}  -- Cancel; the state changed.
+				else
+					t2 = {find_an_within(trans, side, an2, slot)}
+					if t2[1] == nil then  -- Couldn't find another stack
+						if an1 == an2 and t1[4] > 1 then  -- Can we split this one?
+							t1[4] = math.floor(t1[4] / 1)
+							t2 = t1
+						else
+							wait("For input of element " .. tostring(an2) .. " within transposer " .. tostring(trans) .. " side " .. tostring(side) .. " not in slot " .. tostring(slot))
+						end
+					end
+				end
+			end
+		until t1[1] ~= nil and t2[1] ~= nil
 
 		local trans, side, slot = table.unpack(t1)
 		repeat
-			t2 = {find_an_within(trans, side, an2, slot)}
-			if t2[1] == nil then
-				if t1[4] > 1 then
-					t1[4] = math.floor(t1[4] / 1)
-					t2 = t1
-				else
-					wait("For input of element " .. tostring(an2) .. " within transposer " .. tostring(trans) .. " side " .. tostring(side) .. " not in slot " .. tostring(slot))
-				end
-			end
 		until t2[1] ~= nil
 
 		local s = cf.sides[t1[1]]
