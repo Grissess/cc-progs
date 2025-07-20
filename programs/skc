@@ -23,7 +23,7 @@ local function request(cmd)
 end
 
 local function cmpStocks(a, b)
-	return a.available < b.available
+	return a.available > b.available
 end
 
 local function show(sp)
