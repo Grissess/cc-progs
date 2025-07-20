@@ -1,0 +1,51 @@
+local function request(cmd)
+	local rid = math.random(1, 65536)
+	local timeout = os.startTimer(1)
+	os.queueEvent('skcmd', rid, cmd)
+	repeat
+		local edata = {os.pullEvent()}
+		if edata[1] == 'timer' and edata[2] == timeout then
+			error('timeout')
+		elseif edata[1] == 'skres' and edata[2] == rid then
+			os.cancelTimer(timeout)
+			return edata[3]
+		end
+	until false
+end
+
+local function cmpStocks(a, b)
+	return a.available < b.available
+end
+
+local function show(sp)
+	local stock = request{command = 'stock', species = sp}
+	if sp then  -- pretend it's the whole table, not just the species stock
+		stock = {[sp] = stock}
+	end
+	local entries = {}
+	for species, st in pairs(stock) do
+		table.insert(entries, {name = species, available = st.available.count})
+	end
+	table.sort(entries, cmpStocks)
+	local tbl = {}
+	for _, ent in ipairs(entries) do
+		table.insert(tbl, {ent.name, tostring(ent.available)})
+	end
+	textutils.pagedTabulate(colors.lime, {'Name', 'Amt'}, colors.white, table.unpack(tbl))
+end
+
+local args = {...}
+
+if (not args[1]) or args[1] == 'show' then
+	show(args[2])
+elseif args[1] == 'get' then
+	local name = assert(args[2], 'specify a name')
+	local count = assert(tonumber(args[3]), 'specify an amount')
+	local res = request{command = 'moveTo', group = 'interface', species = name, count = count}
+	assert(res.ok, res.message)
+elseif args[1] == 'stow' then
+	local res = request{command = 'moveAway', sourceGroup = 'interface', targetGroup = 'storage'}
+	assert(res.ok, res.message)
+else
+	error('unrecognized command ' .. args[1])
+end

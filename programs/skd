@@ -1,0 +1,197 @@
+local CC = os.loadAPI ~= nil
+local ppath = ''
+if CC then ppath = 'lib.' end
+
+local liblua = require(ppath .. 'liblua')
+
+local config = {
+	scanInterval = 10,
+}
+
+local database = {
+	groups = {
+		interface = {'minecraft:barrel_0'},
+		storage = {},
+	},
+}
+
+for i = 1, 9 do table.insert(database.groups.storage, 'minecraft:barrel_' .. i) end
+
+local function annotateAddress(addr, inv)
+	inv.addr = addr
+	return true
+end
+
+local function allInventories()
+	return {peripheral.find('inventory', annotateAddress)}
+end
+
+local function inventoriesInGroup(grp)
+	local set = liblua.seq_to_set(database.groups[grp])
+	return {peripheral.find('inventory', function(addr, inv)
+		if set[addr] then
+			inv.addr = addr
+			return true
+		end
+	end)}
+end
+
+local function species(stack)
+	if stack.nbt then
+		return stack.name .. ':' .. stack.nbt
+	else
+		return stack.name
+	end
+end
+
+local function toLoc(inv, slot)
+	return inv.addr .. '/' .. slot
+end
+
+local function fromLoc(loc)
+	local addr, slot = loc:match('^(.*)/(%d+)$')
+	assert(slot, 'invalid location')
+	local inv = peripheral.wrap(addr)
+	inv.addr = addr
+	return inv, slot
+end
+
+local function scan()
+	database.stock = {}
+	database.slots = {ready = 0, total = 0}
+	database.names = {}
+	for _, inv in ipairs(allInventories()) do
+		local empty = inv.size()
+		database.slots.total = database.slots.total + empty
+		for slot, stack in pairs(inv.list()) do
+			empty = empty - 1
+			local sp = species(stack)
+			if not database.stock[sp] then
+				database.stock[sp] = {available = {count = 0, locations = {}}}
+			end
+			local avail = database.stock[sp].available
+			avail.count = avail.count + stack.count
+			local loc = toLoc(inv, slot)
+			avail.locations[loc] = stack.count
+		end
+		database.slots.ready = database.slots.ready + empty
+	end
+end
+
+local function firstFreeSlot(inv)
+	local list = inv.list()
+	for i = 1, inv.size() do
+		if list[i] == nil then return i end
+	end
+end
+
+local function advanceFreeSlotCursor(cur)
+	cur.slot = firstFreeSlot(cur.invs[cur.idx])
+	while (not cur.slot) and cur.idx <= #cur.invs do
+		cur.idx = cur.idx + 1
+		cur.slot = firstFreeSlot(cur.invs[cur.idx])
+	end
+	if cur.idx > #cur.invs then cur.exhausted = true end
+end
+
+local function newFreeSlotCursor(invs)
+	local cur = {invs = invs, idx = 1}
+	advanceFreeSlotCursor(cur)
+	return cur
+end
+
+local function freeSlotCursorLoc(cur)
+	return cur.invs[cur.idx], cur.slot
+
+local function moveTo(grp, sp, count)
+	local targets = inventoriesInGroup(grp)
+	local target = newFreeSlotCursor(targets)
+	if target.exhausted then return false, 'not enough destination space' end
+
+	local sources = database.stock[sp]
+	for _, location in ipairs(sources.available.locations) do
+		local inv, slot = fromLoc(location)
+		local info
+		repeat
+			info = inv.getItemDetail(slot)
+			if not info then break end  -- did we empty the slot?
+			-- This could be false when our info is stale; don't move the stack otherwise
+			if species(info) ~= sp then break end
+
+			local toMove = math.min(count, info.count)
+			local tinv, tslot = freeSlotCursorLoc(target)
+			local moved = inv.pushItems(tinv, slot, toMove, tslot)
+			count = count - moved
+			if count == 0 then return true end
+
+			-- If nothing moved, the tslot is probably full; try another target
+			if moved == 0 then
+				advanceFreeSlotCursor(target)
+				if target.exhausted then return false, 'not enough destination space' end
+			end
+		until false
+	end
+	return false, 'not enough items to satisfy request'
+end
+
+local function moveAway(sgrp, tgrp)
+	local sources = inventoriesInGroup(sgrp)
+	local targets = inventoriesInGroup(tgrp)
+	local target = newFreeSlotCursor(targets)
+	if target.exhausted then return false, 'not enough target space' end
+
+	for _, source in ipairs(sources) do
+		for slot = 0, source.size() do
+			local info
+			repeat
+				info = source.getItemDetail(slot)
+				if not info then break end
+
+				local tinv, tslot = freeSlotCursorLoc(target)
+				local moved = source.pushItems(tinv, slot, info.count, tslot)
+				if moved == 0 then
+					advanceFreeSlotCursor(target)
+					if target.exhausted then return false, 'not enough target space' end
+				end
+			until false
+		end
+	end
+	return true
+end
+
+local function parseCmd(cmd)
+	if cmd.command == 'moveTo' then
+		local ok, msg = moveTo(cmd.group, cmd.species, cmd.count)
+		return {ok = ok, message = msg}
+	elseif cmd.command == 'moveAway' then
+		local ok, msg = moveAway(cmd.sourceGroup, cmd.targetGroup)
+		return {ok = ok, message = msg}
+	elseif cmd.command == 'stock' then
+		if cmd.species then
+			return {ok = true, stock = database.stock[cmd.species]}
+		end
+		return {ok = true, stock = database.stock}
+	else
+		return {ok = false, message = 'unknown command'}
+	end
+end
+
+local function main()
+	scan()
+	local scanTimer = os.setTimer(config.scanInterval)
+	repeat
+		local edata = {os.pullEvent()}
+		if edata[1] == 'timer' then
+			if edata[2] == scanTimer then
+				scanTimer = os.setTimer(config.scanInterval)
+				scan()
+			end
+		elseif edata[1] == 'skcmd' then
+			local res = parseCmd(edata[3])
+			os.queueEvent('skres', edata[2], res)
+		end
+	until false
+end
+
+main()
+end

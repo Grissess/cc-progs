@@ -1,7 +1,9 @@
-!Manifest revision 8
+!Manifest revision 9
 programs/bootstrap programs/bootstrap
 programs/vim programs/vim
 programs/dctl programs/dctl
+programs/skd programs/skd
+programs/skc programs/skc
 programs/lib/libtedit apis/libtedit
 programs/lib/libdaemon apis/libdaemon
 programs/lib/lib2daccel apis/lib2daccel
