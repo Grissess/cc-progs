@@ -33,6 +33,7 @@ local function show(sp)
 	end
 	local entries = {}
 	for species, st in pairs(stock) do
+		print('for', species, 'stock', st)
 		table.insert(entries, {name = species, available = st.available.count})
 	end
 	table.sort(entries, cmpStocks)
