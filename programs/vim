@@ -612,6 +612,7 @@ local modes = {
 	end,
 }
 
+local l2daversion = '(not loaded)'
 if not CC then
 	tmid = event.timer(0.5, function()
 		local x, y = term.getCursor()
@@ -623,9 +624,10 @@ if not CC then
 
 	accel = lib2daccel.new(component.gpu)
 	acprox = accel:proxy()
+	l2daversion = lib2daccel.REVISION
 end
 
-buf.status = "oc-progs vim rev " .. REVISION .. " libtedit " .. libtedit.REVISION .. " lib2daccel " .. lib2daccel.REVISION .." - Grissess"
+buf.status = "oc-progs vim rev " .. REVISION .. " libtedit " .. libtedit.REVISION .. " lib2daccel " .. l2daversion .." - Grissess"
 if CC then
 	buf:blit(term)
 else
