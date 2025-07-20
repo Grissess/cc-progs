@@ -27,13 +27,14 @@ local function cmpStocks(a, b)
 end
 
 local function show(sp)
-	local stock = request{command = 'stock', species = sp}
+	local res = request{command = 'stock', species = sp}
+	assert(res.ok, res.message)
+	local stock = res.stock
 	if sp then  -- pretend it's the whole table, not just the species stock
 		stock = {[sp] = stock}
 	end
 	local entries = {}
 	for species, st in pairs(stock) do
-		print('for', species, 'stock', st)
 		table.insert(entries, {name = species, available = st.available.count})
 	end
 	table.sort(entries, cmpStocks)
