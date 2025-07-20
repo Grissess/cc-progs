@@ -115,7 +115,7 @@ local function moveTo(grp, sp, count)
 	if target.exhausted then return false, 'not enough destination space' end
 
 	local sources = database.stock[sp]
-	for _, location in ipairs(sources.available.locations) do
+	for location, amt in pairs(sources.available.locations) do
 		log('moveTo: test', location)
 		local inv, slot = fromLoc(location)
 		local info
@@ -170,9 +170,11 @@ local function parseCmd(cmd)
 	log('command')
 	if cmd.command == 'moveTo' then
 		local ok, msg = moveTo(cmd.group, cmd.species, cmd.count)
+		scan()
 		return {ok = ok, message = msg}
 	elseif cmd.command == 'moveAway' then
 		local ok, msg = moveAway(cmd.sourceGroup, cmd.targetGroup)
+		scan()
 		return {ok = ok, message = msg}
 	elseif cmd.command == 'stock' then
 		if cmd.species then
