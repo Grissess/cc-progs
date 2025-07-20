@@ -1,4 +1,4 @@
-!Manifest revision 7
+!Manifest revision 8
 programs/bootstrap programs/bootstrap
 programs/vim programs/vim
 programs/dctl programs/dctl
@@ -10,6 +10,7 @@ programs/lib/libccpackage apis/libccpackage
 programs/lib/libacid apis/libacid
 programs/lib/libbit apis/libbit
 programs/lib/libgetopt apis/libgetopt
+programs/lib/liblua apis/liblua
 opt/daemon/heartbeat daemons/heartbeat
 .manifest manifest.cc
 COPYING COPYING
