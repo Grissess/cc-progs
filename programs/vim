@@ -113,16 +113,15 @@ unprintable_map = {
 	[keys.f10] = true,
 	[keys.f11] = true,
 	[keys.f12] = true,
-	[keys.kana] = true,
-	[keys.convert] = true,
-	[keys.noconvert] = true,
-	[keys.stop] = true,
-	[keys.kanji] = true,
-	[keys.ax] = true,
 }
+for _, keyname in ipairs({'kana', 'convert', 'noconvert', 'stop', 'kanji', 'ax'}) do
+	if keys[keyname] then
+		unprintable_map[keys[keyname]] = true
+	end
+end
 
 function is_unprintable(key)
-	return unprintable_map[key] == true
+	return unprintable_map[key]
 end
 
 function simple_motion(char, key)
