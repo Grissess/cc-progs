@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 46
+REVISION = 47
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -133,12 +133,12 @@ syntaxes = {
 libtedit.syntaxes = syntaxes
 
 if CC then
-	function term_blit(term, text, syn, cs)
+	function term_blit(term, text, syn, cs, ts)
 		local fg = syn:highlight(text, cs)
-		if term.blit ~= nil then
+		--[[ if term.blit ~= nil then
 			term.blit(text, fg, string.rep(" ", #text))
 			return
-		end
+		end ]]
 		if #text <= 0 then return end
 		if #text ~= #fg then error("text and fg must be of same length") end
 		local idx = 1
@@ -148,7 +148,14 @@ if CC then
 				curcol = revcolmap[fg:sub(idx, idx)]
 				term.setTextColor(curcol)
 			end
-			term.write(text:sub(idx, idx))
+			local ch = text:sub(idx, idx)
+			if ch == '\t' then
+				local cx, cy = term.getCursorPos()
+				cx = cx + ts - (rx-1) % ts
+				term.setCursorPos(cx, cy)
+			else
+				term.write(text:sub(idx, idx))
+			end
 			idx = idx + 1
 		end
 	end
@@ -296,7 +303,7 @@ buffer = {
 			if #str > 0 then
 				if CC then 
 					disp.setCursorPos(1, ty)
-					term_blit(disp, str, self.syntax, colset)
+					term_blit(disp, str, self.syntax, colset, self.tabstop)
 				else
 					term_blit(disp, str, self.syntax, colset, ty, self.tabstop, self.monochrome)
 				end
