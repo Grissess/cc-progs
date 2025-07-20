@@ -334,9 +334,9 @@ buffer = {
 		local vcx, vcy = self:to_screen(self.cx, self.cy, disp)
 
 		if CC then
-			term.setCursorPos(vcx - self.sx + 1, vcy - self.sy + 1)
+			term.setCursorPos(vcx, vcy)
 		else
-			term.setCursor(vcx - self.sx + 1, vcy - self.sy + 1)
+			term.setCursor(vcx, vcy)
 		end
 		term.setCursorBlink(true)
 	end,
@@ -357,8 +357,8 @@ buffer = {
 
 	to_screen = function(self, x, y, disp)
 		x, y = self:virtual(x, y)
-		if not self.wrap then return x, y end
 		local bx, by = self.sx, self.sy
+		if not self.wrap then return x - bx + 1, y - by + 1 end
 		local tw, th
 		if CC then
 			tw, th = disp.getSize()
