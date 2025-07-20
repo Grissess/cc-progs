@@ -127,7 +127,7 @@ local function moveTo(grp, sp, count)
 
 			local toMove = math.min(count, info.count)
 			local tinv, tslot = freeSlotCursorLoc(target)
-			local moved = inv.pushItems(tinv, slot, toMove, tslot)
+			local moved = inv.pushItems(tinv.addr, slot, toMove, tslot)
 			count = count - moved
 			if count == 0 then return true end
 
@@ -155,7 +155,7 @@ local function moveAway(sgrp, tgrp)
 				if not info then break end
 
 				local tinv, tslot = freeSlotCursorLoc(target)
-				local moved = source.pushItems(tinv, slot, info.count, tslot)
+				local moved = source.pushItems(tinv.addr, slot, info.count, tslot)
 				if moved == 0 then
 					advanceFreeSlotCursor(target)
 					if target.exhausted then return false, 'not enough target space' end
