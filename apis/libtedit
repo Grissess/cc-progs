@@ -1,6 +1,6 @@
 local libtedit = {}
 
-REVISION = 47
+REVISION = 48
 libtedit.REVISION = REVISION
 
 local CC = os.loadAPI ~= nil
@@ -151,7 +151,7 @@ if CC then
 			local ch = text:sub(idx, idx)
 			if ch == '\t' then
 				local cx, cy = term.getCursorPos()
-				cx = cx + ts - (rx-1) % ts
+				cx = cx + ts - (cx-1) % ts
 				term.setCursorPos(cx, cy)
 			else
 				term.write(text:sub(idx, idx))
