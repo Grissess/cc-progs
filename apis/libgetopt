@@ -27,3 +27,5 @@ function libgetopt.getopt(...)
 	end
 	return positional, options
 end
+
+return libgetopt
