@@ -133,7 +133,8 @@ syntaxes = {
 libtedit.syntaxes = syntaxes
 
 if CC then
-	function term_blit(term, text, fg)
+	function term_blit(term, text, syn, cs)
+		local fg = syn:highlight(text, cs)
 		if term.blit ~= nil then
 			term.blit(text, fg, string.rep(" ", #text))
 			return
@@ -171,7 +172,7 @@ else
 		[colors.white] = 0xFFFFFF,
 	}
 	libtedit.real_colors = real_colors
-	-- syn is a syntax hiighlighter;
+	-- syn is a syntax highlighter;
 	-- cs is a colorschema;
 	-- ts is tabsize;
 	-- mc is monochrome (a boolean).
