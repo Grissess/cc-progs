@@ -2,8 +2,12 @@ REVISION = 42
 
 local CC = os.loadAPI ~= nil
 
+local getopt
+
 if CC then
 	os.loadAPI("/disk/apis/libtedit")
+	os.loadAPI("/disk/apis/libgetopt")
+	getopt = libgetopt.getopt
 else
 	libtedit = require('libtedit')
 	lib2daccel = require('lib2daccel')
@@ -17,9 +21,10 @@ else
 	fs = {}
 	fs.exists = filesystem.exists
 	fs.isDir = filesystem.isDirectory
+	getopt = shell.parse
 end
 
-local args, options = shell.parse(...)
+local args, options = getopt(...)
 
 local text = ""
 local path = nil

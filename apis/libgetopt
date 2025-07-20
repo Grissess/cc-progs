@@ -1,0 +1,29 @@
+local libgetopt = {}
+
+local function splitval(arg)
+	local k, v = arg:find('([^=]*)=?(.*)')
+	if v == '' then v = true end
+	return k, v
+end
+
+function libgetopt.getopt(...)
+	local positional, options = {}, {}
+	for _, arg in ipairs({...}) do
+		if arg:sub(1, 1) == '-' then
+			if arg:sub(2, 2) == '-' then
+				-- A long option
+				local k, v = splitval(arg:sub(3))
+				options[k] = v
+			else
+				-- Short options
+				for i = 2, #arg do
+					options[arg:sub(i, i)] = true
+				end
+			end
+		else
+			-- A positional argument
+			table.insert(positional, arg)
+		end
+	end
+	return positional, options
+end
