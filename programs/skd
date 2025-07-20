@@ -116,6 +116,7 @@ local function moveTo(grp, sp, count)
 
 	local sources = database.stock[sp]
 	for _, location in ipairs(sources.available.locations) do
+		log('moveTo: test', location)
 		local inv, slot = fromLoc(location)
 		local info
 		repeat
@@ -147,7 +148,7 @@ local function moveAway(sgrp, tgrp)
 	if target.exhausted then return false, 'not enough target space' end
 
 	for _, source in ipairs(sources) do
-		for slot = 0, source.size() do
+		for slot = 1, source.size() do
 			local info
 			repeat
 				info = source.getItemDetail(slot)
