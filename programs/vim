@@ -5,8 +5,8 @@ local CC = os.loadAPI ~= nil
 local getopt
 
 if CC then
-	libtedit = require 'libtedit'
-	libgetopt = require 'libgetopt'
+	libtedit = require 'lib.libtedit'
+	libgetopt = require 'lib.libgetopt'
 	getopt = libgetopt.getopt
 else
 	libtedit = require('libtedit')
