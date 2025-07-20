@@ -3,8 +3,8 @@ local pretty = require 'cc.pretty'
 local function request(cmd)
 	local rid = math.random(1, 65536)
 	local timeout = os.startTimer(1)
-	write('->')
-	pretty.pretty_print(cmd)
+	--write('->')
+	--pretty.pretty_print(cmd)
 	os.queueEvent('skcmd', rid, cmd)
 	local ret
 	repeat
@@ -17,8 +17,8 @@ local function request(cmd)
 			break
 		end
 	until false
-	write('<-')
-	pretty.pretty_print(ret)
+	--write('<-')
+	--pretty.pretty_print(ret)
 	return ret
 end
 
