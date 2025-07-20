@@ -28,7 +28,4 @@ function libgetopt.getopt(...)
 	return positional, options
 end
 
-local CC = os.loadAPI ~= nil
-if CC then getopt = libgetopt.getopt end
-
 return libgetopt

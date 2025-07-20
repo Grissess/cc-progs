@@ -1,12 +1,12 @@
-REVISION = 42
+REVISION = 45
 
 local CC = os.loadAPI ~= nil
 
 local getopt
 
 if CC then
-	os.loadAPI("/disk/apis/libtedit")
-	os.loadAPI("/disk/apis/libgetopt")
+	libtedit = require 'libtedit'
+	libgetopt = require 'libgetopt'
 	getopt = libgetopt.getopt
 else
 	libtedit = require('libtedit')
