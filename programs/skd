@@ -102,6 +102,7 @@ end
 
 local function freeSlotCursorLoc(cur)
 	return cur.invs[cur.idx], cur.slot
+end
 
 local function moveTo(grp, sp, count)
 	local targets = inventoriesInGroup(grp)
@@ -178,12 +179,12 @@ end
 
 local function main()
 	scan()
-	local scanTimer = os.setTimer(config.scanInterval)
+	local scanTimer = os.startTimer(config.scanInterval)
 	repeat
 		local edata = {os.pullEvent()}
 		if edata[1] == 'timer' then
 			if edata[2] == scanTimer then
-				scanTimer = os.setTimer(config.scanInterval)
+				scanTimer = os.startTimer(config.scanInterval)
 				scan()
 			end
 		elseif edata[1] == 'skcmd' then
@@ -194,4 +195,3 @@ local function main()
 end
 
 main()
-end

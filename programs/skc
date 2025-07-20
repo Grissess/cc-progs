@@ -1,16 +1,25 @@
+local pretty = require 'cc.pretty'
+
 local function request(cmd)
 	local rid = math.random(1, 65536)
 	local timeout = os.startTimer(1)
+	write('->')
+	pretty.pretty_print(cmd)
 	os.queueEvent('skcmd', rid, cmd)
+	local ret
 	repeat
 		local edata = {os.pullEvent()}
 		if edata[1] == 'timer' and edata[2] == timeout then
 			error('timeout')
 		elseif edata[1] == 'skres' and edata[2] == rid then
 			os.cancelTimer(timeout)
-			return edata[3]
+			ret = edata[3]
+			break
 		end
 	until false
+	write('<-')
+	pretty.pretty_print(ret)
+	return ret
 end
 
 local function cmpStocks(a, b)
