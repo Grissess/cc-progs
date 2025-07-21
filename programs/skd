@@ -313,7 +313,7 @@ local function main()
 			local ok, res = pcall(parseCmd, cmd)
 			log('result', res)
 			if not ok then res = {ok = false, error = res} end
-			peripheral.call(mdm, transmit, reply, {rid = rid, response = res})
+			peripheral.call(mdm, 'transmit', reply, {rid = rid, response = res})
 		elseif edata[1] == 'peripheral' then
 			local types = liblua.seq_to_set(peripheral.getTypes(edata[2]))
 			if types.modem then
