@@ -116,7 +116,6 @@ local function moveTo(grp, sp, count)
 
 	local sources = database.stock[sp]
 	for location, amt in pairs(sources.available.locations) do
-		log('moveTo: test', location)
 		local inv, slot = fromLoc(location)
 		local info
 		repeat
@@ -167,7 +166,6 @@ local function moveAway(sgrp, tgrp)
 end
 
 local function parseCmd(cmd)
-	log('command')
 	if cmd.command == 'moveTo' then
 		local ok, msg = moveTo(cmd.group, cmd.species, cmd.count)
 		scan()
@@ -197,7 +195,9 @@ local function main()
 				scan()
 			end
 		elseif edata[1] == 'skcmd' then
+			log('command', edata[3].command)
 			local res = parseCmd(edata[3])
+			log('result', res)
 			os.queueEvent('skres', edata[2], res)
 		end
 	until false
