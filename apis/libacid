@@ -29,7 +29,7 @@ local function read_all(filename)
 	local ret
 	local fh = filesystem.open(filename, "rb")
 	if CC then
-		ret = fh:readAll()
+		ret = fh.readAll()
 	else
 		ret = fh:read(math.huge)
 	end
@@ -44,8 +44,14 @@ end
 
 function DB:set(value)
 	local fh = filesystem.open(self.filename, "wb")
-	fh:write(serialization.serialize(value))
-	fh:close()
+	local str = serialization.serialize(value)
+	if CC then
+		fh.write(str)
+		fh.close()
+	else
+		fh:write(str)
+		fh:close()
+	end
 end
 
 function DB:operate(trans)
