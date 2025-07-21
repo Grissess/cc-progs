@@ -73,7 +73,7 @@ local function show(sp)
 	textutils.pagedTabulate(colors.lime, {'Name', 'Amt'}, colors.white, table.unpack(tbl))
 end
 
-local args, opts = libgetopt.getopt({...})
+local args, opts = libgetopt.getopt(...)
 if opts['local'] then
 	interface = nil
 else
