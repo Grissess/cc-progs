@@ -23,7 +23,7 @@ function DB.open(fn)
 	return setmetatable({filename = fn}, DB.mt)
 end
 
-setmetatable(DB, {__call = function(self, ...) self.open(...) end})
+setmetatable(DB, {__call = function(self, ...) return self.open(...) end})
 
 local function read_all(filename)
 	local ret
