@@ -57,7 +57,7 @@ local function fromLoc(loc)
 	assert(slot, 'invalid location')
 	local inv = peripheral.wrap(addr)
 	inv.addr = addr
-	return inv, slot
+	return inv, tonumber(slot)
 end
 
 local function scan()
