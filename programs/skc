@@ -1,8 +1,9 @@
 local pretty = require 'cc.pretty'
 
-local function request(cmd)
+local function request(cmd, tmout)
+	if tmout == nil then tmout = 15 end
 	local rid = math.random(1, 65536)
-	local timeout = os.startTimer(3)
+	local timeout = os.startTimer(tmout)
 	--write('->')
 	--pretty.pretty_print(cmd)
 	os.queueEvent('skcmd', rid, cmd)
@@ -57,6 +58,11 @@ elseif args[1] == 'get' then
 elseif args[1] == 'stow' then
 	local res = request{command = 'moveAway', sourceGroup = 'interface', targetGroup = 'storage'}
 	assert(res.ok, res.message)
+elseif args[1] == 'search' then
+	local res = request{command = 'search', pattern = args[2]}
+	for _, sp in ipairs(res.matches) do
+		print(sp)
+	end
 else
 	error('unrecognized command ' .. args[1])
 end

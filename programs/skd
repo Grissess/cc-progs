@@ -165,6 +165,16 @@ local function moveAway(sgrp, tgrp)
 	return true
 end
 
+local function speciesMatching(pat)
+	local ret = {}
+	for sp, _ in pairs(database.stock) do
+		if sp:match(pat) then
+			table.insert(ret, sp)
+		end
+	end
+	return ret
+end
+
 local function parseCmd(cmd)
 	if cmd.command == 'moveTo' then
 		local ok, msg = moveTo(cmd.group, cmd.species, cmd.count)
@@ -179,6 +189,8 @@ local function parseCmd(cmd)
 			return {ok = true, stock = database.stock[cmd.species]}
 		end
 		return {ok = true, stock = database.stock}
+	elseif cmd.command == 'search' then
+		return {ok = true, matches = speciesMatching(cmd.pattern)}
 	else
 		return {ok = false, message = 'unknown command'}
 	end
@@ -196,8 +208,9 @@ local function main()
 			end
 		elseif edata[1] == 'skcmd' then
 			log('command', edata[3].command)
-			local res = parseCmd(edata[3])
+			local ok, res = pcall(parseCmd(edata[3]))
 			log('result', res)
+			if not ok then res = {ok = false, error = res} end
 			os.queueEvent('skres', edata[2], res)
 		end
 	until false
