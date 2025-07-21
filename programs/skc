@@ -26,6 +26,7 @@ local function request(cmd, tmout)
 	--write('->')
 	--pretty.pretty_print(cmd)
 	if interface then
+		peripheral.call(interface, 'open', 14850)
 		peripheral.call(interface, 'transmit', 14850, 14850, {rid = rid, request = cmd})
 	else
 		os.queueEvent('skcmd', rid, cmd)
