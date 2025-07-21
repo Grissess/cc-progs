@@ -1,4 +1,23 @@
 local pretty = require 'cc.pretty'
+local libgetopt = require 'lib.libgetopt'
+local libacid = require 'lib.libacid'
+
+fs.makeDir('/etc')
+local dbo = libacid.DB('/etc/skc.conf')
+local config = dbo:get()
+local defaultConfig = {
+	targetGroup = 'interface',
+}
+local dirty = false
+for k, v in pairs(defaultConfig) do
+	if not config[k] then
+		config[k] = v
+		dirty = true
+	end
+end
+if dirty then dbo:set(config) end
+
+local interface
 
 local function request(cmd, tmout)
 	if tmout == nil then tmout = 15 end
@@ -6,12 +25,20 @@ local function request(cmd, tmout)
 	local timeout = os.startTimer(tmout)
 	--write('->')
 	--pretty.pretty_print(cmd)
-	os.queueEvent('skcmd', rid, cmd)
+	if interface then
+		peripheral.call(interface, 'transmit', 14850, 14850, {rid = rid, request = cmd})
+	else
+		os.queueEvent('skcmd', rid, cmd)
+	end
 	local ret
 	repeat
 		local edata = {os.pullEvent()}
 		if edata[1] == 'timer' and edata[2] == timeout then
 			error('timeout')
+		elseif edata[1] == 'modem_message' and edata[5].rid == rid and edata[5].response then
+			os.cancelTimer(timeout)
+			ret = edata[5].response
+			break
 		elseif edata[1] == 'skres' and edata[2] == rid then
 			os.cancelTimer(timeout)
 			ret = edata[3]
@@ -46,23 +73,81 @@ local function show(sp)
 	textutils.pagedTabulate(colors.lime, {'Name', 'Amt'}, colors.white, table.unpack(tbl))
 end
 
-local args = {...}
+local args, opts = libgetopt.getopt({...})
+if opts['local'] then
+	interface = nil
+else
+	interface = peripheral.find('modem', function(addr, mdm)
+		mdm.addr = addr
+		return true
+	end)
+	if interface then
+		interface = interface.addr
+	else
+		error('No modems found! If this is a local instance, pass --local')
+	end
+end
+
+local function printHeader(...)
+	term.setTextColor(colors.green)
+	print(...)
+	term.setTextColor(colors.white)
+end
 
 if (not args[1]) or args[1] == 'show' then
 	show(args[2])
 elseif args[1] == 'get' then
 	local name = assert(args[2], 'specify a name')
-	local count = assert(tonumber(args[3]), 'specify an amount')
-	local res = request{command = 'moveTo', group = 'interface', species = name, count = count}
+	local count = tonumber(args[3])
+	if not count then count = 1 end
+	local res = request{command = 'search', pattern = name}
+	if (not res.matches) or #res.matches == 0 then
+		error('no items by that name')
+	elseif #res.matches > 1 then
+		error('ambiguous name: could be any of: ' .. table.concat(res.matches, ', '))
+	end
+	local sp = res.matches[1]
+	local res = request{command = 'moveTo', group = config.targetGroup, species = sp, count = count}
 	assert(res.ok, res.message)
 elseif args[1] == 'stow' then
-	local res = request{command = 'moveAway', sourceGroup = 'interface', targetGroup = 'storage'}
+	local res = request{command = 'moveAway', sourceGroup = config.targetGroup, targetGroup = 'storage'}
 	assert(res.ok, res.message)
 elseif args[1] == 'search' then
 	local res = request{command = 'search', pattern = args[2]}
+	printHeader('Results')
 	for _, sp in ipairs(res.matches) do
 		print(sp)
 	end
+elseif args[1] == 'group' then
+	if (not args[2]) or args[2] == 'list' then
+		local res = request{command = 'group'}
+		printHeader('Groups')
+		for _, grp in ipairs(res.groups) do
+			print(grp)
+		end
+	elseif args[2] == 'show' then
+		local res = request{command = 'group', group = args[3]}
+		printHeader('Group ' .. args[3])
+		for _, iface in ipairs(res.interfaces) do
+			print(iface)
+		end
+	elseif args[2] == 'add' then
+		request{command = 'groupAdd', group = args[3], interfaces = {table.unpack(args, 4)}}
+	elseif args[2] == 'remove' then
+		request{command = 'groupRemove', group = args[3], interfaces = {table.unpack(args, 4)}}
+	elseif args[2] == 'clear' then
+		request{command = 'groupClear', group = args[3]}
+	else
+		error('unrecognized group command ' .. args[2])
+	end
+elseif args[1] == 'if' or args[1] == 'interfaces' then
+	local res = request{command = 'interfaces'}
+	printHeader('Interfaces')
+	for _, iface in ipairs(res.interfaces) do
+		print(iface)
+	end
+elseif args[1] == 'save' then
+	request{command = 'save'}
 else
 	error('unrecognized command ' .. args[1])
 end

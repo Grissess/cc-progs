@@ -3,23 +3,35 @@ local ppath = ''
 if CC then ppath = 'lib.' end
 
 local liblua = require(ppath .. 'liblua')
+local libacid = require(ppath .. 'libacid')
 
-local config = {
+fs.makeDir('/etc')
+local dbo = libacid.DB('/etc/skd.conf')
+
+local defaultConfig = {
 	scanInterval = 10,
+	groups = {},
 }
 
-local database = {
-	groups = {
-		interface = {'minecraft:barrel_0'},
-		storage = {},
-	},
-}
-
-for i = 1, 9 do table.insert(database.groups.storage, 'minecraft:barrel_' .. i) end
+local database = dbo:get()
 
 local function log(...)
 	print(textutils.formatTime(os.time(), true), ...)
 end
+
+local function save()
+	log('saved db')
+	dbo:set(database)
+end
+
+local dirty = false
+for k, v in pairs(defaultConfig) do
+	if not database[k] then
+		database[k] = v
+		dirty = true
+	end
+end
+if dirty then save() end
 
 local function annotateAddress(addr, inv)
 	inv.addr = addr
@@ -31,7 +43,8 @@ local function allInventories()
 end
 
 local function inventoriesInGroup(grp)
-	local set = liblua.seq_to_set(database.groups[grp])
+	local set = database.groups[grp]
+	if not set then return {} end
 	return {peripheral.find('inventory', function(addr, inv)
 		if set[addr] then
 			inv.addr = addr
@@ -175,28 +188,108 @@ local function speciesMatching(pat)
 	return ret
 end
 
-local function parseCmd(cmd)
-	if cmd.command == 'moveTo' then
+local function getGroups()
+	local ret = liblua.set_to_seq(database.groups)
+	table.sort(ret)
+	return ret
+end
+
+local function getGroup(grp)
+	local grp = database.groups[grp]
+	if not group then return {} end
+	local ret = liblua.set_to_seq(grp)
+	table.sort(ret)
+	return ret
+end
+
+local function addToGroup(grp, ifaces)
+	if not database.groups[grp] then database.groups[grp] = {} end
+	for _, iface in ipairs(ifaces) do
+		database.groups[grp][iface] = true
+	end
+	save()
+end
+
+local function removeFromGroup(grp, ifaces)
+	if not database.groups[grp] then return end
+	for _, iface in ipairs(ifaces) do
+		database.groups[grp][iface] = nil
+	end
+	if not next(database.groups[grp]) then database.groups[grp] = nil end
+	save()
+end
+
+local function clearGroup(grp)
+	database.groups[grp] = nil
+end
+
+local function getInterfaceNames()
+	local ret = {}
+	local ifaces = allInventories()
+	for _, iface in ipairs(ifaces) do
+		table.insert(ret, iface.addr)
+	end
+	table.sort(ret)
+	return ret
+end
+
+local cmds = {
+	moveTo = function(cmd)
 		local ok, msg = moveTo(cmd.group, cmd.species, cmd.count)
 		scan()
 		return {ok = ok, message = msg}
-	elseif cmd.command == 'moveAway' then
+	end,
+	moveAway = function(cmd)
 		local ok, msg = moveAway(cmd.sourceGroup, cmd.targetGroup)
 		scan()
 		return {ok = ok, message = msg}
-	elseif cmd.command == 'stock' then
+	end,
+	stock = function(cmd)
 		if cmd.species then
 			return {ok = true, stock = database.stock[cmd.species]}
 		end
 		return {ok = true, stock = database.stock}
-	elseif cmd.command == 'search' then
+	end,
+	search = function(cmd)
 		return {ok = true, matches = speciesMatching(cmd.pattern)}
-	else
-		return {ok = false, message = 'unknown command'}
-	end
+	end,
+	group = function(cmd)
+		if cmd.group then
+			return {ok = true, interfaces = getGroup(cmd.group)}
+		end
+		return {ok = true, groups = getGroups()}
+	end,
+	groupAdd = function(cmd)
+		addToGroup(cmd.group, cmd.interfaces)
+		return {ok = true}
+	end,
+	groupRemove = function(cmd)
+		removeFromGroup(cmd.group, cmd.interfaces)
+		return {ok = true}
+	end,
+	groupClear = function(cmd)
+		clearGroup(cmd.group)
+		return {ok = true}
+	end,
+	interfaces = function(cmd)
+		return {ok = true, interfaces = getInterfaceNames()}
+	end,
+	save = function(cmd)
+		save()
+		return {ok = true}
+	end,
+}
+
+local function parseCmd(cmd)
+	local func = cmds[cmd.command]
+	if func then return func(cmd) end
+	return {ok = false, message = 'unknown command'}
 end
 
 local function main()
+	for _, mdm in ipairs({peripheral.find 'modem'}) do
+		mdm.open(14850)
+	end
 	scan()
 	local scanTimer = os.startTimer(config.scanInterval)
 	repeat
@@ -208,10 +301,21 @@ local function main()
 			end
 		elseif edata[1] == 'skcmd' then
 			log('command', edata[3].command)
-			local ok, res = pcall(parseCmd(edata[3]))
+			local ok, res = pcall(parseCmd, edata[3])
 			log('result', res)
 			if not ok then res = {ok = false, error = res} end
 			os.queueEvent('skres', edata[2], res)
+		elseif edata[1] == 'modem_message' and edata[3] == 14850 and edata[5].request then
+			local mdm, reply = edata[2], edata[4]
+			local rid, cmd = edata[5].rid, edata[5].request
+			local ok, res = pcall(parseCmd, cmd)
+			if not ok then res = {ok = false, error = res} end
+			peripheral.call(mdm, transmit, reply, {rid = rid, response = res})
+		elseif edata[1] == 'peripheral' then
+			local types = liblua.seq_to_set(peripheral.getTypes(edata[2]))
+			if types.modem then
+				peripheral.call(edata[2], 'open', 14850)
+			end
 		end
 	until false
 end
