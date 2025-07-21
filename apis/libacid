@@ -4,8 +4,7 @@ local CC = os.loadAPI ~= nil
 local liblua, serialization, filesystem
 
 if CC then
-	os.loadAPI("liblua")
-	liblua = _G.liblua
+	liblua = require 'lib.liblua'
 	serialization = textutils
 	filesystem = fs
 else
