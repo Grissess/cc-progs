@@ -291,12 +291,12 @@ local function main()
 		mdm.open(14850)
 	end
 	scan()
-	local scanTimer = os.startTimer(config.scanInterval)
+	local scanTimer = os.startTimer(database.scanInterval)
 	repeat
 		local edata = {os.pullEvent()}
 		if edata[1] == 'timer' then
 			if edata[2] == scanTimer then
-				scanTimer = os.startTimer(config.scanInterval)
+				scanTimer = os.startTimer(database.scanInterval)
 				scan()
 			end
 		elseif edata[1] == 'skcmd' then
