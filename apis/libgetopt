@@ -1,7 +1,7 @@
 local libgetopt = {}
 
 local function splitval(arg)
-	local k, v = arg:find('([^=]*)=?(.*)')
+	local k, v = arg:match('([^=]*)=?(.*)')
 	if v == '' then v = true end
 	return k, v
 end
