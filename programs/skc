@@ -74,7 +74,7 @@ local function show(sp)
 end
 
 local args, opts = libgetopt.getopt(...)
-if opts['local'] then
+if opts.l or opts['local'] then
 	interface = nil
 else
 	interface = peripheral.find('modem', function(addr, mdm)
