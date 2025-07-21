@@ -288,6 +288,7 @@ end
 
 local function main()
 	for _, mdm in ipairs({peripheral.find 'modem'}) do
+		log('open init port')
 		mdm.open(14850)
 	end
 	scan()
@@ -308,12 +309,15 @@ local function main()
 		elseif edata[1] == 'modem_message' and edata[3] == 14850 and edata[5].request then
 			local mdm, reply = edata[2], edata[4]
 			local rid, cmd = edata[5].rid, edata[5].request
+			log('modem command', cmd.command)
 			local ok, res = pcall(parseCmd, cmd)
+			log('result', res)
 			if not ok then res = {ok = false, error = res} end
 			peripheral.call(mdm, transmit, reply, {rid = rid, response = res})
 		elseif edata[1] == 'peripheral' then
 			local types = liblua.seq_to_set(peripheral.getTypes(edata[2]))
 			if types.modem then
+				log('open port on ' .. edata[2])
 				peripheral.call(edata[2], 'open', 14850)
 			end
 		end
