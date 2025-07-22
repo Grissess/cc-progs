@@ -114,7 +114,11 @@ end
 
 local function newFreeSlotCursor(invs)
 	local cur = {invs = invs, idx = 1}
-	advanceFreeSlotCursor(cur)
+	if not next(invs) then
+		cur.exhausted = true
+	else
+		advanceFreeSlotCursor(cur)
+	end
 	return cur
 end
 

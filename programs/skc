@@ -49,6 +49,11 @@ local function request(cmd, tmout)
 	until false
 	--write('<-')
 	--pretty.pretty_print(ret)
+	if not ret.ok then
+		if ret.error then error(ret.error) end
+		if ret.message then error(ret.message) end
+		error(ret)
+	end
 	return ret
 end
 
