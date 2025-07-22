@@ -259,7 +259,7 @@ local cmds = {
 	end,
 	group = function(cmd)
 		if cmd.group then
-			if not database.group[cmd.group] then
+			if not database.groups[cmd.group] then
 				return {ok = false, message = 'no such group'}
 			end
 			return {ok = true, interfaces = getGroup(cmd.group)}
