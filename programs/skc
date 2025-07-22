@@ -1,6 +1,7 @@
 local pretty = require 'cc.pretty'
 local libgetopt = require 'lib.libgetopt'
 local libacid = require 'lib.libacid'
+local liblua = require 'lib.liblua'
 
 fs.makeDir('/etc')
 local dbo = libacid.DB('/etc/skc.conf')
@@ -95,6 +96,19 @@ local function printHeader(...)
 	term.setTextColor(colors.white)
 end
 
+local function toInterfaces(nms, ifaces)
+	ifaces = liblua.seq_to_set(ifaces)
+	local ret = {}
+	for _, nm in ipairs(nms) do
+		for iface, _ in pairs(ifaces) do
+			if iface:match(nm) then
+				ret[iface] = true
+			end
+		end
+	end
+	return liblua.set_to_seq(ret)
+end
+
 if (not args[1]) or args[1] == 'show' then
 	show(args[2])
 elseif args[1] == 'get' then
@@ -133,9 +147,11 @@ elseif args[1] == 'group' then
 			print(iface)
 		end
 	elseif args[2] == 'add' then
-		request{command = 'groupAdd', group = args[3], interfaces = {table.unpack(args, 4)}}
+		local ifaces = toInterfaces({table.unpack(args, 4)}, request{command = 'interfaces'})
+		request{command = 'groupAdd', group = args[3], interfaces = ifaces}
 	elseif args[2] == 'remove' then
-		request{command = 'groupRemove', group = args[3], interfaces = {table.unpack(args, 4)}}
+		local ifaces = toInterfaces({table.unpack(args, 4)}, request{command = 'group', group = args[3]})
+		request{command = 'groupRemove', group = args[3], interfaces = ifaces}
 	elseif args[2] == 'clear' then
 		request{command = 'groupClear', group = args[3]}
 	else
