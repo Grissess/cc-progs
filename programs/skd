@@ -200,7 +200,7 @@ end
 
 local function getGroup(grp)
 	local grp = database.groups[grp]
-	if not group then return {} end
+	if not grp then return {} end
 	local ret = liblua.set_to_seq(grp)
 	table.sort(ret)
 	return ret
