@@ -153,9 +153,17 @@ elseif args[1] == 'group' then
 		end
 	elseif args[2] == 'add' then
 		local ifaces = toInterfaces({table.unpack(args, 4)}, request{command = 'interfaces'})
+		printHeader('Interfaces added to ' .. args[3])
+		for _, iface in ipairs(ifaces) do
+			print(iface)
+		end
 		request{command = 'groupAdd', group = args[3], interfaces = ifaces}
 	elseif args[2] == 'remove' then
 		local ifaces = toInterfaces({table.unpack(args, 4)}, request{command = 'group', group = args[3]})
+		printHeader('Interfaces removed from ' .. args[3])
+		for _, iface in ipairs(ifaces) do
+			print(iface)
+		end
 		request{command = 'groupRemove', group = args[3], interfaces = ifaces}
 	elseif args[2] == 'clear' then
 		request{command = 'groupClear', group = args[3]}
