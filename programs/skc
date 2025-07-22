@@ -128,7 +128,7 @@ elseif args[1] == 'get' then
 		error('ambiguous name: could be any of: ' .. table.concat(res.matches, ', '))
 	end
 	local sp = res.matches[1]
-	local res = request{command = 'moveTo', group = config.targetGroup, species = sp, count = count}
+	local res = request{command = 'moveTo', group = config.localGroup, species = sp, count = count}
 	assert(res.ok, res.message)
 elseif args[1] == 'stow' then
 	local res = request{command = 'moveAway', sourceGroup = config.localGroup, targetGroup = config.storageGroup}
