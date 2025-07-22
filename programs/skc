@@ -7,7 +7,8 @@ fs.makeDir('/etc')
 local dbo = libacid.DB('/etc/skc.conf')
 local config = dbo:get()
 local defaultConfig = {
-	targetGroup = 'interface',
+	localGroup = 'local',
+	storageGroup = 'storage',
 }
 local dirty = false
 for k, v in pairs(defaultConfig) do
@@ -130,7 +131,7 @@ elseif args[1] == 'get' then
 	local res = request{command = 'moveTo', group = config.targetGroup, species = sp, count = count}
 	assert(res.ok, res.message)
 elseif args[1] == 'stow' then
-	local res = request{command = 'moveAway', sourceGroup = config.targetGroup, targetGroup = 'storage'}
+	local res = request{command = 'moveAway', sourceGroup = config.localGroup, targetGroup = config.storageGroup}
 	assert(res.ok, res.message)
 elseif args[1] == 'search' then
 	local res = request{command = 'search', pattern = args[2]}
